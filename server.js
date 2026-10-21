@@ -482,6 +482,8 @@ io.on('connection', (socket) => {
   });
 });
 
-/* ================= СТАРТ ================= */
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log('🌊 Волна — сервер на http://localhost:' + PORT));
+// Явно указываем хост '0.0.0.0', чтобы Render мог достучаться до сервера
+server.listen(PORT, '0.0.0.0', () => {
+  console.log('🌊 Волна — сервер запущен на порту ' + PORT);
+});
