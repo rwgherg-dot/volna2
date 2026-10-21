@@ -178,6 +178,8 @@ img,video{display:block;max-width:100%}
 .mobile-view .mod{padding:0;align-items:flex-end}
 .mobile-view .mc{border-radius:20px 20px 0 0;max-height:95vh;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
 @keyframes starSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+#qrImg{width:220px;height:220px;object-fit:cover;object-position:center;border-radius:12px}
+#buyStarsModal .pkg{font-size:13px;padding:10px 6px;min-height:64px;line-height:1.2}
 </style>
 </head>
 <body>
@@ -207,6 +209,7 @@ img,video{display:block;max-width:100%}
 <button data-a="fr">👥 Добавить друга</button>
 <button data-a="search">🔎 Поиск по всем</button>
 <button data-a="admin">👁 Админ-панель</button>
+<button data-a="admintools">👑 Админ-инструменты</button>
 <button data-a="group">👥 Создать группу</button>
 <button data-a="story">📸 Добавить историю</button>
 <button data-a="mygifts">📦 Мои подарки</button>
@@ -307,6 +310,45 @@ img,video{display:block;max-width:100%}
 <div class="ma2"><button id="editCancel" class="btn g">Отмена</button><button id="editSave" class="btn p">Сохранить</button></div>
 </div></div>
 
+<div id="buyStarsModal" class="mod hidden"><div class="mc">
+  <h3>⭐ Купить звёзды</h3>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0">
+    <button class="btn g pkg" data-stars="100"  data-price="99">100 ⭐<br><small>99 ₽</small></button>
+    <button class="btn g pkg" data-stars="500"  data-price="449">500 ⭐<br><small>449 ₽</small></button>
+    <button class="btn g pkg" data-stars="1000" data-price="849">1000 ⭐<br><small>849 ₽</small></button>
+    <button class="btn g pkg" data-stars="2500" data-price="1990">2500 ⭐<br><small>1990 ₽</small></button>
+    <button class="btn g pkg" data-stars="5000" data-price="3790">5000 ⭐<br><small>3790 ₽</small></button>
+    <button class="btn g pkg" data-stars="10000" data-price="6990">10000 ⭐<br><small>6990 ₽</small></button>
+  </div>
+  <div id="payQR" class="hidden" style="text-align:center;padding:12px;background:var(--p2);border-radius:14px">
+    <div style="font-size:16px;margin-bottom:8px">Перевести через Т-Банк или Сбербанк</div>
+    <div style="display:inline-block;background:#fff;padding:12px;border-radius:16px">
+      <img id="qrImg" alt="QR">
+    </div>
+    <div style="font-size:18px;font-weight:700;margin-top:10px">+7 902 016-75-09</div>
+    <div style="font-size:14px;color:var(--m)">Данил К.</div>
+    <div id="payAmount" style="font-size:20px;font-weight:800;color:var(--star);margin-top:8px"></div>
+  </div>
+  <div class="ma2">
+    <button id="buyClose" class="btn g">Закрыть</button>
+    <button id="buyConfirm" class="btn p hidden">✅ Я оплатил</button>
+  </div>
+</div></div>
+
+<div id="adminToolsModal" class="mod hidden"><div class="mc">
+  <h3>👑 Админ-инструменты</h3>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <button class="btn danger" id="admBan">🚫 Забанить пользователя</button>
+    <button class="btn danger" id="admUnban">✅ Разбанить пользователя</button>
+    <button class="btn premium" id="admGiveStars">⭐ Начислить звёзды</button>
+    <button class="btn success" id="admGivePremium">👑 Выдать Premium</button>
+    <button class="btn g" id="admViewAll">👁 Все пользователи</button>
+    <button class="btn g" id="admBroadcast">📢 Рассылка всем</button>
+    <button class="btn danger" id="admWipeChat">🧹 Очистить чат пользователя</button>
+  </div>
+  <div class="ma2"><button id="admToolsClose" class="btn g">Закрыть</button></div>
+</div></div>
+
 <input type="file" id="phF" accept="image/*" hidden>
 <input type="file" id="vdF" accept="video/*" hidden>
 
@@ -359,6 +401,7 @@ socket.on('connect',()=>{
 });
 
 socket.on('disconnect',()=>toast('⚠️ Соединение потеряно'));
+socket.on('banned',()=>{toast('🚫 Вы забанены');setTimeout(()=>{store.set('volna_profile',null);location.reload()},1500)});
 
 socket.on('newMessage',({from,message})=>{
   if(message.groupId){
@@ -452,9 +495,12 @@ socket.on('premiumActivated',({until})=>{
 
 socket.on('giftReceived',({gift})=>toast('🎁 Получен подарок: '+gift.name));
 socket.on('reviewReceived',()=>toast('📝 Новый отзыв!'));
-socket.on('storyAdded',({story})=>{
-  state.stories.push(story);toast('📸 Новая история');
-});// ============ РЕГИСТРАЦИЯ ============
+socket.on('storyAdded',({story})=>{state.stories.push(story);toast('📸 Новая история')});
+socket.on('broadcast',({from,text})=>toast('📢 '+from+': '+text));
+socket.on('newPurchaseRequest',(req)=>{if(state.user&&state.user.isAdmin)toast('💰 Заявка: '+req.name+' — '+req.stars+'⭐ за '+req.price+'₽')});
+socket.on('chatWiped',()=>{toast('🧹 Чат очищен');location.reload()});
+
+// ============ РЕГИСТРАЦИЯ ============
 function doRegister(code,name,pass,photo,silent){
   socket.emit('register',{code,name,pass,photo},(res)=>{
     if(!res.ok){toast('Ошибка: '+res.error);return}
@@ -892,10 +938,53 @@ $('#adM').onclick=e=>{
   if(a==='fr'){$('#modal').classList.remove('hidden');$('#fcIn').value='';$('#mErr').textContent=''}
   else if(a==='search'){$('#searchModal').classList.remove('hidden');$('#searchInput').value='';$('#searchResults').innerHTML='';setTimeout(()=>$('#searchInput').focus(),100)}
   else if(a==='admin')openAdminPanel();
+  else if(a==='admintools')document.getElementById('adminToolsModal').classList.remove('hidden');
   else if(a==='group')openGroupModal();
   else if(a==='story')addStory();
   else if(a==='mygifts')showMyGifts();
   else if(a==='ex')exportData();
+};
+
+document.getElementById('admToolsClose').onclick = () =>
+  document.getElementById('adminToolsModal').classList.add('hidden');
+
+document.getElementById('admBan').onclick = () => {
+  const c = prompt('Код пользователя для бана:');
+  if (!c) return;
+  socket.emit('adminBanUser', { code: c.trim().toUpperCase() }, r => toast(r.ok ? '🚫 Забанен' : 'Ошибка: ' + r.error));
+};
+document.getElementById('admUnban').onclick = () => {
+  const c = prompt('Код пользователя для разбана:');
+  if (!c) return;
+  socket.emit('adminUnbanUser', { code: c.trim().toUpperCase() }, r => toast(r.ok ? '✅ Разбанен' : 'Ошибка: ' + r.error));
+};
+document.getElementById('admGiveStars').onclick = () => {
+  const c = prompt('Код пользователя:');
+  if (!c) return;
+  const a = prompt('Сколько звёзд?', '100');
+  if (!a) return;
+  socket.emit('transferStars', { to: c.trim().toUpperCase(), amount: parseInt(a) });
+  toast('⭐ Начислено');
+};
+document.getElementById('admGivePremium').onclick = () => {
+  const c = prompt('Код пользователя:');
+  if (!c) return;
+  socket.emit('activatePremium', { to: c.trim().toUpperCase(), days: 30 });
+  toast('👑 Premium выдан');
+};
+document.getElementById('admViewAll').onclick = () => {
+  document.getElementById('adminToolsModal').classList.add('hidden');
+  openAdminPanel();
+};
+document.getElementById('admBroadcast').onclick = () => {
+  const t = prompt('Текст рассылки:');
+  if (!t) return;
+  socket.emit('adminBroadcast', { text: t }, r => toast(r.ok ? '📢 Отправлено' : 'Ошибка'));
+};
+document.getElementById('admWipeChat').onclick = () => {
+  const c = prompt('Код пользователя (с кем чат):');
+  if (!c) return;
+  socket.emit('adminWipeChat', { withCode: c.trim().toUpperCase() }, r => toast(r.ok ? '🧹 Очищено' : 'Ошибка'));
 };
 
 // ============ ДОБАВИТЬ ДРУГА ============
@@ -1056,6 +1145,9 @@ function openProfile(f){
         <button class="btn p" id="pmReview">📝 Написать отзыв</button>
         ${state.user.isAdmin?'<button class="btn success" id="pmGiveStars">⭐ Начислить звёзды</button>':''}
         ${state.user.isAdmin?'<button class="btn premium" id="pmGivePremium">👑 Дать Premium</button>':''}
+        ${state.user.isAdmin?'<button class="btn danger" id="pmBan">🚫 Забанить</button>':''}
+        ${state.user.isAdmin?'<button class="btn danger" id="pmWipe">🧹 Очистить чат</button>':''}
+        ${state.user.isAdmin?'<button class="btn g" id="pmForceAdd">➕ Принудительно добавить</button>':''}
       </div>
       ${reviewsHtml}
       <div class="ma2"><button class="btn g" onclick="document.getElementById('prm').classList.add('hidden')">Закрыть</button></div>
@@ -1065,6 +1157,19 @@ function openProfile(f){
     if(state.user.isAdmin){
       $('#pmGiveStars').onclick=()=>{const a=prompt('Сколько звёзд?','100');if(a)socket.emit('transferStars',{to:f.code,amount:parseInt(a)});};
       $('#pmGivePremium').onclick=()=>{if(confirm('Активировать Premium на 30 дней?'))socket.emit('activatePremium',{to:f.code,days:30});};
+      $('#pmBan').onclick=()=>{
+        if(!confirm('Забанить '+f.name+'?'))return;
+        socket.emit('adminBanUser',{code:f.code},r=>toast(r.ok?'🚫 Забанен':'Ошибка: '+r.error));
+      };
+      $('#pmWipe').onclick=()=>{
+        if(!confirm('Очистить переписку с '+f.name+'?'))return;
+        socket.emit('adminWipeChat',{withCode:f.code},r=>{
+          if(r.ok){delete state.messages[f.code];renderFriends();renderMessages();toast('🧹 Очищено');}
+        });
+      };
+      $('#pmForceAdd').onclick=()=>{
+        socket.emit('forceAddFriend',{targetCode:f.code},r=>{if(r.ok)toast('✅ Добавлен');});
+      };
     }
   });
 }
@@ -1146,74 +1251,18 @@ function exportData(){
   a.click();
   toast('📥 Экспортировано');
 }
-<!-- Модалка покупки звёзд -->
-<div id="buyStarsModal" class="mod hidden"><div class="mc">
-  <h3>⭐ Купить звёзды</h3>
 
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0">
-    <button class="btn g pkg" data-stars="100"  data-price="99">100 ⭐<br><small>99 ₽</small></button>
-    <button class="btn g pkg" data-stars="500"  data-price="449">500 ⭐<br><small>449 ₽</small></button>
-    <button class="btn g pkg" data-stars="1000" data-price="849">1000 ⭐<br><small>849 ₽</small></button>
-    <button class="btn g pkg" data-stars="2500" data-price="1990">2500 ⭐<br><small>1990 ₽</small></button>
-    <button class="btn g pkg" data-stars="5000" data-price="3790">5000 ⭐<br><small>3790 ₽</small></button>
-    <button class="btn g pkg" data-stars="10000" data-price="6990">10000 ⭐<br><small>6990 ₽</small></button>
-  </div>
-
-  <div id="payQR" class="hidden" style="text-align:center;padding:12px;background:var(--p2);border-radius:14px">
-    <div style="font-size:16px;margin-bottom:8px">Перевести через Т-Банк или Сбербанк</div>
-
-    <!-- QR обрезан и центрирован -->
-    <div style="display:inline-block;background:#fff;padding:12px;border-radius:16px">
-      <img id="qrImg" alt="QR" style="width:220px;height:220px;object-fit:cover;object-position:center;display:block">
-    </div>
-
-    <div style="font-size:18px;font-weight:700;margin-top:10px">+7 902 016-75-09</div>
-    <div style="font-size:14px;color:var(--m)">Данил К.</div>
-    <div id="payAmount" style="font-size:20px;font-weight:800;color:var(--star);margin-top:8px"></div>
-  </div>
-
-  <div class="ma2">
-    <button id="buyClose" class="btn g">Закрыть</button>
-    <button id="buyConfirm" class="btn p hidden">✅ Я оплатил</button>
-  </div>
-</div></div>
-
-<!-- Админ-инструменты -->
-<div id="adminToolsModal" class="mod hidden"><div class="mc">
-  <h3>👑 Админ-инструменты</h3>
-  <div style="display:flex;flex-direction:column;gap:8px">
-    <button class="btn danger" id="admBan">🚫 Забанить пользователя</button>
-    <button class="btn danger" id="admUnban">✅ Разбанить пользователя</button>
-    <button class="btn premium" id="admGiveStars">⭐ Начислить звёзды</button>
-    <button class="btn success" id="admGivePremium">👑 Выдать Premium</button>
-    <button class="btn g" id="admViewAll">👁 Все пользователи</button>
-    <button class="btn g" id="admBroadcast">📢 Рассылка всем</button>
-    <button class="btn danger" id="admWipeChat">🧹 Очистить чат пользователя</button>
-  </div>
-  <div class="ma2"><button id="admToolsClose" class="btn g">Закрыть</button></div>
-</div></div>
-  /* ==================== ПОКУПКА ЗВЁЗД ==================== */
-
-const QR_IMG_SRC = 'data:image/png;base64,ВАШ_BASE64_QR'; 
-// ↑ сюда вставьте обрезанный QR в base64 (я не могу сгенерировать картинку из вашего скриншота — 
-//   но в CSS ниже уже сделано «обрезание» через object-fit, так что можно использовать любой QR
-//   с нужной областью — или вставьте вырезанный QR из скриншота).
-// Если хотите быстро: возьмите готовый QR из скриншота, вырежьте квадратом и сохраните как base64.
-
-const PRICE_PER_STAR = 0.85; // админ-цена (можно менять)
+// ============ ПОКУПКА ЗВЁЗД ============
+const QR_IMG_SRC = 'data:image/png;base64,ВСТАВЬТЕ_СЮДА_ВАШ_QR';
 let pendingBuy = null;
 
-// Открытие
 document.getElementById('starsBadge').addEventListener('click', () => {
   if (!state.user) return;
-  const m = document.getElementById('buyStarsModal');
-  m.classList.remove('hidden');
+  document.getElementById('buyStarsModal').classList.remove('hidden');
   document.getElementById('payQR').classList.add('hidden');
   document.getElementById('buyConfirm').classList.add('hidden');
-  // обновляем баланс в заголовке
 });
 
-// Выбор пакета
 document.querySelectorAll('#buyStarsModal .pkg').forEach(btn => {
   btn.onclick = () => {
     const stars = +btn.dataset.stars;
@@ -1222,33 +1271,20 @@ document.querySelectorAll('#buyStarsModal .pkg').forEach(btn => {
     document.getElementById('payQR').classList.remove('hidden');
     document.getElementById('buyConfirm').classList.remove('hidden');
     document.getElementById('payAmount').textContent = `${price} ₽ за ${stars} ⭐`;
-    // ставим QR (обрезанный по центру)
     const img = document.getElementById('qrImg');
-    if (QR_IMG_SRC.startsWith('data:image')) {
-      img.src = QR_IMG_SRC;
-    } else {
-      // fallback — если QR не задан, генерируем заглушку
-      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=+7%20902%20016-75-09';
-    }
-    // если админ — показываем кнопку «начислить себе» для теста
-    if (state.user.isAdmin) {
-      document.getElementById('buyConfirm').textContent = '👑 Начислить как админ';
-    } else {
-      document.getElementById('buyConfirm').textContent = '✅ Я оплатил';
-    }
+    img.src = QR_IMG_SRC.startsWith('data:image')
+      ? QR_IMG_SRC
+      : 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent('+7 902 016-75-09');
+    document.getElementById('buyConfirm').textContent = state.user.isAdmin ? '👑 Начислить как админ' : '✅ Я оплатил';
   };
 });
 
-// Закрытие
 document.getElementById('buyClose').onclick = () =>
   document.getElementById('buyStarsModal').classList.add('hidden');
 
-// Подтверждение оплаты
 document.getElementById('buyConfirm').onclick = () => {
   if (!pendingBuy) return;
-
   if (state.user.isAdmin) {
-    // админ может начислить себе без оплаты
     socket.emit('buyStars', { stars: pendingBuy.stars, isAdmin: true }, (res) => {
       if (res.ok) {
         state.user.stars = res.stars;
@@ -1259,18 +1295,14 @@ document.getElementById('buyConfirm').onclick = () => {
     });
     return;
   }
-
-  // обычный пользователь — заявка на модерацию
-  socket.emit('requestStarPurchase', {
-    stars: pendingBuy.stars,
-    price: pendingBuy.price
-  }, (res) => {
+  socket.emit('requestStarPurchase', { stars: pendingBuy.stars, price: pendingBuy.price }, (res) => {
     if (res.ok) {
       toast('📩 Заявка отправлена. После проверки звёзды придут.');
       document.getElementById('buyStarsModal').classList.add('hidden');
     } else toast('Ошибка: ' + res.error);
   });
 };
+
 </script>
 </body>
 </html>
