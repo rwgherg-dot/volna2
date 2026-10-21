@@ -10,6 +10,7 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
+/* ВАШ ОРИГИНАЛЬНЫЙ ДИЗАЙН */
 :root{--bg:#fff;--panel:#fff;--chat-bg:#dfe8d6;--text:#000;--sec:#8e8e93;--accent:#3390ec;--border:#e5e5ea;--hover:#f2f2f7;--in:#fff;--out:#eeffde;--outt:#4fae4e;--glass:rgba(255,255,255,.85);--danger:#ff453a;--gold:#e6b800;
 --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 [data-theme=dark]{--bg:#0f0f10;--panel:#1c1c1e;--chat-bg:#0e1621;--text:#fff;--accent:#4ea4f6;--border:#2c2c2e;--hover:#2a2a2d;--in:#182533;--out:#2b5278;--outt:#8fc4ee;--glass:rgba(28,28,30,.85)}
@@ -28,7 +29,6 @@ button{font-family:inherit;cursor:pointer}
 .ic.sm{width:18px;height:18px}
 .ic.lg{width:44px;height:44px;stroke-width:1.6}
 
-/* Авторизация */
 .auth-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bg);z-index:50}
 .auth{width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px;align-items:center;animation:fadeIn .3s}
 .logo{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#54a9eb,#3390ec);color:#fff;display:flex;align-items:center;justify-content:center}
@@ -44,8 +44,8 @@ button{font-family:inherit;cursor:pointer}
 .btn.secondary{background:var(--hover);color:var(--accent)}
 
 #main{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--panel)}
-.top{display:flex;align-items:center;gap:10px;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top));min-height:56px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--border);z-index:20}
-.bsm{font-weight:900;font-size:21px;letter-spacing:1px}
+.top{display:flex;align-items:center;gap:10px;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top));min-height:56px;background:var(--glass);backdrop-filter:blur(20px);border-bottom:.5px solid var(--border);z-index:20}
+.bsm{font-weight:900;font-size:21px}
 .stars{background:var(--hover);padding:5px 12px;border-radius:14px;font-size:14px;font-weight:600;color:var(--gold);display:flex;align-items:center;gap:6px;cursor:pointer}
 .ib{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);background:none;border:none}
 .ib:active{background:var(--hover)}
@@ -56,13 +56,12 @@ button{font-family:inherit;cursor:pointer}
 
 .body{flex:1;display:flex;min-height:0;position:relative;overflow:hidden}
 #sb{width:100%;max-width:380px;flex-shrink:0;display:flex;flex-direction:column;background:var(--panel);border-right:.5px solid var(--border)}
-.sbs{padding:8px 12px}
-.sbs input{width:100%;padding:10px 16px;border-radius:20px;background:var(--hover)}
+.sbs{padding:8px 12px}.sbs input{width:100%;padding:10px 16px;border-radius:20px;background:var(--hover)}
 #fl{flex:1;overflow-y:auto}
 .fr{display:flex;align-items:center;gap:12px;padding:8px 12px;cursor:pointer}
 .fr:hover,.fr.act{background:var(--hover)}
 .avw{position:relative;flex-shrink:0}
-.av{width:54px;height:54px;border-radius:50%;overflow:hidden}
+.av{width:54px;height:54px;border-radius:50%;overflow:hidden;position:relative}
 .dot{position:absolute;bottom:1px;right:1px;width:14px;height:14px;border-radius:50%;background:#34c759;border:2.5px solid var(--panel)}
 .fi{flex:1;min-width:0}
 .fn{display:flex;justify-content:space-between;gap:8px;font-size:16px;font-weight:600}
@@ -71,8 +70,8 @@ button{font-family:inherit;cursor:pointer}
 .fl{font-size:15px;color:var(--sec);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
 
 #ca{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;background:var(--chat-bg)}
-.ch{display:flex;align-items:center;gap:10px;padding:6px 12px;min-height:56px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--border)}
-.avsm{width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0}
+.ch{display:flex;align-items:center;gap:10px;padding:6px 12px;min-height:56px;background:var(--glass);backdrop-filter:blur(20px);border-bottom:.5px solid var(--border)}
+.avsm{width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;position:relative}
 .cn{font-size:16px;font-weight:600}
 .cs{font-size:13px;color:var(--sec)}
 .cs.on{color:var(--accent)}
@@ -90,10 +89,10 @@ button{font-family:inherit;cursor:pointer}
 .rx{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
 .rx div{background:var(--panel);border:.5px solid var(--border);padding:2px 8px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:4px}
 .rx .ic{width:14px;height:14px}
-.rmenu{position:fixed;background:var(--panel);border-radius:20px;padding:8px 12px;display:flex;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,.3);z-index:250;animation:slideUp .15s;border:.5px solid var(--border)}
+.rmenu{position:fixed;background:var(--panel);border-radius:30px;padding:6px 10px;display:flex;gap:4px;box-shadow:0 8px 32px rgba(0,0,0,.3);z-index:250;animation:slideUp .15s;border:.5px solid var(--border)}
 .rmenu span{cursor:pointer;padding:6px;transition:transform .15s;display:flex;align-items:center;justify-content:center;border-radius:50%}
-.rmenu span:hover{transform:scale(1.1);background:var(--hover)}
-.rmenu .ic{width:22px;height:22px}
+.rmenu span:hover{transform:scale(1.2);background:var(--hover)}
+.rmenu .ic{width:24px;height:24px}
 
 .cmp{display:flex;gap:8px;padding:8px 10px;padding-bottom:calc(8px + env(safe-area-inset-bottom));background:var(--panel);align-items:flex-end;border-top:.5px solid var(--border)}
 .mi{flex:1;padding:10px 14px;border-radius:20px;background:var(--hover);min-height:40px;max-height:120px;resize:none;line-height:1.35}
@@ -105,13 +104,16 @@ button{font-family:inherit;cursor:pointer}
 
 #profileScreen{position:fixed;inset:0;background:var(--hover);z-index:200;display:flex;flex-direction:column;animation:slideUp .2s}
 .nav{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));background:var(--glass);font-weight:600}
-.pt{display:flex;flex-direction:column;align-items:center;padding:20px 16px;background:var(--panel)}
-.pav{width:110px;height:110px;border-radius:50%;overflow:hidden;margin-bottom:12px}
+.pt{display:flex;flex-direction:column;align-items:center;padding:20px 16px;background:var(--panel);position:relative}
+.pav{width:110px;height:110px;border-radius:50%;overflow:hidden;margin-bottom:12px;position:relative}
 .pn{font-size:22px;font-weight:600}
-.ps{font-size:15px;color:var(--sec)}.ps.on{color:var(--accent)}
+.ps{font-size:15px;color:var(--sec)}
+.ps.on{color:var(--accent)}
 .sec{margin:16px;background:var(--panel);border-radius:12px;overflow:hidden}
-.row{padding:12px 16px;border-bottom:.5px solid var(--border)}.row:last-child{border:none}
-.row div:first-child{font-size:16px}.row div:last-child{font-size:13px;color:var(--sec);margin-top:2px}
+.row{padding:12px 16px;border-bottom:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.row:last-child{border:none}
+.gift-badge{position:absolute;right:-6px;bottom:-6px;width:44px;height:44px;border-radius:50%;background:var(--panel);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:5}
+.gift-badge .ic{width:26px;height:26px}
 
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:400;padding:16px}
 .modal.open{display:flex}
@@ -125,13 +127,22 @@ button{font-family:inherit;cursor:pointer}
 .gm input{width:20px;height:20px;accent-color:var(--accent)}
 .gav{width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0}
 
-/* Админка / Оплата */
+/* Прайс, Админка, NFT */
 .pay-box{background:var(--hover);border-radius:16px;padding:16px;text-align:center;margin-bottom:16px}
 .qr-img{width:180px;height:180px;border-radius:12px;margin:10px auto;display:block}
+.price-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.price-item{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:background .2s}
+.price-item:hover{background:var(--hover)}
 .admin-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border);gap:10px}
 .admin-input{width:70px;padding:6px;border-radius:8px;border:1px solid var(--border);background:var(--panel);text-align:center;color:var(--text)}
+.nft-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:10px}
+.nft-card{background:var(--panel);border-radius:12px;overflow:hidden;cursor:pointer;border:1px solid var(--border);position:relative}
+.nft-art{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef2ff,#fce7f3)}
+.nft-art svg{width:80%;height:80%;display:block}
+.nft-name{font-size:12px;padding:6px;text-align:center;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nft-price{position:absolute;bottom:24px;right:6px;background:rgba(0,0,0,.7);color:#fff;font-size:11px;padding:2px 6px;border-radius:10px;display:flex;align-items:center;gap:3px}
+.nft-price .ic{width:10px;height:10px;stroke:var(--gold)}
 
-/* Звонки */
 .call-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
 .call-av{width:120px;height:120px;border-radius:50%;background:var(--accent);margin-bottom:20px;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:bold}
 .call-btn{width:60px;height:60px;border-radius:50%;border:none;color:#fff;display:flex;align-items:center;justify-content:center;margin:0 10px;cursor:pointer}
@@ -156,10 +167,8 @@ button{font-family:inherit;cursor:pointer}
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
 <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4 4 0 0 1 12 7a4 4 0 0 1 7 3.5C19 15.6 12 20 12 20z"/></symbol>
 <symbol id="i-fire" viewBox="0 0 24 24"><path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 1-5 0 1 1 2 2 2 0-2-1-3 1-5z"/></symbol>
-<symbol id="i-laugh" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 3 4 3 4-3 4-3M9 9h.01M15 9h.01"/></symbol>
-<symbol id="i-sad" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 16s1.5-2 4-2 4 2 4 2M9 9h.01M15 9h.01"/></symbol>
-<symbol id="i-party" viewBox="0 0 24 24"><path d="M4 20l4-12 8 8zM14 4l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></symbol>
 <symbol id="i-like" viewBox="0 0 24 24"><path d="M7 11v9H4v-9zM7 11l4-7a2 2 0 0 1 3 2v4h4a2 2 0 0 1 2 2.3l-1.3 6A2 2 0 0 1 16.7 20H7"/></symbol>
+<symbol id="i-laugh" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 3 4 3 4-3 4-3M9 9h.01M15 9h.01"/></symbol>
 <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 20V5M6 11l6-6 6 6"/></symbol>
 <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M20 12H5M11 6l-6 6 6 6"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12l5 5 11-11"/></symbol>
@@ -173,7 +182,7 @@ button{font-family:inherit;cursor:pointer}
   <div class="auth">
     <div class="logo"><svg class="ic lg"><use href="#i-logo"/></svg></div>
     <h1 class="brand">DERZUS</h1>
-    <p class="sub">Введите имя и пароль.<br>Новое имя — создастся аккаунт.</p>
+    <p class="sub">Введите имя и пароль. Имя уникально.</p>
     <label class="avp"><img id="avPrev" alt="" class="hidden"><span id="avPlus"><svg class="ic"><use href="#i-plus"/></svg></span><input type="file" id="phIn" accept="image/*" hidden></label>
     <input id="nIn" class="fld" placeholder="Ваше имя" maxlength="24" autocomplete="off">
     <input id="pIn" class="fld" type="password" placeholder="Пароль" maxlength="64">
@@ -187,7 +196,7 @@ button{font-family:inherit;cursor:pointer}
     <div class="bsm">DERZUS</div>
     <div class="stars" onclick="openStars()"><svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg><span id="starCount">0</span></div>
     <div style="margin-left:auto;position:relative;display:flex;gap:4px">
-      <button id="adminBtn" class="ib hidden" onclick="openAdminPanel()"><svg class="ic"><use href="#i-admin"/></svg></button>
+      <button id="adminBtn" class="ib hidden" onclick="openAdminPanel()"><svg class="ic" style="stroke:var(--accent)"><use href="#i-admin"/></svg></button>
       <button id="menuBtn" class="ib"><svg class="ic"><use href="#i-menu"/></svg></button>
       <button id="profileBtn" class="ib"><svg class="ic"><use href="#i-user"/></svg></button>
       <div id="adM" class="dd hidden">
@@ -209,55 +218,68 @@ button{font-family:inherit;cursor:pointer}
       <div id="chd" class="ch"></div>
       <div id="msgs" class="msgs"></div>
       <div class="cmp">
-        <button id="micBtn" class="mic-btn" title="Голосовое"><svg class="ic"><use href="#i-mic"/></svg></button>
+        <button id="micBtn" class="mic-btn"><svg class="ic"><use href="#i-mic"/></svg></button>
         <textarea id="mi" class="mi" placeholder="Сообщение" rows="1"></textarea>
         <button id="sendBtn" class="send"><svg class="ic"><use href="#i-arrow-up"/></svg></button>
       </div>
-      <div id="cempty"><span>Выберите чат, чтобы начать общение</span></div>
+      <div id="cempty"><span>Выберите чат</span></div>
     </main>
   </div>
 </div>
 
 <div id="profileScreen" class="hidden">
-  <div class="nav"><button class="ib" id="profileBack"><svg class="ic"><use href="#i-arrow-left"/></svg></button><div>Профиль</div><div class="ib"></div></div>
+  <div class="nav">
+    <button class="ib" id="profileBack"><svg class="ic"><use href="#i-arrow-left"/></svg></button>
+    <div>Профиль</div>
+    <button class="ib" id="editProfileBtn" onclick="openEditProfile()"><svg class="ic"><use href="#i-menu"/></svg></button>
+  </div>
   <div id="profileContent" style="flex:1;overflow-y:auto"></div>
 </div>
 
-<!-- Оплата -->
-<div id="starsModal" class="modal"><div class="mc">
-  <h3 class="mtitle">Пополнение звёзд</h3>
-  <div class="pay-box">
-    <p style="margin-bottom:10px;font-weight:600">Переведите сумму и нажмите кнопку</p>
-    <div style="background:#fff;padding:10px;border-radius:12px;display:inline-block">
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=tel:+79020167509" class="qr-img" alt="QR">
-    </div>
-    <div style="margin-top:12px;font-size:20px;font-weight:900;">+7 902 016-75-09</div>
-    <div style="color:var(--sec)">Данил К.</div>
+<div id="editProfileModal" class="modal"><div class="mc">
+  <h3 class="mtitle">Редактировать профиль</h3>
+  <div style="text-align:center;margin-bottom:16px">
+    <label class="avp" style="margin:0 auto;width:100px;height:100px">
+      <img id="editAvPrev" alt="" class="hidden">
+      <span id="editAvPlus"><svg class="ic"><use href="#i-user"/></svg></span>
+      <input type="file" id="editPhIn" accept="image/*" hidden>
+    </label>
   </div>
-  <input id="payAmount" class="fld" placeholder="Сколько звёзд покупаете?" type="number" style="margin-bottom:10px">
-  <button class="btn primary" onclick="requestStars()">Я оплатил</button>
-  <button class="btn secondary" onclick="closeStars()" style="margin-top:10px">Отмена</button>
+  <input id="editName" class="fld" placeholder="Имя" maxlength="24" style="margin-bottom:10px">
+  <input id="editBio" class="fld" placeholder="О себе (статус)" maxlength="60" style="margin-bottom:16px">
+  <button class="btn primary" onclick="saveProfile()">Сохранить</button>
+  <button class="btn secondary" onclick="closeEditProfile()" style="margin-top:10px">Отмена</button>
 </div></div>
 
-<!-- Админка -->
+<div id="starsModal" class="modal"><div class="mc">
+  <h3 class="mtitle">Магазин звёзд</h3>
+  <div class="price-list">
+    <div class="price-item" onclick="selectPrice(100, 99)"><div style="font-weight:700">100 звёзд</div><div style="color:var(--accent);font-weight:700">99 руб.</div></div>
+    <div class="price-item" onclick="selectPrice(500, 449)"><div style="font-weight:700">500 звёзд</div><div style="color:var(--accent);font-weight:700">449 руб.</div></div>
+    <div class="price-item" onclick="selectPrice(1000, 899)"><div style="font-weight:700">1000 звёзд</div><div style="color:var(--accent);font-weight:700">899 руб.</div></div>
+  </div>
+  <div style="text-align:center;margin-top:16px">
+    <p class="sub" style="margin-bottom:10px">Переведите на номер:</p>
+    <div style="font-size:20px;font-weight:900;">+7 902 016-75-09</div>
+    <div style="color:var(--sec)">Данил К.</div>
+    <div style="font-size:12px;color:var(--sec);margin-top:8px">После перевода нажмите "Я оплатил".</div>
+  </div>
+  <button class="btn primary" onclick="requestStars()" style="margin-top:16px">Я оплатил(а)</button>
+  <button class="btn secondary" onclick="closeStars()" style="margin-top:10px">Закрыть</button>
+</div></div>
+
+<div id="nftModal" class="modal"><div class="mc" style="max-width:500px">
+  <h3 class="mtitle">NFT Подарки</h3>
+  <div id="nftGrid" class="nft-grid"></div>
+  <button class="btn secondary" onclick="closeNft()" style="margin-top:16px">Закрыть</button>
+</div></div>
+
 <div id="adminModal" class="modal"><div class="mc" style="max-width:500px">
   <h3 class="mtitle">Админ Панель</h3>
   <div id="adminUsersList" style="max-height:400px;overflow-y:auto;margin-bottom:16px"></div>
   <button class="btn secondary" onclick="closeAdminPanel()">Закрыть</button>
 </div></div>
 
-<!-- Звонок -->
-<div id="callModal" class="call-overlay hidden">
-  <div class="call-av" id="callAvatar">?</div>
-  <h2 id="callName" style="margin-bottom:10px">Имя</h2>
-  <p id="callStatus" style="color:#aaa;margin-bottom:40px">Звоним...</p>
-  <div style="display:flex">
-    <button class="call-btn end" onclick="endCall()"><svg class="ic" style="transform:rotate(135deg)"><use href="#i-phone"/></svg></button>
-    <button id="acceptCallBtn" class="call-btn accept hidden" onclick="acceptCall()"><svg class="ic"><use href="#i-phone"/></svg></button>
-  </div>
-</div>
-
-<!-- Добавить друга -->
 <div id="addFriendModal" class="modal"><div class="mc">
   <h3 class="mtitle">Добавить друга</h3>
   <div class="tabs">
@@ -283,7 +305,6 @@ button{font-family:inherit;cursor:pointer}
   <button class="btn secondary" onclick="closeAddFriend()" style="margin-top:14px">Закрыть</button>
 </div></div>
 
-<!-- Группа -->
 <div id="groupModal" class="modal"><div class="mc">
   <h3 class="mtitle">Создать группу</h3>
   <input id="grName" class="fld" placeholder="Название группы" maxlength="40" style="margin-bottom:12px">
@@ -293,13 +314,22 @@ button{font-family:inherit;cursor:pointer}
   <button class="btn secondary" onclick="closeGroupModal()" style="margin-top:8px">Отмена</button>
 </div></div>
 
+<div id="callModal" class="call-overlay hidden">
+  <div class="call-av" id="callAvatar">?</div>
+  <h2 id="callName" style="margin-bottom:10px">Имя</h2>
+  <p id="callStatus" style="color:#aaa;margin-bottom:40px">Звоним...</p>
+  <div style="display:flex">
+    <button class="call-btn end" onclick="endCall()"><svg class="ic" style="transform:rotate(135deg)"><use href="#i-phone"/></svg></button>
+    <button id="acceptCallBtn" class="call-btn accept hidden" onclick="acceptCall()"><svg class="ic"><use href="#i-phone"/></svg></button>
+  </div>
+</div>
+
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const store = { get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}} };
 const fmtTime = ts => new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-
 function toast(t){
   const e = document.createElement('div'); e.textContent = t;
   e.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:12px 20px;border-radius:22px;font-size:15px;z-index:500;max-width:90%;text-align:center';
@@ -307,7 +337,7 @@ function toast(t){
 }
 function avFor(n,p){
   if (p) return `<img src="${p}" style="width:100%;height:100%;object-fit:cover">`;
-  const raw = (n||'?').trim()||'?', cs=['#3390ec','#e17076','#7bc862','#e5ca77','#6ec9cb','#65aadd','#ee7aae'];
+  const raw = (n||'?').trim()||'?', cs=['#3390ec','#e17076','#7bc862','#e5ca77','#6ec9cb'];
   let x=0; for (const c of raw) x+=c.charCodeAt(0);
   return `<div style="width:100%;height:100%;background:${cs[x%cs.length]};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:20px">${esc(raw[0].toUpperCase())}</div>`;
 }
@@ -315,10 +345,19 @@ const applyTheme = t => { document.body.dataset.theme=t; store.set('derzus_theme
 const toggleTheme = () => applyTheme(document.body.dataset.theme==='dark'?'light':'dark');
 applyTheme(store.get('derzus_theme','light'));
 
-const state = {user:null,friends:[],groups:[],messages:{},activeChat:null,activeGroup:null,online:{},qrScanner:null,curTab:'search',pendingAvatar:null,isRecording:false,mediaRecorder:null,audioChunks:[],callData:null};
+const state = {user:null,friends:[],groups:[],messages:{},activeChat:null,activeGroup:null,online:{},qrScanner:null,pendingAvatar:null,editAvatar:null,selectedPrice:null,isRecording:false,mediaRecorder:null,audioChunks:[],callData:null};
 const activeKey = () => state.activeGroup || state.activeChat;
 const socket = io();
 let pc, localStream;
+
+const NFT_CATALOG = {
+  wave: { name: 'Волна', price: 50, art: `<svg viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3390ec"/><stop offset="1" stop-color="#7bc862"/></linearGradient></defs><rect width="100" height="100" fill="url(#g1)"/><path d="M0 65 Q25 45 50 65 T100 65 V100 H0 Z" fill="#fff" opacity=".9"/><path d="M0 78 Q25 58 50 78 T100 78 V100 H0 Z" fill="#fff" opacity=".5"/></svg>` },
+  star: { name: 'Звезда', price: 150, art: `<svg viewBox="0 0 100 100"><defs><radialGradient id="g2"><stop offset="0" stop-color="#fff8d0"/><stop offset="1" stop-color="#ffb400"/></radialGradient></defs><rect width="100" height="100" fill="#1a0033"/><circle cx="50" cy="50" r="42" fill="url(#g2)"/><path d="M50 20l7 20h21l-17 13 7 21-18-13-18 13 7-21-17-13h21z" fill="#fff" stroke="#ff8a00" stroke-width="2"/></svg>` },
+  diamond: { name: 'Алмаз', price: 300, art: `<svg viewBox="0 0 100 100"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4ea4f6"/><stop offset=".5" stop-color="#b39ddb"/><stop offset="1" stop-color="#4ea4f6"/></linearGradient></defs><rect width="100" height="100" fill="#0b1020"/><polygon points="50,15 80,40 50,85 20,40" fill="url(#g3)" stroke="#fff" stroke-width="2"/><polygon points="20,40 50,40 50,85" fill="#fff" opacity=".25"/><polygon points="50,15 50,40 80,40" fill="#fff" opacity=".4"/></svg>` },
+  rocket: { name: 'Ракета', price: 500, art: `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0b1020"/><path d="M50 15 Q65 40 65 65 L50 80 L35 65 Q35 40 50 15Z" fill="#e5e5ea"/><circle cx="50" cy="45" r="7" fill="#4ea4f6"/><path d="M35 65 L25 78 L40 75Z" fill="#e17076"/><path d="M65 65 L75 78 L60 75Z" fill="#e17076"/><path d="M45 80 Q50 92 55 80" fill="#ffb400"/></svg>` },
+  crown: { name: 'Корона', price: 1000, art: `<svg viewBox="0 0 100 100"><defs><linearGradient id="g4"><stop offset="0" stop-color="#ffe066"/><stop offset="1" stop-color="#e6b800"/></linearGradient></defs><rect width="100" height="100" fill="#1a0033"/><path d="M20 75 L20 45 L35 58 L50 30 L65 58 L80 45 L80 75 Z" fill="url(#g4)" stroke="#fff" stroke-width="2"/><circle cx="50" cy="42" r="3" fill="#ff3b30"/><circle cx="30" cy="52" r="2" fill="#4ea4f6"/><circle cx="70" cy="52" r="2" fill="#4ea4f6"/></svg>` },
+  alien: { name: 'Пришелец', price: 2000, art: `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0b1020"/><ellipse cx="50" cy="45" rx="30" ry="35" fill="#7bc862"/><ellipse cx="38" cy="40" rx="8" ry="12" fill="#0b1020"/><ellipse cx="62" cy="40" rx="8" ry="12" fill="#0b1020"/><circle cx="38" cy="40" r="3" fill="#fff"/><circle cx="62" cy="40" r="3" fill="#fff"/><path d="M40 70 Q50 75 60 70" stroke="#0b1020" stroke-width="2" fill="none"/><path d="M20 80 L15 90 M80 80 L85 90" stroke="#7bc862" stroke-width="3"/></svg>` }
+};
 
 socket.on('connect', () => {
   const s = store.get('derzus_profile',null);
@@ -326,15 +365,13 @@ socket.on('connect', () => {
 });
 socket.on('newMessage', ({from,message}) => {
   const key = message.groupId || from;
-  const arr = (state.messages[key] ||= []);
-  if (!arr.find(m=>m.id===message.id)) arr.push(message);
+  (state.messages[key] ||= []).push(message);
   if (activeKey()===key) renderMessages();
   renderFriends();
 });
 socket.on('messageSent', ({to,groupId,message}) => {
   const key = groupId || to;
-  const arr = (state.messages[key] ||= []);
-  if (!arr.find(m=>m.id===message.id)) arr.push(message);
+  (state.messages[key] ||= []).push(message);
   if (activeKey()===key) renderMessages();
   renderFriends();
 });
@@ -354,11 +391,17 @@ socket.on('friendOnline', ({code,online}) => { state.online[code]=online; render
 socket.on('friendAdded', f => {
   if (!state.friends.find(x=>x.code===f.code)) { state.friends.push(f); state.online[f.code]=f.online; renderFriends(); refreshGroupMembers(); }
 });
+socket.on('friendUpdated', f => {
+  const friend = state.friends.find(x=>x.code===f.code);
+  if (friend) { friend.name = f.name; friend.bio = f.bio; friend.photo = f.photo; renderFriends(); if(state.activeChat===f.code) updateChatHeader(); }
+});
 socket.on('groupAdded', g => {
   if (!state.groups.find(x=>x.id===g.id)) { state.groups.push(g); renderFriends(); }
 });
+socket.on('nftReceived', ({nft}) => {
+  state.user.nft.push(nft); toast('Вам подарен NFT!');
+});
 socket.on('adminUsers', (users) => renderAdminUsers(users));
-socket.on('errorMsg', (msg) => toast(msg));
 
 function doRegister(code,name,pass,photo,silent){
   socket.emit('register',{code,name,pass,photo},res => {
@@ -374,16 +417,14 @@ function doRegister(code,name,pass,photo,silent){
     $('#starCount').textContent=res.user.stars;
     if(state.user.code === 'ADMIN') $('#adminBtn').classList.remove('hidden');
     renderFriends();
-    if (state.activeChat) updateChatHeader();
   });
 }
 $('#aBtn').onclick = () => {
   const name=$('#nIn').value.trim(), pass=$('#pIn').value;
   if (!name||!pass) return toast('Заполните поля');
-  const code = name==='ADMIN' ? 'ADMIN' : Math.random().toString(36).slice(2,8).toUpperCase();
+  const code = Math.random().toString(36).slice(2,8).toUpperCase();
   doRegister(code,name,pass,state.pendingAvatar);
 };
-$('#pIn').onkeydown = e => { if (e.key==='Enter') $('#aBtn').click(); };
 $('#loBtn').onclick = () => { if (confirm('Выйти?')) { store.set('derzus_profile',null); location.reload(); } };
 $('#themeBtn').onclick = toggleTheme;
 $('#phIn').onchange = e => {
@@ -399,7 +440,6 @@ $('#phIn').onchange = e => {
   img.src=url;
 };
 
-// Список чатов
 const lastOf = c => { const a=state.messages[c]||[]; return a[a.length-1]; };
 function renderFriends(){
   const list=$('#fl'); if(!list||!state.user) return;
@@ -412,10 +452,7 @@ function renderFriends(){
   list.innerHTML=all.map(f=>{
     const last=lastOf(f.code);
     let prev='Нет сообщений';
-    if (last) {
-      if (last.kind === 'voice') prev = (last.from===state.user.code?'Вы: ':'') + 'Голосовое сообщение';
-      else prev=(last.from===state.user.code?'Вы: ':'')+(last.text||'[файл]');
-    }
+    if (last) prev=(last.from===state.user.code?'Вы: ':'')+(last.kind==='voice'?'[Голосовое]':(last.text||'[файл]'));
     const act=f.code===activeKey()?' act':'';
     return `<div class="fr${act}" data-code="${esc(f.code)}" onclick="${f.isGroup?'openGroup':'openChat'}('${esc(f.code)}')">
       <div class="avw"><div class="av">${avFor(f.name,f.photo)}</div>${!f.isGroup&&state.online[f.code]?'<div class="dot"></div>':''}</div>
@@ -430,11 +467,10 @@ function filterList(){
 }
 $('#sbSr').oninput = filterList;
 
-// Чаты
 function openChat(code){
   if (!state.friends.find(x=>x.code===code)) return;
   state.activeChat=code; state.activeGroup=null; showChat();
-  socket.emit('loadHistory',{withCode:code},res=>{ state.messages[code]=res.history||[]; renderMessages(); renderFriends(); socket.emit('markRead',{withCode:code}); });
+  socket.emit('loadHistory',{withCode:code},res=>{ state.messages[code]=res.history||[]; renderMessages(); renderFriends(); });
 }
 function openGroup(gid){
   if (!state.groups.find(x=>x.id===gid)) return;
@@ -463,9 +499,7 @@ const REACTIONS = {
   like:  '<svg class="ic"><use href="#i-like"/></svg>',
   heart: '<svg class="ic" style="stroke:#ff3b30"><use href="#i-heart"/></svg>',
   fire:  '<svg class="ic" style="stroke:#ff8a00"><use href="#i-fire"/></svg>',
-  laugh: '<svg class="ic" style="stroke:#ffb400"><use href="#i-laugh"/></svg>',
-  sad:   '<svg class="ic" style="stroke:#4ea4f6"><use href="#i-sad"/></svg>',
-  party: '<svg class="ic" style="stroke:#b39ddb"><use href="#i-party"/></svg>'
+  laugh: '<svg class="ic" style="stroke:#ffb400"><use href="#i-laugh"/></svg>'
 };
 
 function renderMessages(){
@@ -520,7 +554,6 @@ function showReactionsMenu(e,id,mine){
   setTimeout(()=>{ const close=()=>{menu.remove();document.removeEventListener('click',close)}; document.addEventListener('click',close); },50);
 }
 
-// Отправка
 const mi=$('#mi');
 const autoResize=()=>{ mi.style.height='auto'; mi.style.height=Math.min(mi.scrollHeight,120)+'px'; };
 mi.addEventListener('input',autoResize);
@@ -560,7 +593,6 @@ $('#micBtn').onclick = async () => {
   }
 };
 
-// Меню
 $('#menuBtn').onclick=e=>{ e.stopPropagation(); $('#adM').classList.toggle('hidden'); };
 document.addEventListener('click',e=>{ if(!e.target.closest('#adM')&&!e.target.closest('#menuBtn')) $('#adM').classList.add('hidden'); });
 $('#adM').onclick=e=>{
@@ -571,13 +603,17 @@ $('#adM').onclick=e=>{
   else if (a==='theme') toggleTheme();
 };
 
-// Профиль
 function profileHtml(u,self){
-  return `<div class="pt"><div class="pav">${avFor(u.name,u.photo)}</div><div class="pn">${esc(u.name)}</div>
-    <div class="ps ${u.online?'on':''}">${u.online?'в сети':'был(а) недавно'}</div></div>
-    <div class="sec"><div class="row"><div>${esc(u.name)}</div><div>Имя</div></div>
-    <div class="row"><div>${esc(u.code)}</div><div>Код пользователя</div></div>
-    ${self?`<div class="row"><div>${u.stars||0} ★</div><div>Баланс</div></div>`:''}</div>`;
+  const nftId = self ? state.user.profileNft : null; 
+  const nftArt = nftId && NFT_CATALOG[nftId] ? NFT_CATALOG[nftId].art : '';
+  return `<div class="pt"><div class="pav">${avFor(u.name,u.photo)}${nftId?`<div class="gift-badge">${nftArt}</div>`:''}</div>
+    <div class="pn">${esc(u.name)}</div>
+    <div class="ps ${u.online?'on':''}">${esc(u.bio || (u.online?'в сети':'был(а) недавно'))}</div></div>
+    <div class="sec">
+    <div class="row"><div style="font-size:16px">${esc(u.name)}</div><div style="font-size:13px;color:var(--sec)">Имя</div></div>
+    <div class="row"><div style="font-size:16px">${esc(u.code)}</div><div style="font-size:13px;color:var(--sec)">Код пользователя</div></div>
+    ${self?`<div class="row" style="cursor:pointer" onclick="openNft()"><div style="font-size:16px;color:var(--accent)">NFT Подарки</div><div style="font-size:13px;color:var(--sec)">${(state.user.nft||[]).length} шт.</div></div>`:''}
+    ${self?`<div class="row"><div style="font-size:16px">${u.stars||0} <svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg></div><div style="font-size:13px;color:var(--sec)">Баланс</div></div>`:''}</div>`;
 }
 $('#profileBtn').onclick=()=>{ if(!state.user) return; $('#profileContent').innerHTML=profileHtml({...state.user,online:true},true); $('#profileScreen').classList.remove('hidden'); };
 $('#profileBack').onclick=()=>$('#profileScreen').classList.add('hidden');
@@ -587,16 +623,77 @@ function openProfile(code){
   $('#profileScreen').classList.remove('hidden');
 }
 
-// Оплата и Админка
+function openEditProfile(){
+  $('#editName').value = state.user.name;
+  $('#editBio').value = state.user.bio || '';
+  $('#editAvPrev').src = state.user.photo || '';
+  if (state.user.photo) { $('#editAvPrev').classList.remove('hidden'); $('#editAvPlus').classList.add('hidden'); }
+  else { $('#editAvPrev').classList.add('hidden'); $('#editAvPlus').classList.remove('hidden'); }
+  state.editAvatar = state.user.photo;
+  $('#editProfileModal').classList.add('open');
+}
+function closeEditProfile(){ $('#editProfileModal').classList.remove('open'); }
+$('#editPhIn').onchange = e => {
+  const f=e.target.files[0]; if(!f) return;
+  const img=new Image(), url=URL.createObjectURL(f);
+  img.onload = () => {
+    const c=document.createElement('canvas'), s=Math.min(256/img.width,256/img.height,1);
+    c.width=img.width*s; c.height=img.height*s; c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    state.editAvatar=c.toDataURL('image/jpeg',.8);
+    $('#editAvPrev').src=state.editAvatar; $('#editAvPrev').classList.remove('hidden'); $('#editAvPlus').classList.add('hidden');
+    URL.revokeObjectURL(url);
+  };
+  img.src=url;
+};
+function saveProfile(){
+  const name = $('#editName').value.trim();
+  const bio = $('#editBio').value.trim();
+  if (!name) return toast('Имя не может быть пустым');
+  socket.emit('updateProfile', { name, bio, photo: state.editAvatar }, res => {
+    if (!res || !res.ok) return toast(res?.error || 'Ошибка');
+    state.user.name = name; state.user.bio = bio; state.user.photo = state.editAvatar;
+    toast('Профиль обновлен');
+    closeEditProfile();
+    $('#profileContent').innerHTML = profileHtml({...state.user, online:true}, true);
+  });
+}
+
 function openStars(){ $('#starsModal').classList.add('open'); }
-function closeStars(){ $('#starsModal').classList.remove('open'); }
+function closeStars(){ $('#starsModal').classList.remove('open'); state.selectedPrice=null; }
+function selectPrice(amount, price){
+  state.selectedPrice = { amount, price };
+  toast(`Выбран пакет: ${amount} звёзд за ${price} руб.`);
+}
 function requestStars(){
-  const amt = $('#payAmount').value;
-  if(!amt) return toast('Укажите сумму');
-  socket.emit('requestStars', { amount: amt }, res => {
+  if(!state.selectedPrice) return toast('Выберите пакет');
+  socket.emit('requestStars', state.selectedPrice, res => {
     if(res.ok) { toast('Заявка отправлена Админу!'); closeStars(); }
   });
 }
+
+function openNft(){
+  $('#nftGrid').innerHTML = Object.entries(NFT_CATALOG).map(([id, n]) => `
+    <div class="nft-card" onclick="buyNft('${id}')">
+      <div class="nft-art">${n.art}</div>
+      <div class="nft-name">${n.name}</div>
+      <div class="nft-price"><svg class="ic"><use href="#i-star"/></svg>${n.price}</div>
+    </div>
+  `).join('');
+  $('#nftModal').classList.add('open');
+}
+function closeNft(){ $('#nftModal').classList.remove('open'); }
+function buyNft(id){
+  const n = NFT_CATALOG[id];
+  if (state.user.stars < n.price) return toast('Недостаточно звёзд!');
+  socket.emit('buyNft', { nftId: id }, res => {
+    if (!res || !res.ok) return toast(res?.error||'Ошибка');
+    state.user.stars = res.stars;
+    state.user.nft.push(res.nft);
+    $('#starCount').textContent = res.stars;
+    toast(`Куплено: ${n.name}`);
+  });
+}
+
 function openAdminPanel(){ socket.emit('getAdminUsers'); $('#adminModal').classList.add('open'); }
 function closeAdminPanel(){ $('#adminModal').classList.remove('open'); }
 function renderAdminUsers(users){
@@ -621,11 +718,9 @@ function giveStars(code){
   });
 }
 
-// Друзья
 function openAddFriend(){ $('#addFriendModal').classList.add('open'); switchAddTab('search'); }
 function closeAddFriend(){ $('#addFriendModal').classList.remove('open'); stopQRScanner(); }
 function switchAddTab(tab){
-  state.curTab=tab;
   [['search','Search'],['qr','Qr'],['scan','Scan']].forEach(([t,n])=>{
     $('#view'+n).classList.toggle('hidden',t!==tab);
     $('#tab'+n).classList.toggle('active',t===tab);
@@ -675,14 +770,13 @@ function startQRScanner(){
   sc.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},decoded=>{
     const code=String(decoded||'').trim().toUpperCase(); if(!code) return;
     stopQRScanner(); addFriendByCode(code);
-  },()=>{}).catch(()=>{ toast('Камера недоступна. Нужен HTTPS или localhost'); state.qrScanner=null; });
+  },()=>{}).catch(()=>{ toast('Камера недоступна'); state.qrScanner=null; });
 }
 function stopQRScanner(){
   const s=state.qrScanner; if(!s) return; state.qrScanner=null;
   try{ s.stop().then(()=>s.clear()).catch(()=>{}); }catch(e){}
 }
 
-// Группы
 function openGroupModal(){
   if(!state.friends.length) return toast('Сначала добавьте друзей');
   $('#grName').value=''; refreshGroupMembers(); $('#groupModal').classList.add('open');
@@ -702,14 +796,11 @@ function submitCreateGroup(){
   });
 }
 
-// Звонки
 async function setupPeer() {
   const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
   pc = new RTCPeerConnection(configuration);
   pc.onicecandidate = event => {
-    if (event.candidate && state.callData) {
-      socket.emit('iceCandidate', { to: state.callData.peer, candidate: event.candidate });
-    }
+    if (event.candidate && state.callData) socket.emit('iceCandidate', { to: state.callData.peer, candidate: event.candidate });
   };
   pc.ontrack = event => {
     let audio = document.getElementById('remoteAudio');
@@ -719,7 +810,6 @@ async function setupPeer() {
   if(!localStream) localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 }
-
 async function startCall(peerCode, peerName) {
   state.callData = { peer: peerCode, name: peerName, isCaller: true };
   $('#callName').textContent = peerName; $('#callStatus').textContent = 'Звоним...';
@@ -729,14 +819,12 @@ async function startCall(peerCode, peerName) {
   await pc.setLocalDescription(offer);
   socket.emit('callUser', { to: peerCode, offer });
 }
-
 socket.on('incomingCall', async ({ from, offer }) => {
   const friend = state.friends.find(f => f.code === from);
   state.callData = { peer: from, name: friend ? friend.name : 'User', isCaller: false, offer };
   $('#callName').textContent = state.callData.name; $('#callStatus').textContent = 'Входящий звонок...';
   $('#callModal').classList.remove('hidden'); $('#acceptCallBtn').classList.remove('hidden');
 });
-
 async function acceptCall() {
   $('#acceptCallBtn').classList.add('hidden'); $('#callStatus').textContent = 'Соединение...';
   await setupPeer();
@@ -745,17 +833,13 @@ async function acceptCall() {
   await pc.setLocalDescription(answer);
   socket.emit('answerCall', { to: state.callData.peer, answer });
 }
-
 socket.on('callAnswered', async ({ answer }) => {
   $('#callStatus').textContent = 'На связи'; await pc.setRemoteDescription(new RTCSessionDescription(answer));
 });
-
 socket.on('iceCandidate', async ({ candidate }) => {
   if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
 });
-
 socket.on('callEnded', () => { endCall(); });
-
 function endCall() {
   $('#callModal').classList.add('hidden');
   if (pc) { pc.close(); pc = null; }
@@ -763,13 +847,6 @@ function endCall() {
   if (state.callData) { socket.emit('endCall', { to: state.callData.peer }); state.callData = null; }
   const audio = document.getElementById('remoteAudio'); if(audio) audio.remove();
 }
-
-Object.assign(window,{
-  openAddFriend,closeAddFriend,switchAddTab,copyMyCode,searchFriend,addFriendByCode,
-  openChat,openGroup,closeChat,openProfile,quickReact,showReactionsMenu,submitCreateGroup,closeGroupModal,
-  openStars,closeStars,requestStars,openAdminPanel,closeAdminPanel,giveStars,
-  startCall,acceptCall,endCall,closeChat
-});
 </script>
 </body>
 </html> 
