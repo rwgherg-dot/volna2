@@ -1146,7 +1146,131 @@ function exportData(){
   a.click();
   toast('📥 Экспортировано');
 }
+<!-- Модалка покупки звёзд -->
+<div id="buyStarsModal" class="mod hidden"><div class="mc">
+  <h3>⭐ Купить звёзды</h3>
 
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0">
+    <button class="btn g pkg" data-stars="100"  data-price="99">100 ⭐<br><small>99 ₽</small></button>
+    <button class="btn g pkg" data-stars="500"  data-price="449">500 ⭐<br><small>449 ₽</small></button>
+    <button class="btn g pkg" data-stars="1000" data-price="849">1000 ⭐<br><small>849 ₽</small></button>
+    <button class="btn g pkg" data-stars="2500" data-price="1990">2500 ⭐<br><small>1990 ₽</small></button>
+    <button class="btn g pkg" data-stars="5000" data-price="3790">5000 ⭐<br><small>3790 ₽</small></button>
+    <button class="btn g pkg" data-stars="10000" data-price="6990">10000 ⭐<br><small>6990 ₽</small></button>
+  </div>
+
+  <div id="payQR" class="hidden" style="text-align:center;padding:12px;background:var(--p2);border-radius:14px">
+    <div style="font-size:16px;margin-bottom:8px">Перевести через Т-Банк или Сбербанк</div>
+
+    <!-- QR обрезан и центрирован -->
+    <div style="display:inline-block;background:#fff;padding:12px;border-radius:16px">
+      <img id="qrImg" alt="QR" style="width:220px;height:220px;object-fit:cover;object-position:center;display:block">
+    </div>
+
+    <div style="font-size:18px;font-weight:700;margin-top:10px">+7 902 016-75-09</div>
+    <div style="font-size:14px;color:var(--m)">Данил К.</div>
+    <div id="payAmount" style="font-size:20px;font-weight:800;color:var(--star);margin-top:8px"></div>
+  </div>
+
+  <div class="ma2">
+    <button id="buyClose" class="btn g">Закрыть</button>
+    <button id="buyConfirm" class="btn p hidden">✅ Я оплатил</button>
+  </div>
+</div></div>
+
+<!-- Админ-инструменты -->
+<div id="adminToolsModal" class="mod hidden"><div class="mc">
+  <h3>👑 Админ-инструменты</h3>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <button class="btn danger" id="admBan">🚫 Забанить пользователя</button>
+    <button class="btn danger" id="admUnban">✅ Разбанить пользователя</button>
+    <button class="btn premium" id="admGiveStars">⭐ Начислить звёзды</button>
+    <button class="btn success" id="admGivePremium">👑 Выдать Premium</button>
+    <button class="btn g" id="admViewAll">👁 Все пользователи</button>
+    <button class="btn g" id="admBroadcast">📢 Рассылка всем</button>
+    <button class="btn danger" id="admWipeChat">🧹 Очистить чат пользователя</button>
+  </div>
+  <div class="ma2"><button id="admToolsClose" class="btn g">Закрыть</button></div>
+</div></div>
+  /* ==================== ПОКУПКА ЗВЁЗД ==================== */
+
+const QR_IMG_SRC = 'data:image/png;base64,ВАШ_BASE64_QR'; 
+// ↑ сюда вставьте обрезанный QR в base64 (я не могу сгенерировать картинку из вашего скриншота — 
+//   но в CSS ниже уже сделано «обрезание» через object-fit, так что можно использовать любой QR
+//   с нужной областью — или вставьте вырезанный QR из скриншота).
+// Если хотите быстро: возьмите готовый QR из скриншота, вырежьте квадратом и сохраните как base64.
+
+const PRICE_PER_STAR = 0.85; // админ-цена (можно менять)
+let pendingBuy = null;
+
+// Открытие
+document.getElementById('starsBadge').addEventListener('click', () => {
+  if (!state.user) return;
+  const m = document.getElementById('buyStarsModal');
+  m.classList.remove('hidden');
+  document.getElementById('payQR').classList.add('hidden');
+  document.getElementById('buyConfirm').classList.add('hidden');
+  // обновляем баланс в заголовке
+});
+
+// Выбор пакета
+document.querySelectorAll('#buyStarsModal .pkg').forEach(btn => {
+  btn.onclick = () => {
+    const stars = +btn.dataset.stars;
+    const price = +btn.dataset.price;
+    pendingBuy = { stars, price };
+    document.getElementById('payQR').classList.remove('hidden');
+    document.getElementById('buyConfirm').classList.remove('hidden');
+    document.getElementById('payAmount').textContent = `${price} ₽ за ${stars} ⭐`;
+    // ставим QR (обрезанный по центру)
+    const img = document.getElementById('qrImg');
+    if (QR_IMG_SRC.startsWith('data:image')) {
+      img.src = QR_IMG_SRC;
+    } else {
+      // fallback — если QR не задан, генерируем заглушку
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=+7%20902%20016-75-09';
+    }
+    // если админ — показываем кнопку «начислить себе» для теста
+    if (state.user.isAdmin) {
+      document.getElementById('buyConfirm').textContent = '👑 Начислить как админ';
+    } else {
+      document.getElementById('buyConfirm').textContent = '✅ Я оплатил';
+    }
+  };
+});
+
+// Закрытие
+document.getElementById('buyClose').onclick = () =>
+  document.getElementById('buyStarsModal').classList.add('hidden');
+
+// Подтверждение оплаты
+document.getElementById('buyConfirm').onclick = () => {
+  if (!pendingBuy) return;
+
+  if (state.user.isAdmin) {
+    // админ может начислить себе без оплаты
+    socket.emit('buyStars', { stars: pendingBuy.stars, isAdmin: true }, (res) => {
+      if (res.ok) {
+        state.user.stars = res.stars;
+        document.getElementById('starCount').textContent = res.stars;
+        toast('👑 Админ-начисление: +' + pendingBuy.stars + ' ⭐');
+        document.getElementById('buyStarsModal').classList.add('hidden');
+      } else toast('Ошибка: ' + res.error);
+    });
+    return;
+  }
+
+  // обычный пользователь — заявка на модерацию
+  socket.emit('requestStarPurchase', {
+    stars: pendingBuy.stars,
+    price: pendingBuy.price
+  }, (res) => {
+    if (res.ok) {
+      toast('📩 Заявка отправлена. После проверки звёзды придут.');
+      document.getElementById('buyStarsModal').classList.add('hidden');
+    } else toast('Ошибка: ' + res.error);
+  });
+};
 </script>
 </body>
 </html>
