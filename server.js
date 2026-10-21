@@ -1,4 +1,4 @@
-'use strict';
+ 'use strict';
 const path = require('path');
 const fs = require('fs');
 const express = require('express');
@@ -8,7 +8,7 @@ const { Server } = require('socket.io');
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 
-let db = { users: {}, messages: [], groups: {} };
+let db = { users: {}, messages: [], groups: {}, stories: [], requests: [] };
 if (fs.existsSync(DATA_FILE)) { try { db = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); } catch (e) {} }
 function save() { try { fs.writeFileSync(DATA_FILE, JSON.stringify(db)); } catch (e) {} }
 setInterval(save, 5000);
@@ -23,7 +23,6 @@ const io = new Server(server, { maxHttpBufferSize: 10e6 });
 
 app.use(express.static(path.join(__dirname, 'public')));
 const sockets = {};
-
 const NFT_PRICES = { wave: 50, star: 150, diamond: 300, rocket: 500, crown: 1000, alien: 2000 };
 
 io.on('connection', socket => {
@@ -38,7 +37,7 @@ io.on('connection', socket => {
 
     if (name.toUpperCase() === 'ADMIN') {
        if (pass !== 'admin123') return cb?.({ ok: false, error: 'Неверный пароль админа' });
-       u = db.users['ADMIN'] || { code: 'ADMIN', name: 'ADMIN', pass: 'admin123', stars: 99999, friends: [], bio: 'Создатель DERZUS', nft: [], profileNft: null, created: Date.now() };
+       u = db.users['ADMIN'] || { code: 'ADMIN', name: 'ADMIN', pass: 'admin123', stars: 99999, friends: [], bio: 'Создатель DERZUS', nft: [], profileNft: null, premium: true, created: Date.now() };
        db.users['ADMIN'] = u;
     } else if (u) {
        if (u.pass !== pass) return cb?.({ ok: false, error: 'Это имя уже занято другим паролем' });
@@ -47,16 +46,15 @@ io.on('connection', socket => {
        const taken = Object.values(db.users).find(x => x.name.toLowerCase() === name.toLowerCase());
        if (taken) return cb?.({ ok: false, error: 'Имя занято' });
        const newCode = normCode(code) || rnd(6).toUpperCase();
-       u = { code: newCode, name, pass, photo, stars: 0, bio: 'Привет, я в DERZUS!', friends: [], nft: [], profileNft: null, created: Date.now() };
+       u = { code: newCode, name, pass, photo, stars: 0, bio: 'Привет, я в DERZUS!', friends: [], nft: [], profileNft: null, premium: false, created: Date.now() };
        db.users[newCode] = u;
     }
 
     socket.data.code = u.code;
     (sockets[u.code] ||= new Set()).add(socket.id);
 
-    const friends = u.friends.map(c => db.users[c]).filter(Boolean).map(f => ({ code: f.code, name: f.name, photo: f.photo, bio: f.bio, online: !!sockets[f.code]?.size }));
+    const friends = u.friends.map(c => db.users[c]).filter(Boolean).map(f => ({ code: f.code, name: f.name, photo: f.photo, bio: f.bio, premium: f.premium, online: !!sockets[f.code]?.size }));
     const groups = Object.values(db.groups).filter(g => g.members.includes(u.code));
-    
     const lasts = {};
     db.messages.forEach(m => {
       if (m.groupId && groups.some(g => g.id === m.groupId)) lasts[m.groupId] = m;
@@ -66,8 +64,7 @@ io.on('connection', socket => {
       }
     });
 
-    cb?.({ ok: true, user: { code: u.code, name: u.name, stars: u.stars, photo: u.photo, bio: u.bio, nft: u.nft, profileNft: u.profileNft }, friends, groups, lasts });
-    
+    cb?.({ ok: true, user: { code: u.code, name: u.name, stars: u.stars, photo: u.photo, bio: u.bio, nft: u.nft, profileNft: u.profileNft, premium: u.premium }, friends, groups, lasts, stories: [] });
     u.friends.forEach(c => sockets[c]?.forEach(sid => io.to(sid).emit('friendOnline', { code: u.code, online: true })));
     save();
   });
@@ -75,7 +72,6 @@ io.on('connection', socket => {
   socket.on('updateProfile', ({ name, bio, photo }, cb) => {
     const u = db.users[socket.data.code];
     if (!u) return cb?.({ ok: false });
-    
     if (name && name.toLowerCase() !== u.name.toLowerCase()) {
       const taken = Object.values(db.users).find(x => x.name.toLowerCase() === name.toLowerCase());
       if (taken) return cb?.({ ok: false, error: 'Это имя уже занято' });
@@ -83,8 +79,7 @@ io.on('connection', socket => {
     }
     if (bio !== undefined) u.bio = bio;
     if (photo !== undefined) u.photo = photo;
-    
-    u.friends.forEach(c => sockets[c]?.forEach(sid => io.to(sid).emit('friendUpdated', { code: u.code, name: u.name, bio: u.bio, photo: u.photo })));
+    u.friends.forEach(c => sockets[c]?.forEach(sid => io.to(sid).emit('friendUpdated', { code: u.code, name: u.name, bio: u.bio, photo: u.photo, premium: u.premium })));
     cb?.({ ok: true });
     save();
   });
@@ -92,7 +87,7 @@ io.on('connection', socket => {
   socket.on('searchUsers', ({ query }, cb) => {
     const q = String(query || '').toLowerCase().trim();
     if (!q) return cb?.({ ok: true, users: [] });
-    const list = Object.values(db.users).filter(u => u.name.toLowerCase().includes(q) || u.code.toLowerCase() === q).slice(0, 20).map(u => ({ code: u.code, name: u.name, photo: u.photo, online: !!sockets[u.code]?.size }));
+    const list = Object.values(db.users).filter(u => u.name.toLowerCase().includes(q) || u.code.toLowerCase() === q).slice(0, 20).map(u => ({ code: u.code, name: u.name, photo: u.photo, bio: u.bio, premium: u.premium, online: !!sockets[u.code]?.size }));
     cb?.({ ok: true, users: list });
   });
 
@@ -107,12 +102,12 @@ io.on('connection', socket => {
     const already = me.friends.includes(target.code);
     if (!already) {
       me.friends.push(target.code); target.friends.push(me.code);
-      const pubMe = { code: me.code, name: me.name, photo: me.photo, bio: me.bio, online: true };
-      const pubTarget = { code: target.code, name: target.name, photo: target.photo, bio: target.bio, online: !!sockets[target.code]?.size };
+      const pubMe = { code: me.code, name: me.name, photo: me.photo, bio: me.bio, premium: me.premium, online: true };
+      const pubTarget = { code: target.code, name: target.name, photo: target.photo, bio: target.bio, premium: target.premium, online: !!sockets[target.code]?.size };
       sockets[target.code]?.forEach(sid => io.to(sid).emit('friendAdded', pubMe));
       sockets[me.code]?.forEach(sid => io.to(sid).emit('friendAdded', pubTarget));
     }
-    cb?.({ ok: true, already, friend: { code: target.code, name: target.name, photo: target.photo, bio: target.bio, online: !!sockets[target.code]?.size } });
+    cb?.({ ok: true, already, friend: { code: target.code, name: target.name, photo: target.photo, bio: target.bio, premium: target.premium, online: !!sockets[target.code]?.size } });
     save();
   });
 
@@ -123,11 +118,9 @@ io.on('connection', socket => {
     if (!name) return cb?.({ ok: false, error: 'Введите название' });
     members = (members || []).map(normCode).filter(c => me.friends.includes(c));
     if (!members.length) return cb?.({ ok: false, error: 'Выберите друзей' });
-
     const id = 'g_' + uid();
     const g = { id, name, members: [me.code, ...members], owner: me.code, created: Date.now() };
     db.groups[id] = g;
-
     g.members.forEach(c => {
       const pubG = { id: g.id, name: g.name, members: g.members.slice() };
       sockets[c]?.forEach(sid => io.to(sid).emit('groupAdded', pubG));
@@ -152,7 +145,6 @@ io.on('connection', socket => {
     const me = db.users[socket.data.code];
     if (!me) return;
     const msg = { id: 'm_' + uid(), from: me.code, text: p.text, kind: p.kind, ts: Date.now(), reactions: {} };
-    
     if (p.groupId && db.groups[p.groupId]) {
       msg.groupId = p.groupId;
       db.messages.push(msg);
@@ -185,35 +177,58 @@ io.on('connection', socket => {
     }
   });
 
+  socket.on('reactToMessage', ({ id, emoji }) => {
+    const me = db.users[socket.data.code];
+    const m = db.messages.find(x => x.id === id);
+    if (!m || !me) return;
+    m.reactions ||= {}; m.reactions[emoji] ||= [];
+    const i = m.reactions[emoji].indexOf(me.code);
+    if (i >= 0) m.reactions[emoji].splice(i, 1); else m.reactions[emoji].push(me.code);
+    if (!m.reactions[emoji].length) delete m.reactions[emoji];
+    const targets = m.groupId ? db.groups[m.groupId].members : [m.from, m.to].filter(Boolean);
+    targets.forEach(c => sockets[c]?.forEach(sid => io.to(sid).emit('messageReacted', { id: m.id, reactions: m.reactions })));
+    save();
+  });
+
+  socket.on('buyPremium', (cb) => {
+    const u = db.users[socket.data.code];
+    if (!u) return cb?.({ ok: false });
+    if (u.stars < 1000) return cb?.({ ok: false, error: 'Нужно 1000 звёзд' });
+    u.stars -= 1000; u.premium = true;
+    cb?.({ ok: true, stars: u.stars, premium: true });
+    u.friends.forEach(c => sockets[c]?.forEach(sid => io.to(sid).emit('friendUpdated', { code: u.code, name: u.name, bio: u.bio, photo: u.photo, premium: true })));
+    save();
+  });
+
   socket.on('requestStars', ({ amount, price }, cb) => {
     const me = db.users[socket.data.code];
     if (!me) return cb?.({ ok: false });
-    const text = `[ЗАЯВКА НА ЗВЁЗДЫ]\nПользователь: ${me.name} (${me.code})\nПакет: ${amount} звёзд за ${price} руб.\nПроверьте перевод по номеру +7 902 016-75-09.`;
-    const msg = { id: 'm_' + uid(), from: me.code, to: 'ADMIN', text, ts: Date.now(), reactions: {} };
-    db.messages.push(msg);
-    sockets['ADMIN']?.forEach(sid => io.to(sid).emit('newMessage', { from: me.code, message: msg }));
-    sockets[me.code]?.forEach(sid => io.to(sid).emit('messageSent', { to: 'ADMIN', message: msg }));
+    const req = { id: uid(), userCode: me.code, userName: me.name, amount, price, ts: Date.now(), status: 'pending' };
+    db.requests.push(req);
+    sockets['ADMIN']?.forEach(sid => io.to(sid).emit('newStarsRequest', req));
     cb?.({ ok: true });
     save();
   });
 
-  socket.on('buyNft', ({ nftId }, cb) => {
-    const u = db.users[socket.data.code];
-    if (!u) return cb?.({ ok: false });
-    const price = NFT_PRICES[nftId];
-    if (!price) return cb?.({ ok: false, error: 'Неизвестный NFT' });
-    if (u.stars < price) return cb?.({ ok: false, error: 'Недостаточно звёзд' });
-    u.stars -= price;
-    u.nft ||= [];
-    const nftItem = { id: nftId, uid: uid(), from: u.code };
-    u.nft.push(nftItem);
-    cb?.({ ok: true, stars: u.stars, nft: nftItem });
-    save();
+  socket.on('getStarsRequests', () => {
+    if (socket.data.code !== 'ADMIN') return;
+    socket.emit('starsRequests', db.requests.filter(r => r.status === 'pending'));
   });
 
-  socket.on('setNft', ({ nftId }) => {
-    const u = db.users[socket.data.code];
-    if (u) { u.profileNft = nftId; save(); }
+  socket.on('resolveStarsRequest', ({ id, amount }) => {
+    if (socket.data.code !== 'ADMIN') return;
+    const req = db.requests.find(r => r.id === id);
+    if (!req) return;
+    req.status = 'done';
+    const u = db.users[req.userCode];
+    if (u) {
+      u.stars += Number(amount);
+      const msg = { id: 'm_' + uid(), from: 'ADMIN', to: u.code, text: `[АДМИН] Вам начислено ${amount} звёзд!`, ts: Date.now(), reactions: {} };
+      db.messages.push(msg);
+      sockets[u.code]?.forEach(sid => io.to(sid).emit('newMessage', { from: 'ADMIN', message: msg }));
+    }
+    sockets['ADMIN']?.forEach(sid => io.to(sid).emit('starsRequests', db.requests.filter(r => r.status === 'pending')));
+    save();
   });
 
   socket.on('getAdminUsers', () => {
@@ -235,17 +250,23 @@ io.on('connection', socket => {
     }
   });
 
-  socket.on('reactToMessage', ({ id, emoji }) => {
-    const me = db.users[socket.data.code];
-    const m = db.messages.find(x => x.id === id);
-    if (!m || !me) return;
-    m.reactions ||= {}; m.reactions[emoji] ||= [];
-    const i = m.reactions[emoji].indexOf(me.code);
-    if (i >= 0) m.reactions[emoji].splice(i, 1); else m.reactions[emoji].push(me.code);
-    if (!m.reactions[emoji].length) delete m.reactions[emoji];
-    const targets = m.groupId ? db.groups[m.groupId].members : [m.from, m.to].filter(Boolean);
-    targets.forEach(c => sockets[c]?.forEach(sid => io.to(sid).emit('messageReacted', { id: m.id, reactions: m.reactions })));
+  socket.on('buyNft', ({ nftId }, cb) => {
+    const u = db.users[socket.data.code];
+    if (!u) return cb?.({ ok: false });
+    const price = NFT_PRICES[nftId];
+    if (!price) return cb?.({ ok: false, error: 'Неизвестный NFT' });
+    if (u.stars < price) return cb?.({ ok: false, error: 'Недостаточно звёзд' });
+    u.stars -= price;
+    u.nft ||= [];
+    const nftItem = { id: nftId, uid: uid(), from: u.code };
+    u.nft.push(nftItem);
+    cb?.({ ok: true, stars: u.stars, nft: nftItem });
     save();
+  });
+
+  socket.on('setNft', ({ nftId }) => {
+    const u = db.users[socket.data.code];
+    if (u) { u.profileNft = nftId; save(); }
   });
 
   socket.on('callUser', ({ to, offer }) => { sockets[to]?.forEach(sid => io.to(sid).emit('incomingCall', { from: socket.data.code, offer })); });
@@ -262,4 +283,4 @@ io.on('connection', socket => {
   });
 });
 
-server.listen(PORT, () => console.log('DERZUS server on ' + PORT)); 
+server.listen(PORT, () => console.log('DERZUS server on ' + PORT));
