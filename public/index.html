@@ -10,190 +10,335 @@
 <title>Volna</title>
 <script src="/socket.io/socket.io.js"></script>
 <style>
+/* =========================================
+   БАЗА
+   ========================================= */
 :root {
-  --bg:#ffffff;--panel:#ffffff;--sidebar:#f7f7f7;--chat-bg:#f0f0f0;
-  --text:#1a1a1a;--text-secondary:#8e8e93;--accent:#007aff;--border:#e5e5ea;
-  --hover:#f2f2f7;--bubble-in:#ffffff;--bubble-out:#e1ffc7;
-  --radius:12px;
-  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --bg: #ffffff; --panel: #ffffff; --sidebar: #ffffff; --chat-bg: #f2f2f7;
+  --text: #000000; --text-secondary: #8e8e93; --accent: #007aff;
+  --border: #e5e5ea; --hover: #f2f2f7;
+  --bubble-in: #ffffff; --bubble-out: #e1ffc7;
+  --gold: #e6b800; --glass: rgba(255,255,255,0.75);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
-[data-theme="dark"]{--bg:#000;--panel:#1c1c1e;--sidebar:#1c1c1e;--chat-bg:#000;--text:#fff;--text-secondary:#8e8e93;--accent:#0a84ff;--border:#38383a;--hover:#2c2c2e;--bubble-in:#262628;--bubble-out:#1e4620;}
-[data-theme="midnight"]{--bg:#0f172a;--panel:#1e293b;--sidebar:#1e293b;--chat-bg:#0f172a;--text:#e2e8f0;--text-secondary:#94a3b8;--accent:#38bdf8;--border:#334155;--hover:#1e293b;--bubble-in:#1e293b;--bubble-out:#164e63;}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;overscroll-behavior:none;font-size:16px;user-select:none;}
-input,textarea{user-select:text;font-size:16px !important;font-family:inherit;outline:none;border:none;background:transparent;color:var(--text);}
-.hidden{display:none !important;}
-img,video{display:block;max-width:100%;}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes slideUp{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes popMsg{0%{transform:scale(.95);opacity:0}100%{transform:scale(1);opacity:1}}
+[data-theme="dark"] {
+  --bg: #000; --panel: #1c1c1e; --sidebar: #000; --chat-bg: #000;
+  --text: #fff; --text-secondary: #8e8e93; --accent: #0a84ff;
+  --border: #38383a; --hover: #1c1c1e;
+  --bubble-in: #262628; --bubble-out: #1e4620;
+  --glass: rgba(28,28,30,0.75);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body {
+  height: 100%; font-family: var(--font); background: var(--bg); color: var(--text);
+  overflow: hidden; overscroll-behavior: none; font-size: 16px; user-select: none;
+  -webkit-font-smoothing: antialiased; letter-spacing: -0.1px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+input, textarea { user-select: text; font-size: 16px !important; font-family: inherit; outline: none; border: none; background: transparent; color: var(--text); }
+.hidden { display: none !important; }
+img, video { display: block; max-width: 100%; }
 
-.auth-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bg);z-index:50;}
-.auth{width:100%;max-width:340px;display:flex;flex-direction:column;gap:16px;align-items:center;animation:fadeIn .3s ease;}
-.brand{font-size:28px;font-weight:600;letter-spacing:-.5px;}
-.sub{color:var(--text-secondary);font-size:14px;text-align:center;line-height:1.4;margin-bottom:8px;}
-.avp{width:90px;height:90px;border-radius:50%;position:relative;cursor:pointer;overflow:hidden;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:32px;transition:opacity .2s;margin-bottom:8px;}
-.avp:active{opacity:.8;}
-.avp img{width:100%;height:100%;object-fit:cover;}
-.fld{width:100%;padding:12px 16px;border-radius:10px;background:var(--hover);font-size:16px;border:1px solid transparent;transition:border-color .2s;}
-.fld:focus{border-color:var(--accent);}
-.btn{width:100%;padding:12px;border-radius:10px;font-size:16px;font-weight:500;cursor:pointer;text-align:center;transition:background .2s;min-height:44px;display:flex;align-items:center;justify-content:center;}
-.btn:active{opacity:.7;}
-.btn.primary{background:var(--accent);color:#fff;}
-.btn.secondary{background:var(--hover);color:var(--accent);}
-.btn.text{background:transparent;color:var(--text-secondary);font-weight:400;font-size:14px;}
-.err{color:#ff453a;font-size:14px;min-height:20px;text-align:center;}
+/* =========================================
+   АНИМАЦИИ
+   ========================================= */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes popMsg { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes pulseOnline { 0%,100% { box-shadow: 0 0 0 0 rgba(52,199,89,0.6); } 50% { box-shadow: 0 0 0 6px rgba(52,199,89,0); } }
+@keyframes pulseGold { 0% { box-shadow: 0 0 0 0 rgba(230,184,0,0.4); } 70% { box-shadow: 0 0 0 12px rgba(230,184,0,0); } 100% { box-shadow: 0 0 0 0 rgba(230,184,0,0); } }
+@keyframes rotateBg { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes ringSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes storyProgress { from { width: 0%; } to { width: 100%; } }
 
-#main{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--panel);animation:fadeIn .2s ease;}
-.top{display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--panel);height:56px;flex-shrink:0;position:relative;z-index:10;border-bottom:1px solid var(--border);}
-.bsm{font-weight:600;font-size:18px;}
-.stars-badge{display:flex;align-items:center;gap:6px;background:var(--hover);padding:6px 12px;border-radius:16px;font-size:14px;font-weight:500;cursor:pointer;margin-left:auto;}
-.stars-badge:active{background:var(--border);}
-.ib{width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);transition:background .2s;flex-shrink:0;}
-.ib:active{background:var(--hover);}
-.acts{display:flex;gap:4px;position:relative;align-items:center;}
-.dd{position:absolute;top:46px;right:8px;background:var(--panel);border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:2px;z-index:80;min-width:200px;box-shadow:0 4px 16px rgba(0,0,0,.1);animation:slideUp .15s ease;border:1px solid var(--border);}
-.dd button{background:transparent;color:var(--text);padding:12px 16px;text-align:left;border-radius:8px;cursor:pointer;font-size:15px;display:flex;gap:12px;align-items:center;font-family:inherit;transition:background .2s;border:none;}
-.dd button:active{background:var(--hover);}
-.dd .sep{height:1px;background:var(--border);margin:4px 0;}
+/* =========================================
+   АВТОРИЗАЦИЯ
+   ========================================= */
+.auth-wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--bg); z-index: 50; }
+.auth { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 16px; align-items: center; animation: fadeIn 0.5s; }
+.brand { font-size: 32px; font-weight: 700; letter-spacing: -0.8px; }
+.sub { color: var(--text-secondary); font-size: 15px; }
+.avp { width: 90px; height: 90px; border-radius: 50%; cursor: pointer; overflow: hidden; background: var(--hover); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 32px; }
+.avp img { width: 100%; height: 100%; object-fit: cover; }
+.fld { width: 100%; padding: 14px 16px; border-radius: 10px; background: var(--hover); font-size: 16px; border: 1px solid transparent; transition: border-color 0.2s; }
+.fld:focus { border-color: var(--accent); }
+.btn { width: 100%; padding: 14px; border-radius: 10px; font-size: 17px; font-weight: 600; cursor: pointer; text-align: center; border: none; transition: transform 0.1s, opacity 0.2s; }
+.btn:active { transform: scale(0.97); opacity: 0.8; }
+.btn.primary { background: var(--accent); color: #fff; }
+.btn.secondary { background: var(--hover); color: var(--accent); }
 
-.body{flex:1;display:flex;min-height:0;position:relative;overflow:hidden;}
-#sb{width:100%;max-width:400px;flex-shrink:0;overflow-y:auto;background:var(--sidebar);display:flex;flex-direction:column;border-right:1px solid var(--border);}
-.sbs{padding:8px 12px;display:flex;gap:8px;background:var(--panel);}
-.sbs input{width:100%;padding:8px 12px;border-radius:10px;background:var(--hover);font-size:15px;border:1px solid transparent;}
-.sbs input:focus{border-color:var(--accent);}
-#fl{display:flex;flex-direction:column;flex:1;overflow-y:auto;}
-.empty{text-align:center;color:var(--text-secondary);font-size:15px;padding:40px 20px;}
-.fr{display:flex;align-items:center;gap:12px;padding:8px 16px;cursor:pointer;transition:background .15s;position:relative;}
-.fr:active,.fr.active{background:var(--hover);}
-.avw{position:relative;flex-shrink:0;}
-.av{width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:500;overflow:hidden;}
-.av img{width:100%;height:100%;object-fit:cover;}
-.dot{position:absolute;bottom:0;right:0;width:12px;height:12px;border-radius:50%;background:#34c759;border:2px solid var(--sidebar);}
-.fi{flex:1;min-width:0;border-bottom:1px solid var(--border);padding:8px 0;display:flex;flex-direction:column;justify-content:center;}
-.fr:last-child .fi{border-bottom:none;}
-.fn{font-size:16px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:6px;align-items:center;}
-.fl{font-size:14px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;display:flex;align-items:center;gap:4px;}
-.bdg{background:var(--accent);color:#fff;font-size:12px;font-weight:600;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 6px;margin-left:auto;}
+/* =========================================
+   ГЛАВНЫЙ ЭКРАН
+   ========================================= */
+#main { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--panel); }
+.top {
+  display: flex; align-items: center; gap: 12px; padding: 8px 16px;
+  height: 56px; flex-shrink: 0; z-index: 10;
+  background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 0.5px solid var(--border);
+}
+.bsm { font-weight: 700; font-size: 22px; letter-spacing: -0.5px; }
+.stars-badge {
+  display: flex; align-items: center; gap: 6px; background: var(--hover);
+  padding: 6px 14px; border-radius: 16px; font-size: 15px; font-weight: 600;
+  cursor: pointer; margin-left: auto; color: var(--gold);
+  transition: transform 0.15s;
+}
+.stars-badge:active { transform: scale(0.92); }
+.ib { width: 40px; height: 40px; border-radius: 50%; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--accent); transition: background 0.15s; }
+.ib:active { background: var(--hover); }
+.dd {
+  position: absolute; top: 50px; right: 16px; background: var(--panel); border-radius: 14px;
+  padding: 6px; display: flex; flex-direction: column; z-index: 80; min-width: 220px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18); border: 0.5px solid var(--border);
+  animation: slideUp 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.dd button { background: transparent; color: var(--text); padding: 12px 16px; text-align: left; border-radius: 8px; font-size: 16px; display: flex; gap: 12px; align-items: center; border: none; font-weight: 500; transition: background 0.15s; }
+.dd button:active { background: var(--hover); }
+.dd .sep { height: 0.5px; background: var(--border); margin: 6px 0; }
 
-#ca{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;background:var(--chat-bg);}
-.ch{display:flex;align-items:center;gap:12px;padding:8px 16px;height:56px;background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0;cursor:pointer;}
-.avsm{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;overflow:hidden;}
-.avsm img{width:100%;height:100%;object-fit:cover;}
-.cn{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cs{font-size:13px;color:var(--text-secondary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.bk{display:none;background:none;border:none;color:var(--accent);font-size:22px;cursor:pointer;padding:8px;}
+.body { flex: 1; display: flex; min-height: 0; position: relative; overflow: hidden; }
+#sb { width: 100%; max-width: 400px; flex-shrink: 0; overflow-y: auto; background: var(--sidebar); display: flex; flex-direction: column; border-right: 0.5px solid var(--border); }
+.sbs { padding: 8px 16px; background: var(--panel); }
+.sbs input { width: 100%; padding: 10px 14px; border-radius: 10px; background: var(--hover); font-size: 16px; }
+#fl { display: flex; flex-direction: column; flex: 1; overflow-y: auto; }
 
-.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;}
-.msg{display:flex;flex-direction:column;max-width:80%;position:relative;animation:popMsg .15s ease-out;}
-.msg.me{align-self:flex-end;}
-.msg.th{align-self:flex-start;}
-.bub{padding:8px 12px;border-radius:16px;font-size:16px;line-height:1.4;word-break:break-word;white-space:pre-wrap;position:relative;}
-.me .bub{background:var(--bubble-out);border-bottom-right-radius:4px;}
-.th .bub{background:var(--bubble-in);border-bottom-left-radius:4px;border:1px solid var(--border);}
-.bub.med{padding:3px;border-radius:12px;overflow:hidden;}
-.mp{max-width:260px;max-height:340px;border-radius:10px;cursor:pointer;}
-.mv{max-width:280px;max-height:340px;border-radius:10px;background:#000;}
-.ma{width:240px;padding:4px;}
-.ma audio{width:100%;height:36px;}
-.se{font-size:64px;line-height:1.1;}
-.mt{font-size:12px;color:var(--text-secondary);margin:2px 4px 0;display:flex;gap:4px;align-items:center;justify-content:flex-end;}
-.me .mt{color:#62a03a;}
-.read-ticks{font-size:14px;line-height:1;margin-left:2px;}
-.read-ticks.read{color:var(--accent);}
-.rc{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;}
-.rch{background:var(--panel);border:1px solid var(--border);padding:2px 8px;border-radius:12px;font-size:14px;cursor:pointer;display:flex;gap:4px;align-items:center;}
-.rch.m{background:var(--accent);border-color:var(--accent);color:#fff;}
+/* =========================================
+   STORIES (Истории)
+   ========================================= */
+.stories-bar { display: flex; gap: 12px; padding: 12px 16px; overflow-x: auto; border-bottom: 0.5px solid var(--border); background: var(--panel); scrollbar-width: none; }
+.stories-bar::-webkit-scrollbar { display: none; }
+.story-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; transition: transform 0.15s; }
+.story-item:active { transform: scale(0.94); }
+.story-ring {
+  width: 66px; height: 66px; border-radius: 50%; padding: 3px;
+  background: conic-gradient(from 0deg, #007aff, #af52de, #ff2d55, #ff9500, #34c759, #007aff);
+  animation: ringSpin 6s linear infinite;
+}
+.story-ring.viewed { background: var(--border); animation: none; }
+.story-ring-inner { width: 100%; height: 100%; border-radius: 50%; background: var(--panel); padding: 2px; }
+.story-avatar { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600; }
+.story-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.story-name { font-size: 12px; color: var(--text-secondary); max-width: 66px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.story-add .story-ring { background: var(--accent); animation: none; }
 
-.cmp{display:flex;gap:8px;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom));background:var(--panel);flex-shrink:0;align-items:flex-end;border-top:1px solid var(--border);}
-.ab,.mb{width:36px;height:36px;border-radius:50%;color:var(--text-secondary);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:transparent;border:none;transition:background .2s;}
-.ab:active,.mb:active{background:var(--hover);}
-.mi{flex:1;padding:8px 14px;border-radius:18px;background:var(--hover);color:var(--text);font-size:16px;min-height:36px;max-height:120px;resize:none;border:1px solid transparent;}
-.mi:focus{border-color:var(--accent);}
-.sb2{width:36px;height:36px;border-radius:50%;color:var(--accent);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;background:none;transition:transform .1s;}
-.sb2:active{transform:scale(.9);}
+/* Полноэкранный просмотр истории */
+#storyViewer {
+  position: fixed; inset: 0; background: #000; z-index: 500; display: flex; flex-direction: column;
+  animation: fadeIn 0.25s;
+}
+.story-progress-bar { display: flex; gap: 4px; padding: 12px 12px 0; padding-top: calc(12px + env(safe-area-inset-top)); }
+.story-progress-seg { flex: 1; height: 3px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
+.story-progress-fill { height: 100%; background: #fff; width: 0%; }
+.story-progress-fill.active { animation: storyProgress 5s linear forwards; }
+.story-progress-fill.done { width: 100%; }
+.story-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #fff; }
+.story-header-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; }
+.story-header-name { font-weight: 600; font-size: 15px; }
+.story-header-time { font-size: 12px; opacity: 0.7; }
+.story-content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.story-content-inner {
+  background: linear-gradient(135deg, #1e3a8a, #4c1d95, #7f1d1d);
+  border-radius: 16px; width: 100%; max-width: 400px; aspect-ratio: 9/16;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+  padding: 30px; color: #fff; text-align: center;
+}
+.story-content-inner h2 { font-size: 26px; font-weight: 700; }
+.story-content-inner p { font-size: 16px; opacity: 0.9; line-height: 1.4; }
+.story-content-inner .emoji { font-size: 80px; }
 
-.mod{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;animation:fadeIn .2s;}
-.mc{width:100%;max-width:400px;background:var(--panel);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px;max-height:90vh;overflow-y:auto;animation:slideUp .2s ease;border:1px solid var(--border);}
-.mc h3{font-size:18px;font-weight:600;}
-.ma2{display:flex;gap:12px;margin-top:8px;}
-.ma2 .btn{flex:1;}
-.theme-options{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.theme-btn{padding:12px;border-radius:10px;border:1px solid var(--border);text-align:center;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;}
-.theme-btn.active{border-color:var(--accent);background:var(--hover);color:var(--accent);}
-.profile-header{text-align:center;padding:20px 0;}
-.profile-avatar{width:100px;height:100px;border-radius:50%;margin:0 auto 12px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:500;overflow:hidden;}
-.profile-avatar img{width:100%;height:100%;object-fit:cover;}
-.profile-name{font-size:22px;font-weight:600;}
-.profile-code{font-size:14px;color:var(--text-secondary);margin-top:4px;}
-.profile-stats{display:flex;justify-content:space-around;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:16px 0;}
-.profile-stat{text-align:center;}
-.profile-stat b{display:block;font-size:18px;font-weight:600;}
-.profile-stat span{font-size:13px;color:var(--text-secondary);}
-.nft-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px;}
-.nft-item{background:var(--panel);border-radius:12px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:transform .1s;}
-.nft-item:active{transform:scale(.97);}
-.nft-art{height:120px;background-size:cover;background-position:center;}
-.nft-name{padding:8px;font-weight:500;text-align:center;font-size:14px;}
-.nft-rarity{padding:4px;text-align:center;font-size:11px;font-weight:600;color:var(--text-secondary);background:var(--hover);text-transform:uppercase;}
-.nft-item.worn{border:2px solid var(--accent);}
-.req-item{background:var(--hover);border-radius:12px;padding:12px;margin-bottom:8px;}
-.req-head{display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);margin-bottom:8px;}
-.req-actions{display:flex;gap:8px;}
-.req-actions button{flex:1;padding:8px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;}
-.req-actions .approve{background:var(--accent);color:#fff;}
-.req-actions .reject{background:var(--hover);color:var(--text);}
-.tst{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:300;animation:slideUp .2s;pointer-events:none;}
-.cempty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-secondary);background:var(--chat-bg);font-size:15px;}
+/* =========================================
+   СПИСОК ЧАТОВ
+   ========================================= */
+.fr { display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; position: relative; transition: background 0.15s; }
+.fr:active { background: var(--hover); }
+.avw { position: relative; flex-shrink: 0; }
+.av { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+.av img { width: 100%; height: 100%; object-fit: cover; }
+.dot { position: absolute; bottom: 0px; right: 0px; width: 14px; height: 14px; border-radius: 50%; background: #34c759; border: 2px solid var(--sidebar); animation: pulseOnline 2s infinite; }
+.fi { flex: 1; min-width: 0; border-bottom: 0.5px solid var(--border); padding: 10px 0; display: flex; flex-direction: column; justify-content: center; }
+.fr:last-child .fi { border-bottom: none; }
+.fn { font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fl { font-size: 15px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.bdg { background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; min-width: 22px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; padding: 0 6px; margin-left: auto; }
 
-@media (max-width:900px){
-  #sb{width:100%;max-width:none;border-right:none;}
-  #ca{position:absolute;inset:0;z-index:20;transform:translateX(100%);transition:transform .25s cubic-bezier(.2,.8,.2,1);}
-  body.co2 #ca{transform:translateX(0);}
-  .bk{display:flex;}
-  .mod{padding:0;align-items:flex-end;}
-  .mc{border-radius:16px 16px 0 0;max-height:95vh;padding-bottom:calc(20px + env(safe-area-inset-bottom));}
+/* =========================================
+   ЧАТ
+   ========================================= */
+#ca { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; background: var(--chat-bg); }
+.ch { display: flex; align-items: center; gap: 12px; padding: 8px 16px; height: 60px; background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 0.5px solid var(--border); flex-shrink: 0; cursor: pointer; }
+.avsm { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; overflow: hidden; }
+.avsm img { width: 100%; height: 100%; object-fit: cover; }
+.cn { font-size: 17px; font-weight: 600; }
+.cs { font-size: 13px; color: var(--text-secondary); margin-top: 1px; }
+.bk { display: none; background: none; border: none; color: var(--accent); font-size: 24px; padding: 8px; }
+
+.msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+.msg { display: flex; flex-direction: column; max-width: 80%; animation: popMsg 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); position: relative; transition: transform 0.1s; }
+.msg.me { align-self: flex-end; }
+.msg.th { align-self: flex-start; }
+.bub { padding: 10px 14px; border-radius: 18px; font-size: 16px; line-height: 1.4; word-break: break-word; white-space: pre-wrap; }
+.me .bub { background: var(--bubble-out); border-bottom-right-radius: 4px; }
+.th .bub { background: var(--bubble-in); border-bottom-left-radius: 4px; border: 0.5px solid var(--border); }
+.mt { font-size: 12px; color: var(--text-secondary); margin: 4px 4px 0; display: flex; gap: 4px; align-items: center; justify-content: flex-end; }
+.me .mt { color: #62a03a; }
+
+/* Меню реакций */
+.reactions-menu {
+  position: fixed; background: var(--panel); border-radius: 30px; padding: 6px 10px;
+  display: flex; gap: 4px; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  z-index: 250; animation: slideUp 0.15s; border: 0.5px solid var(--border);
+}
+.reactions-menu span { font-size: 26px; cursor: pointer; padding: 4px; border-radius: 50%; transition: transform 0.15s; }
+.reactions-menu span:active { transform: scale(1.4); }
+
+/* Плавающая реакция (двойной тап) */
+.float-heart { position: fixed; font-size: 60px; pointer-events: none; z-index: 260; animation: floatUp 0.8s ease-out forwards; }
+@keyframes floatUp { 0% { transform: translate(-50%,-50%) scale(0.3); opacity: 1; } 50% { transform: translate(-50%,-80%) scale(1.3); opacity: 1; } 100% { transform: translate(-50%,-150%) scale(0.8); opacity: 0; } }
+
+/* Панель ввода */
+.cmp { display: flex; gap: 8px; padding: 10px 16px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); flex-shrink: 0; align-items: flex-end; border-top: 0.5px solid var(--border); }
+.ab { width: 36px; height: 36px; color: var(--accent); font-size: 26px; display: flex; align-items: center; justify-content: center; font-weight: 300; background: transparent; border: none; cursor: pointer; }
+.mi { flex: 1; padding: 10px 16px; border-radius: 20px; background: var(--hover); font-size: 16px; min-height: 40px; max-height: 120px; resize: none; }
+.sb2 { width: 36px; height: 36px; color: var(--accent); font-size: 24px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer; transition: transform 0.15s; }
+.sb2:active { transform: scale(0.85); }
+
+/* =========================================
+   ЭКРАН ПРОФИЛЯ
+   ========================================= */
+#profileScreen, #shopScreen {
+  position: fixed; inset: 0; background: var(--sidebar); z-index: 200;
+  display: flex; flex-direction: column; animation: slideInRight 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.nav-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top));
+  background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; flex-shrink: 0;
+}
+.nav-bar .ib { color: var(--accent); font-size: 24px; }
+.nav-title { font-size: 17px; font-weight: 600; }
+
+.profile-scroll { flex: 1; overflow-y: auto; padding-bottom: 40px; }
+.profile-top { display: flex; flex-direction: column; align-items: center; padding: 10px 16px 20px; }
+.profile-avatar { width: 110px; height: 110px; border-radius: 50%; background: var(--accent); overflow: hidden; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 40px; font-weight: 600; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-name { font-size: 22px; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.4px; }
+.profile-status { font-size: 15px; color: var(--text-secondary); }
+.profile-status.online { color: var(--accent); }
+
+.tg-section { margin: 16px 16px 0; background: var(--panel); border-radius: 12px; overflow: hidden; animation: slideUp 0.3s; }
+.tg-row { display: flex; align-items: center; padding: 12px 16px; position: relative; cursor: pointer; }
+.tg-row:active { background: var(--hover); }
+.tg-row:not(:last-child)::after { content: ''; position: absolute; bottom: 0; left: 16px; right: 0; height: 0.5px; background: var(--border); }
+.tg-row-content { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.tg-row-main { font-size: 17px; color: var(--text); line-height: 1.3; }
+.tg-row-sub { font-size: 14px; color: var(--text-secondary); }
+.tg-row-icon { color: var(--text-secondary); font-size: 20px; margin-left: 12px; }
+.tg-section-title { font-size: 14px; font-weight: 600; color: var(--accent); margin: 24px 16px 8px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* =========================================
+   МАГАЗИН
+   ========================================= */
+.shop-header {
+  background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%);
+  color: #fff; padding: 40px 20px 30px; display: flex; flex-direction: column;
+  align-items: center; position: relative; overflow: hidden;
+}
+.shop-header::before {
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+  animation: rotateBg 20s linear infinite;
+}
+.shop-balance { font-size: 44px; font-weight: 700; display: flex; align-items: center; gap: 10px; z-index: 1; letter-spacing: -1px; }
+.shop-balance span { color: #ffd700; }
+.shop-title { font-size: 16px; opacity: 0.9; margin-top: 4px; z-index: 1; }
+
+.shop-tabs { display: flex; padding: 16px 16px 8px; gap: 12px; }
+.shop-tab { flex: 1; text-align: center; padding: 10px; font-size: 16px; font-weight: 600; color: var(--text-secondary); border-radius: 10px; cursor: pointer; background: var(--hover); transition: all 0.25s; }
+.shop-tab.active { background: var(--accent); color: #fff; transform: scale(1.02); }
+
+.shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; }
+.shop-pkg {
+  background: var(--panel); border: 0.5px solid var(--border); border-radius: 14px;
+  padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  cursor: pointer; transition: all 0.15s; animation: slideUp 0.3s backwards;
+}
+.shop-pkg:active { transform: scale(0.95); }
+.shop-pkg-icon { font-size: 32px; }
+.shop-pkg-val { font-size: 20px; font-weight: 700; color: var(--text); }
+.shop-pkg-price { font-size: 15px; color: var(--text-secondary); font-weight: 500; }
+.shop-pkg.best { border: 2px solid var(--accent); background: rgba(0, 122, 255, 0.06); position: relative; }
+.shop-pkg.best::after { content: 'ХИТ'; position: absolute; top: -8px; right: -8px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 8px; }
+
+.premium-card {
+  background: var(--panel); border-radius: 16px; margin: 16px; padding: 24px;
+  border: 1px solid var(--gold); box-shadow: 0 8px 30px rgba(230, 184, 0, 0.2);
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  animation: slideUp 0.3s;
+}
+.premium-icon { font-size: 60px; margin-bottom: 16px; animation: pulseGold 2.5s infinite; border-radius: 50%; }
+.premium-title { font-size: 24px; font-weight: 700; color: var(--gold); margin-bottom: 8px; }
+.premium-desc { font-size: 15px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.4; }
+.premium-btn { background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); color: #000; border: none; font-weight: 700; padding: 14px; border-radius: 12px; width: 100%; font-size: 17px; cursor: pointer; transition: transform 0.1s; }
+.premium-btn:active { transform: scale(0.97); }
+
+/* =========================================
+   МОДАЛКИ
+   ========================================= */
+.mod { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 300; animation: fadeIn 0.2s; }
+.mc { width: 100%; max-width: 340px; background: var(--panel); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px; border: 0.5px solid var(--border); animation: slideUp 0.25s; }
+
+/* =========================================
+   МОБИЛЬНАЯ ВЕРСИЯ
+   ========================================= */
+@media (max-width: 900px) {
+  #sb { width: 100%; max-width: none; border-right: none; }
+  #ca { position: absolute; inset: 0; z-index: 20; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  body.co2 #ca { transform: translateX(0); }
+  .bk { display: flex; }
 }
 </style>
 </head>
 <body data-theme="light">
 
+<!-- АВТОРИЗАЦИЯ -->
 <div id="authScr" class="auth-wrap"><div class="auth">
 <h1 class="brand">Volna</h1>
 <p class="sub">Введите имя и пароль</p>
 <label class="avp" id="avPick"><img id="avPrev" alt="" style="display:none"><span id="avPlus">+</span><input type="file" id="phIn" accept="image/*" hidden></label>
 <input id="nIn" class="fld" placeholder="Ваше имя" maxlength="24" autocomplete="off">
 <input id="pIn" class="fld" type="password" placeholder="Пароль" maxlength="64">
-<div id="aErr" class="err"></div>
 <button id="aBtn" class="btn primary">Войти / Создать</button>
-<button id="resetBtn" class="btn text">Забыли пароль?</button>
 </div></div>
 
+<!-- ГЛАВНЫЙ ЭКРАН -->
 <div id="main" class="hidden">
 <header class="top">
-<div class="ib" id="adBtn">☰</div>
+<div class="ib" id="adBtn" style="color:var(--text)">☰</div>
 <div class="bsm">Volna</div>
 <div class="stars-badge" id="starsBadge"><span>★</span><span id="starCount">0</span></div>
-<div class="acts" style="margin-left:auto">
+<div style="margin-left:auto">
 <div id="adM" class="dd hidden">
 <button data-a="settings">⚙ Настройки</button>
+<button data-a="group">👥 Создать группу</button>
+<button data-a="nft">🎨 NFT-галерея</button>
 <div class="sep"></div>
-<button data-a="admin">Админ-панель</button>
-<button data-a="requests" style="position:relative">Заявки на оплату <span id="reqBadge" class="bdg" style="position:absolute;right:8px;display:none">0</span></button>
-<button data-a="nft">NFT-галерея</button>
-<div class="sep"></div>
-<button data-a="group">Создать группу</button>
-<button data-a="ex">Экспорт</button>
-<div class="sep"></div>
-<button id="loBtn">Выйти</button>
+<button id="loBtn" style="color:#ff453a">🚪 Выйти</button>
 </div>
-<button id="profileBtn" class="ib">👤</button>
+<button id="profileBtn" class="ib" style="margin-left:0">👤</button>
 </div>
 </header>
 <div class="body">
 <aside id="sb">
-<div class="sbs"><input id="sbSr" placeholder="Поиск..."></div>
-<div id="fl"></div>
+  <!-- STORIES BAR -->
+  <div class="stories-bar" id="storiesBar"></div>
+  <!-- SEARCH -->
+  <div class="sbs"><input id="sbSr" placeholder="Поиск..."></div>
+  <!-- CHATS -->
+  <div id="fl"></div>
 </aside>
 <main id="ca">
 <div id="chd" class="ch"></div>
@@ -201,78 +346,80 @@ img,video{display:block;max-width:100%;}
 <div id="cmp" class="cmp">
 <button id="ab" class="ab">+</button>
 <input id="mi" class="mi" placeholder="Сообщение..." autocomplete="off">
-<button id="sb2" class="sb2">→</button>
+<button id="sb2" class="sb2">↑</button>
 </div>
-<div id="cempty" class="cempty">Выберите чат</div>
+<div id="cempty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);background:var(--chat-bg);font-size:15px;">Выберите чат</div>
 </main></div></div>
 
-<div id="settingsModal" class="mod hidden"><div class="mc">
-<h3>Настройки</h3>
-<p style="color:var(--text-secondary);font-size:14px">Тема оформления</p>
-<div class="theme-options">
-  <div class="theme-btn" data-theme="light">Светлая</div>
-  <div class="theme-btn" data-theme="dark">Тёмная</div>
-  <div class="theme-btn" data-theme="midnight">Полночь</div>
+<!-- ПРОФИЛЬ -->
+<div id="profileScreen" class="hidden">
+  <div class="nav-bar">
+    <div class="ib" onclick="closeProfile()">←</div>
+    <div class="nav-title">Профиль</div>
+    <div class="ib">✎</div>
+  </div>
+  <div class="profile-scroll" id="profileContent"></div>
 </div>
-<div class="ma2"><button class="btn secondary" id="settingsClose">Закрыть</button></div>
-</div></div>
 
-<div id="profileModal" class="mod hidden"><div class="mc" id="profileContent"></div></div>
-
-<div id="adminModal" class="mod hidden"><div class="mc">
-<h3>Админ-панель</h3>
-<input id="adminSearch" class="fld" placeholder="Фильтр...">
-<div id="adminUsersList" style="max-height:60vh;overflow-y:auto;margin-top:12px"></div>
-<div class="ma2"><button id="adminClose" class="btn secondary">Закрыть</button></div>
-</div></div>
-
-<div id="groupModal" class="mod hidden"><div class="mc">
-<h3>Создать группу</h3>
-<input id="groupName" class="fld" placeholder="Название">
-<div id="groupMembers" style="display:flex;flex-direction:column;gap:4px;max-height:40vh;overflow-y:auto;border:1px solid var(--border);border-radius:12px;padding:8px;"></div>
-<div class="ma2"><button id="groupCancel" class="btn secondary">Отмена</button><button id="groupCreate" class="btn primary">Создать</button></div>
-</div></div>
-
-<div id="buyStarsModal" class="mod hidden"><div class="mc">
-  <h3>Купить звёзды</h3>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0">
-    <button class="btn secondary pkg" data-stars="100" data-price="99">100 / 99 ₽</button>
-    <button class="btn secondary pkg" data-stars="500" data-price="449">500 / 449 ₽</button>
-    <button class="btn secondary pkg" data-stars="1000" data-price="849">1000 / 849 ₽</button>
-    <button class="btn secondary pkg" data-stars="2500" data-price="1990">2500 / 1990 ₽</button>
+<!-- МАГАЗИН -->
+<div id="shopScreen" class="hidden">
+  <div class="nav-bar" style="position:absolute;width:100%;z-index:10;background:transparent;border:none;">
+    <div class="ib" style="color:#fff" onclick="document.getElementById('shopScreen').classList.add('hidden')">←</div>
   </div>
-  <div id="payQR" class="hidden" style="text-align:center;padding:16px;background:var(--hover);border-radius:12px">
-    <div style="font-size:14px;margin-bottom:12px">Перевод на карту</div>
-    <div style="display:inline-block;background:#fff;padding:10px;border-radius:12px">
-      <div style="width:160px;height:160px;display:flex;align-items:center;justify-content:center;color:#888;font-size:12px">QR</div>
+  <div class="profile-scroll" style="padding-top:0;">
+    <div class="shop-header">
+      <div class="shop-balance"><span>★</span> <span id="shopStarCount">0</span></div>
+      <div class="shop-title">Ваш баланс</div>
     </div>
-    <div style="font-size:16px;font-weight:700;margin-top:12px">+7 902 016-75-09</div>
-    <div style="font-size:13px;color:var(--text-secondary)">Данил К.</div>
-    <div id="payAmount" style="font-size:16px;font-weight:700;color:var(--accent);margin-top:8px"></div>
+    <div class="shop-tabs">
+      <div class="shop-tab active" id="tabStars" onclick="switchShop('stars')">Звёзды</div>
+      <div class="shop-tab" id="tabPremium" onclick="switchShop('premium')">Premium</div>
+    </div>
+    <div id="viewStars">
+      <div class="shop-grid">
+        <div class="shop-pkg" onclick="buyStars(100, 99)" style="animation-delay:0s"><div class="shop-pkg-icon">⭐</div><div class="shop-pkg-val">100</div><div class="shop-pkg-price">99 ₽</div></div>
+        <div class="shop-pkg" onclick="buyStars(500, 449)" style="animation-delay:0.05s"><div class="shop-pkg-icon">🌟</div><div class="shop-pkg-val">500</div><div class="shop-pkg-price">449 ₽</div></div>
+        <div class="shop-pkg best" onclick="buyStars(1000, 849)" style="animation-delay:0.1s"><div class="shop-pkg-icon">💫</div><div class="shop-pkg-val">1000</div><div class="shop-pkg-price">849 ₽</div></div>
+        <div class="shop-pkg" onclick="buyStars(2500, 1990)" style="animation-delay:0.15s"><div class="shop-pkg-icon">🌠</div><div class="shop-pkg-val">2500</div><div class="shop-pkg-price">1990 ₽</div></div>
+      </div>
+    </div>
+    <div id="viewPremium" class="hidden">
+      <div class="premium-card">
+        <div class="premium-icon">👑</div>
+        <div class="premium-title">Volna Premium</div>
+        <div class="premium-desc">Эксклюзивные стикеры, ускоренная загрузка, уникальные реакции, бейдж в профиле и поддержка проекта.</div>
+        <button class="premium-btn" onclick="toast('Скоро')">Оформить за 299 ₽ / мес</button>
+      </div>
+    </div>
   </div>
-  <div class="ma2">
-    <button id="buyClose" class="btn secondary">Закрыть</button>
-    <button id="buyConfirm" class="btn primary hidden">Оплатил</button>
+</div>
+
+<!-- ПРОСМОТР ИСТОРИИ -->
+<div id="storyViewer" class="hidden">
+  <div class="story-progress-bar" id="storyProgressBar"></div>
+  <div class="story-header">
+    <div class="story-header-avatar" id="storyHeaderAvatar"></div>
+    <div><div class="story-header-name" id="storyHeaderName"></div><div class="story-header-time">Только что</div></div>
+  </div>
+  <div class="story-content"><div class="story-content-inner" id="storyContentInner"></div></div>
+</div>
+
+<!-- ОПЛАТА -->
+<div id="payModal" class="mod hidden"><div class="mc">
+  <h3 style="font-size:20px;font-weight:700;text-align:center;">Оплата</h3>
+  <div style="text-align:center;padding:10px;">
+    <div style="background:#fff;padding:10px;border-radius:12px;display:inline-block;">
+       <div style="width:150px;height:150px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#888;">QR-КОД</div>
+    </div>
+    <div style="font-size:16px;font-weight:600;margin-top:16px;">+7 902 016-75-09</div>
+    <div style="font-size:14px;color:var(--text-secondary);">Данил К.</div>
+    <div id="payAmountDisplay" style="font-size:18px;font-weight:700;color:var(--accent);margin-top:12px;"></div>
+  </div>
+  <div style="display:flex;gap:12px;">
+    <button class="btn secondary" onclick="document.getElementById('payModal').classList.add('hidden')">Отмена</button>
+    <button class="btn primary" onclick="confirmPay()">Я оплатил</button>
   </div>
 </div></div>
-
-<div id="requestsModal" class="mod hidden"><div class="mc">
-  <h3>Заявки на оплату</h3>
-  <div id="requestsList" style="max-height:55vh;overflow-y:auto;margin-top:8px"></div>
-  <div class="ma2"><button id="requestsClose" class="btn primary">Закрыть</button></div>
-</div></div>
-
-<div id="nftModal" class="mod hidden"><div class="mc">
-  <h3>NFT-галерея</h3>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px" id="nftGrid"></div>
-  <div class="ma2">
-    <button id="nftMintBtn" class="btn primary">Создать NFT (500)</button>
-    <button id="nftClose" class="btn secondary">Закрыть</button>
-  </div>
-</div></div>
-
-<input type="file" id="phF" accept="image/*" hidden>
-<input type="file" id="vdF" accept="video/*" hidden>
 
 <script>
 'use strict';
@@ -282,67 +429,53 @@ const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v);}catch(e){return d} },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
-const toast = t => { const e=document.createElement('div'); e.className='tst'; e.textContent=t; document.body.appendChild(e); setTimeout(()=>e.remove(),2600); };
+const toast = t => {
+  const e = document.createElement('div');
+  e.textContent = t;
+  e.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:12px 22px;border-radius:22px;font-size:15px;font-weight:500;z-index:400;animation:slideUp 0.2s;backdrop-filter:blur(10px);';
+  document.body.appendChild(e);
+  setTimeout(()=>e.remove(), 2500);
+};
 const fmtTime = ts => new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
 
 const avFor = (n, p) => {
   if (p) return `<img src="${p}" style="width:100%;height:100%;object-fit:cover">`;
   const raw = (n||'?').trim() || '?';
-  const l = raw.charAt(0).toUpperCase() || '?';
+  const l = raw.charAt(0).toUpperCase();
   const cs = ['#007aff','#ff3b30','#34c759','#ff9500','#5856d6','#af52de','#ff2d55'];
   let x = 0; for (const c of raw) x += c.charCodeAt(0) || 0;
-  const col = cs[x % cs.length];
-  return `<div style="width:100%;height:100%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:18px">${esc(l)}</div>`;
+  return `<div style="width:100%;height:100%;background:${cs[x % cs.length]};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600">${esc(l)}</div>`;
 };
 
 let socket = null;
 const state = {
   user: null, friends: [], groups: [], messages: {},
   activeChat: null, activeGroup: null,
-  unread: {}, typing: {}, online: {},
-  pendingPhoto: null, purchaseRequests: [], nfts: []
+  unread: {}, online: {}, stories: [], activeStory: 0, storyTimer: null, seenStories: new Set()
 };
 
 const savedTheme = store.get('volna_theme', 'light');
 document.body.setAttribute('data-theme', savedTheme);
 
 socket = io();
-
 socket.on('connect', () => {
   const saved = store.get('volna_profile', null);
-  if (saved) doRegister(saved.code, saved.name, saved.pass, saved.photo, true);
+  if (saved) doRegister(saved.code, saved.name, saved.pass, saved.photo);
 });
-socket.on('disconnect', () => toast('Соединение потеряно'));
-socket.on('banned', () => { toast('Вы забанены'); setTimeout(()=>{ store.set('volna_profile', null); location.reload(); }, 1500); });
-
 socket.on('newMessage', ({ from, message }) => {
   if (message.groupId) {
-    const gid = message.groupId;
-    (state.messages[gid] = state.messages[gid] || []).push(message);
-    if (state.activeGroup === gid) renderMessages();
-    else { state.unread[gid] = (state.unread[gid]||0)+1; renderFriends(); }
+    (state.messages[message.groupId] = state.messages[message.groupId] || []).push(message);
+    if (state.activeGroup === message.groupId) renderMessages();
   } else {
     (state.messages[from] = state.messages[from] || []).push(message);
     if (state.activeChat === from) { renderMessages(); socket.emit('markRead', { withCode: from }); }
-    else { state.unread[from] = (state.unread[from]||0)+1; renderFriends(); toast('Новое сообщение'); }
+    renderFriends();
   }
 });
 socket.on('messageSent', ({ to, groupId, message }) => {
   const key = groupId || to;
   (state.messages[key] = state.messages[key] || []).push(message);
-  if ((groupId && state.activeGroup === groupId) || (!groupId && state.activeChat === to)) renderMessages();
-});
-socket.on('messageDeleted', ({ from, groupId, id }) => {
-  const key = groupId || from;
-  if (state.messages[key]) state.messages[key] = state.messages[key].filter(m => m.id !== id);
   renderMessages();
-});
-socket.on('messageEdited', ({ id, text }) => {
-  const key = state.activeGroup || state.activeChat;
-  if (state.messages[key]) {
-    const m = state.messages[key].find(x => x.id === id);
-    if (m) { m.text = text; m.edited = true; renderMessages(); }
-  }
 });
 socket.on('messageReacted', ({ id, reactions }) => {
   const key = state.activeGroup || state.activeChat;
@@ -351,126 +484,16 @@ socket.on('messageReacted', ({ id, reactions }) => {
     if (m) { m.reactions = reactions; renderMessages(); }
   }
 });
-socket.on('messagesRead', ({ by, at }) => {
-  if (state.messages[by]) state.messages[by].forEach(m => { if (m.from === state.user.code && !m.read_at) m.read_at = at; });
-  if (state.activeChat === by) renderMessages();
-  renderFriends();
-});
-socket.on('friendTyping', ({ from, groupId, typing }) => {
-  const key = groupId || from;
-  if (typing) state.typing[key] = Date.now();
-  else delete state.typing[key];
-  renderFriends();
+socket.on('starsUpdated', ({ stars }) => {
+  if (state.user) state.user.stars = stars;
+  $('#starCount').textContent = stars;
+  $('#shopStarCount').textContent = stars;
 });
 socket.on('friendOnline', ({ code, online }) => { state.online[code] = online; renderFriends(); });
-socket.on('friendAdded', f => { if (!state.friends.find(x => x.code === f.code)) { state.friends.push(f); renderFriends(); } });
-socket.on('groupAdded', g => { if (!state.groups.find(x => x.id === g.id)) { state.groups.push(g); renderFriends(); } });
-socket.on('starsUpdated', ({ stars, received }) => {
-  if (state.user) state.user.stars = stars;
-  const sc = $('#starCount'); if (sc) sc.textContent = stars;
-  if (received) toast('Получено ' + received + ' ★');
-});
-socket.on('premiumActivated', ({ until }) => { if (state.user) { state.user.premium = true; state.user.premiumUntil = until; } toast('Premium активирован!'); });
-socket.on('newPurchaseRequest', req => {
-  state.purchaseRequests.push(req);
-  if (state.user && state.user.isAdmin) { toast('Новая заявка: ' + req.name + ' — ' + req.stars + '★'); updateRequestsBadge(); }
-});
 
-function updateRequestsBadge(){
-  const badge = document.getElementById('reqBadge'); if (!badge) return;
-  const n = state.purchaseRequests.filter(r => !r.processed).length;
-  badge.textContent = n > 0 ? n : '';
-  badge.style.display = n > 0 ? 'flex' : 'none';
-}
-
-function renderRequests(){
-  const list = document.getElementById('requestsList'); if (!list) return;
-  const pending = state.purchaseRequests.filter(r => !r.processed);
-  if (!pending.length) { list.innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:20px">Нет заявок</div>'; return; }
-  list.innerHTML = pending.map(r => `
-    <div class="req-item" data-id="${esc(r.id)}">
-      <div class="req-head"><span><b>${esc(r.name)}</b> (${esc(r.code)})</span></div>
-      <div style="font-size:15px;margin-bottom:8px">${r.price} ₽ → ★ ${r.stars}</div>
-      <div class="req-actions">
-        <button class="approve" data-act="approve" data-id="${esc(r.id)}">Подтвердить</button>
-        <button class="reject" data-act="reject" data-id="${esc(r.id)}">Отклонить</button>
-      </div>
-    </div>`).join('');
-  list.querySelectorAll('button[data-act]').forEach(b => {
-    b.onclick = () => handleRequestAction(b.dataset.id, b.dataset.act);
-  });
-}
-
-function handleRequestAction(id, action){
-  socket.emit('resolvePurchaseRequest', { id, action }, res => {
-    if (!res || !res.ok) return toast('Ошибка');
-    state.purchaseRequests = state.purchaseRequests.map(r => r.id === id ? { ...r, processed: true } : r);
-    renderRequests();
-    updateRequestsBadge();
-    toast(action === 'approve' ? 'Начислено' : 'Отклонено');
-  });
-}
-
-function openRequestsPanel(){
-  if (!state.user || !state.user.isAdmin) return toast('Только для админа');
-  socket.emit('getPurchaseRequests', res => {
-    if (!res || !res.ok) return toast('Ошибка');
-    state.purchaseRequests = res.requests || [];
-    renderRequests();
-    updateRequestsBadge();
-    document.getElementById('requestsModal').classList.remove('hidden');
-  });
-}
-
-const NFT_RARITIES = { common:{label:'Обычный'}, rare:{label:'Редкий'}, epic:{label:'Эпический'}, legendary:{label:'Легендарный'}, mythic:{label:'Мифический'} };
-const NFT_COST = 500;
-
-function generateNftSvg(rarity, tokenId){
-  const seed = tokenId || 1;
-  const rotation = (seed * 13) % 360;
-  const scale = 1 + (seed % 10) * 0.02;
-  const configs = {
-    common:{ bg1:'#1e293b', bg2:'#334155', color1:'#94a3b8', color2:'#cbd5e1' },
-    rare:{ bg1:'#0f172a', bg2:'#1e3a8a', color1:'#60a5fa', color2:'#93c5fd' },
-    epic:{ bg1:'#2e1065', bg2:'#4c1d95', color1:'#c084fc', color2:'#d8b4fe' },
-    legendary:{ bg1:'#451a03', bg2:'#78350f', color1:'#fbbf24', color2:'#fde68a' },
-    mythic:{ bg1:'#4c0519', bg2:'#7f1d1d', color1:'#f43f5e', color2:'#fda4af' }
-  };
-  const c = configs[rarity] || configs.common;
-  let shape = '';
-  if (rarity === 'common') shape = `<polygon points="50,20 80,50 50,80 20,50" fill="none" stroke="${c.color1}" stroke-width="2" transform="rotate(${rotation} 50 50)"/><polygon points="50,30 70,50 50,70 30,50" fill="${c.color2}" opacity="0.5" transform="rotate(${rotation} 50 50)"/>`;
-  else if (rarity === 'rare') shape = `<circle cx="50" cy="50" r="20" fill="none" stroke="${c.color1}" stroke-width="2"/><circle cx="50" cy="50" r="10" fill="${c.color2}" opacity="0.8"/><path d="M 20 50 Q 50 20 80 50 Q 50 80 20 50" fill="none" stroke="${c.color1}" stroke-width="1.5" transform="rotate(${rotation} 50 50)"/>`;
-  else if (rarity === 'epic') shape = `<rect x="30" y="30" width="40" height="40" fill="none" stroke="${c.color1}" stroke-width="2" transform="rotate(45 50 50)"/><rect x="38" y="38" width="24" height="24" fill="${c.color2}" opacity="0.6" transform="rotate(45 50 50)"/><circle cx="50" cy="50" r="4" fill="#fff" opacity="0.9"/>`;
-  else if (rarity === 'legendary') shape = `<path d="M 25 65 L 25 40 L 40 50 L 50 25 L 60 50 L 75 40 L 75 65 Z" fill="none" stroke="${c.color1}" stroke-width="2" stroke-linejoin="round"/><path d="M 25 65 L 25 40 L 40 50 L 50 25 L 60 50 L 75 40 L 75 65 Z" fill="${c.color2}" opacity="0.4"/><circle cx="50" cy="40" r="3" fill="${c.color1}"/>`;
-  else if (rarity === 'mythic') shape = `<circle cx="50" cy="50" r="18" fill="${c.color2}" opacity="0.8"/><ellipse cx="50" cy="50" rx="35" ry="8" fill="none" stroke="${c.color1}" stroke-width="2" transform="rotate(${rotation} 50 50)"/><circle cx="42" cy="42" r="4" fill="#fff" opacity="0.5"/>`;
-  let stars = '';
-  for (let i = 0; i < 15; i++) {
-    const x = (seed * 37 + i * 19) % 100, y = (seed * 53 + i * 23) % 100, s = ((seed + i) % 3) * 0.5 + 0.5;
-    stars += `<circle cx="${x}" cy="${y}" r="${s}" fill="#fff" opacity="0.3"/>`;
-  }
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c.bg1}"/><stop offset="100%" stop-color="${c.bg2}"/></linearGradient><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="100" height="100" fill="url(#bg)"/>${stars}<g filter="url(#glow)" transform="translate(50,50) scale(${scale}) translate(-50,-50)">${shape}</g></svg>`;
-  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-}
-
-function openNftGallery(){
-  socket.emit('getMyNfts', res => {
-    if (!res || !res.ok) return toast('Ошибка');
-    state.nfts = res.nfts || [];
-    const grid = document.getElementById('nftGrid'); if (!grid) return;
-    if (!state.nfts.length) grid.innerHTML = '<div style="grid-column:1/-1;color:var(--text-secondary);text-align:center;padding:20px">У вас пока нет NFT</div>';
-    else grid.innerHTML = state.nfts.map(n => {
-      const rarity = n.rarity || 'common';
-      const label = NFT_RARITIES[rarity] ? NFT_RARITIES[rarity].label : 'Обычный';
-      const imgUrl = generateNftSvg(rarity, n.tokenId);
-      return `<div class="nft-item"><div class="nft-art" style="background:url('${imgUrl}') center/cover no-repeat;"></div><div class="nft-name">${esc(n.name)}</div><div class="nft-rarity">${label}</div></div>`;
-    }).join('');
-    document.getElementById('nftModal').classList.remove('hidden');
-  });
-}
-
-function doRegister(code, name, pass, photo, silent){
+function doRegister(code, name, pass, photo){
   socket.emit('register', { code, name, pass, photo }, res => {
-    if (!res.ok) { toast('Ошибка: ' + res.error); return; }
+    if (!res.ok) return toast('Ошибка: ' + res.error);
     state.user = res.user;
     state.friends = res.friends;
     state.groups = res.groups || [];
@@ -479,391 +502,279 @@ function doRegister(code, name, pass, photo, silent){
     $('#authScr').classList.add('hidden');
     $('#main').classList.remove('hidden');
     $('#starCount').textContent = res.user.stars;
+    $('#shopStarCount').textContent = res.user.stars;
+    // Создаём демо-истории для друзей
+    state.stories = state.friends.map(f => ({
+      code: f.code, name: f.name, photo: f.photo,
+      content: { emoji: ['🎉','🔥','💎','🌈','⚡'][Math.floor(Math.random()*5)], title: 'Привет!', text: 'Как дела? 😎' }
+    }));
+    renderStories();
     renderFriends();
   });
 }
 
 $('#aBtn').onclick = () => {
-  const name = $('#nIn').value.trim();
-  const pass = $('#pIn').value;
-  if (!name || name.length < 2) return toast('Имя мин. 2');
-  if (!pass || pass.length < 3) return toast('Пароль мин. 3');
-  $('#aErr').textContent = '';
+  const name = $('#nIn').value.trim(), pass = $('#pIn').value;
+  if (!name || !pass) return toast('Заполните поля');
   const saved = store.get('volna_profile', null);
   if (saved && saved.name === name) { doRegister(saved.code, name, pass, saved.photo); return; }
-  let code = '';
-  if (name === 'ADMIN' || name === 'ADMIN2') code = name;
-  else {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  doRegister(code, name, pass, state.pendingPhoto);
+  let code = name === 'ADMIN' ? 'ADMIN' : Math.random().toString(36).slice(2, 8).toUpperCase();
+  doRegister(code, name, pass, null);
 };
-
-$('#phIn').onchange = e => {
-  const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = () => { state.pendingPhoto = r.result; $('#avPrev').src = r.result; $('#avPrev').style.display = 'block'; $('#avPlus').style.display = 'none'; };
-  r.readAsDataURL(f);
-};
-
-$('#resetBtn').onclick = () => { if (!confirm('Сбросить все данные?')) return; store.set('volna_profile', null); location.reload(); };
 $('#loBtn').onclick = () => { if (confirm('Выйти?')) { store.set('volna_profile', null); location.reload(); } };
 
-function renderFriends(){
-  const list = $('#fl'); if (!list) return;
-  const all = [
-    ...state.friends.map(f => ({ ...f, isGroup: false })),
-    ...state.groups.map(g => ({ ...g, isGroup: true, name: g.name, code: g.id }))
-  ];
-  if (!all.length) { list.innerHTML = '<div class="empty">Нет чатов</div>'; return; }
-  const sorted = all.sort((a, b) => {
-    const la = (state.messages[a.code] || []).slice(-1)[0];
-    const lb = (state.messages[b.code] || []).slice(-1)[0];
-    return (lb ? lb.ts : 0) - (la ? la.ts : 0);
-  });
-  list.innerHTML = sorted.map(f => {
-    const ms = state.messages[f.code] || [];
-    const last = ms[ms.length - 1];
-    const isTyping = state.typing[f.code] && Date.now() - state.typing[f.code] < 4000;
-    const unread = state.unread[f.code] || 0;
-    let preview = 'Нет сообщений';
-    if (last) preview = (last.from === state.user.code ? 'Вы: ' : '') + (last.kind === 'text' ? last.text : '[' + last.kind + ']');
-    let ticks = '';
-    if (last && last.from === state.user.code && !f.isGroup) ticks = last.read_at ? ' <span class="read-ticks read">✓✓</span>' : ' <span class="read-ticks">✓</span>';
-    const active = (f.isGroup && state.activeGroup === f.id) || (!f.isGroup && state.activeChat === f.code);
-    return `<div class="fr ${active ? 'active' : ''}" data-code="${esc(f.code)}" data-group="${f.isGroup ? 1 : 0}">
-      <div class="avw"><div class="av">${avFor(f.name, f.photo)}</div>${state.online[f.code] ? '<div class="dot"></div>' : ''}</div>
-      <div class="fi">
-        <div class="fn">${f.isGroup ? 'Группа: ' : ''}${esc(f.name)}</div>
-        <div class="fl">${isTyping ? 'печатает...' : esc(preview) + ticks}</div>
-      </div>
-      ${unread ? '<div class="bdg">' + unread + '</div>' : ''}
+/* =========================================
+   STORIES
+   ========================================= */
+function renderStories(){
+  const bar = $('#storiesBar'); if (!bar) return;
+  // Кнопка "Добавить"
+  let html = `<div class="story-item story-add" onclick="toast('Скоро')">
+    <div class="story-ring"><div class="story-ring-inner"><div class="story-avatar" style="background:var(--accent);color:#fff;font-size:28px;">+</div></div></div>
+    <div class="story-name">Добавить</div>
+  </div>`;
+  html += state.stories.map((s, i) => {
+    const viewed = state.seenStories.has(s.code) ? 'viewed' : '';
+    return `<div class="story-item" onclick="openStory(${i})">
+      <div class="story-ring ${viewed}"><div class="story-ring-inner"><div class="story-avatar">${avFor(s.name, s.photo)}</div></div></div>
+      <div class="story-name">${esc(s.name)}</div>
     </div>`;
   }).join('');
-  list.querySelectorAll('.fr').forEach(el => {
-    el.onclick = () => {
-      if (el.dataset.group === '1') openGroup(el.dataset.code);
-      else openChat(el.dataset.code);
-    };
-  });
+  bar.innerHTML = html;
+}
+
+function openStory(idx){
+  if (idx >= state.stories.length) return closeStory();
+  state.activeStory = idx;
+  const s = state.stories[idx];
+  state.seenStories.add(s.code);
+  $('#storyHeaderAvatar').innerHTML = avFor(s.name, s.photo);
+  $('#storyHeaderName').textContent = s.name;
+  $('#storyContentInner').innerHTML = `
+    <div class="emoji">${s.content.emoji}</div>
+    <h2>${esc(s.content.title)}</h2>
+    <p>${esc(s.content.text)}</p>`;
+  // Прогресс-бары
+  const bars = state.stories.map((_, i) => `
+    <div class="story-progress-seg"><div class="story-progress-fill ${i < idx ? 'done' : ''} ${i === idx ? 'active' : ''}"></div></div>
+  `).join('');
+  $('#storyProgressBar').innerHTML = bars;
+  $('#storyViewer').classList.remove('hidden');
+  renderStories();
+  
+  clearTimeout(state.storyTimer);
+  state.storyTimer = setTimeout(() => openStory(idx + 1), 5000);
+  
+  // Клик по экрану — следующая
+  $('#storyViewer').onclick = e => {
+    if (e.target.closest('.story-header')) return;
+    openStory(idx + 1);
+  };
+}
+
+function closeStory(){
+  clearTimeout(state.storyTimer);
+  $('#storyViewer').classList.add('hidden');
+}
+
+/* =========================================
+   СПИСОК ЧАТОВ
+   ========================================= */
+function renderFriends(){
+  const list = $('#fl'); if (!list) return;
+  const all = [...state.friends.map(f => ({ ...f, isGroup: false })), ...state.groups.map(g => ({ ...g, isGroup: true, code: g.id }))];
+  if (!all.length) { list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);font-size:15px;">Нет чатов</div>'; return; }
+  list.innerHTML = all.map(f => {
+    const ms = state.messages[f.code] || [];
+    const last = ms[ms.length - 1];
+    let preview = 'Нет сообщений';
+    if (last) preview = (last.from === state.user.code ? 'Вы: ' : '') + (last.kind === 'text' ? last.text : '📎 Файл');
+    return `<div class="fr" onclick="${f.isGroup ? `openGroup('${f.code}')` : `openChat('${f.code}')`}">
+      <div class="avw"><div class="av">${avFor(f.name, f.photo)}</div>${state.online[f.code] ? '<div class="dot"></div>' : ''}</div>
+      <div class="fi">
+        <div class="fn">${f.isGroup ? '👥 ' : ''}${esc(f.name)}</div>
+        <div class="fl">${esc(preview)}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function openChat(code){
   state.activeChat = code; state.activeGroup = null;
-  state.unread[code] = 0;
   document.body.classList.add('co2');
   const f = state.friends.find(x => x.code === code); if (!f) return;
   $('#cempty').style.display = 'none';
-  $('#chd').innerHTML = `<button class="bk" id="bkb">←</button>
+  $('#chd').innerHTML = `<button class="bk" onclick="document.body.classList.remove('co2')">←</button>
     <div class="avsm">${avFor(f.name, f.photo)}</div>
-    <div style="flex:1;min-width:0" id="chatHeader">
+    <div style="flex:1;" onclick="openProfile('${f.code}')">
       <div class="cn">${esc(f.name)}</div>
-      <div class="cs">${state.online[code] ? 'онлайн' : 'не в сети'}</div>
+      <div class="cs">${state.online[code] ? 'в сети' : 'не в сети'}</div>
     </div>`;
-  $('#bkb').onclick = () => document.body.classList.remove('co2');
-  $('#chatHeader').onclick = () => openProfile(f);
   socket.emit('loadHistory', { withCode: code }, res => {
     state.messages[code] = res.history;
     renderMessages();
     socket.emit('markRead', { withCode: code });
   });
-  renderFriends();
+  $('#msgs').innerHTML = '';
   setTimeout(() => $('#mi').focus(), 100);
 }
 
 function openGroup(gid){
   state.activeGroup = gid; state.activeChat = null;
-  state.unread[gid] = 0;
   document.body.classList.add('co2');
   const g = state.groups.find(x => x.id === gid); if (!g) return;
   $('#cempty').style.display = 'none';
-  $('#chd').innerHTML = `<button class="bk" id="bkb">←</button>
-    <div class="avsm" style="background:var(--accent)">Г</div>
-    <div style="flex:1;min-width:0">
-      <div class="cn">${esc(g.name)}</div>
-      <div class="cs">${g.members.length} участников</div>
-    </div>`;
-  $('#bkb').onclick = () => document.body.classList.remove('co2');
+  $('#chd').innerHTML = `<button class="bk" onclick="document.body.classList.remove('co2')">←</button>
+    <div class="avsm" style="background:var(--accent);color:#fff;">Г</div>
+    <div style="flex:1;"><div class="cn">${esc(g.name)}</div><div class="cs">${g.members.length} участников</div></div>`;
   socket.emit('loadHistory', { groupId: gid }, res => {
     state.messages[gid] = res.history;
     renderMessages();
   });
-  renderFriends();
-  setTimeout(() => $('#mi').focus(), 100);
 }
 
+/* =========================================
+   СООБЩЕНИЯ
+   ========================================= */
 function renderMessages(){
   const key = state.activeGroup || state.activeChat; if (!key) return;
   const ms = state.messages[key] || [];
   const a = $('#msgs');
-  if (!ms.length) { a.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:40px;font-size:14px">Нет сообщений</div>'; return; }
+  if (!ms.length) { a.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);font-size:15px;">Напишите первое сообщение</div>'; return; }
   a.innerHTML = ms.map(m => {
     const mine = m.from === state.user.code;
-    let ticks = '';
-    if (mine && !state.activeGroup) ticks = m.read_at ? '<span class="read-ticks read">✓✓</span>' : '<span class="read-ticks">✓</span>';
-    let body = '';
-    if (m.kind === 'photo' && m.data && m.data.url) body = `<div class="bub med">${m.data.caption ? '<div style="padding:4px 8px">' + esc(m.data.caption) + '</div>' : ''}<img class="mp" src="${m.data.url}"></div>`;
-    else if (m.kind === 'video' && m.data && m.data.url) body = `<div class="bub med"><video class="mv" controls src="${m.data.url}"></video></div>`;
-    else if (m.kind === 'audio' && m.data && m.data.url) body = `<div class="bub"><div class="ma"><audio controls src="${m.data.url}"></audio></div></div>`;
-    else if (m.kind === 'sticker') body = `<div class="bub" style="background:transparent;border:none;padding:0"><div class="se">${esc(m.text)}</div></div>`;
-    else body = `<div class="bub">${esc(m.text || '')}</div>`;
+    let body = `<div class="bub">${esc(m.text || '')}</div>`;
     let reactions = '';
     if (m.reactions && Object.keys(m.reactions).length) {
-      reactions = '<div class="rc">' + Object.keys(m.reactions).map(e => {
-        const arr = m.reactions[e]; if (!arr.length) return '';
-        const isMine = arr.includes(state.user.code);
-        return `<div class="rch ${isMine ? 'm' : ''}" data-react="${m.id}" data-emoji="${e}"><span>${e}</span><span>${arr.length}</span></div>`;
-      }).join('') + '</div>';
+      reactions = '<div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;">' + Object.keys(m.reactions).map(e => 
+        `<div style="background:var(--panel);border:0.5px solid var(--border);padding:2px 8px;border-radius:12px;font-size:13px;">${e} ${m.reactions[e].length}</div>`
+      ).join('') + '</div>';
     }
-    return `<div class="msg ${mine ? 'me' : 'th'}" data-id="${esc(m.id)}">${body}<div class="mt">${fmtTime(m.ts)} ${ticks}${m.edited ? ' изм.' : ''}</div>${reactions}</div>`;
+    return `<div class="msg ${mine ? 'me' : 'th'}" data-id="${m.id}" ondblclick="quickReact(event, '${m.id}', '❤️')" oncontextmenu="showReactionsMenu(event, '${m.id}'); return false;">
+      ${body}
+      <div class="mt">${fmtTime(m.ts)}${mine ? ' ✓✓' : ''}</div>
+      ${reactions}
+    </div>`;
   }).join('');
-  a.querySelectorAll('.rch').forEach(el => {
-    el.onclick = () => socket.emit('reactToMessage', { id: el.dataset.react, emoji: el.dataset.emoji });
-  });
   a.scrollTop = a.scrollHeight;
 }
 
-function sendCurrent(text, kind, data){
-  if (!state.activeChat && !state.activeGroup) return;
-  const payload = { kind: kind || 'text', text: text || '', data: data || null };
-  if (state.activeGroup) payload.groupId = state.activeGroup;
-  else payload.to = state.activeChat;
-  socket.emit('sendMessage', payload);
+function quickReact(e, id, emoji){
+  e.preventDefault();
+  socket.emit('reactToMessage', { id, emoji });
+  const heart = document.createElement('div');
+  heart.className = 'float-heart';
+  heart.textContent = emoji;
+  heart.style.left = e.pageX + 'px';
+  heart.style.top = e.pageY + 'px';
+  document.body.appendChild(heart);
+  setTimeout(() => heart.remove(), 800);
+}
+
+function showReactionsMenu(e, id){
+  e.preventDefault();
+  const menu = document.createElement('div');
+  menu.className = 'reactions-menu';
+  menu.innerHTML = ['👍','❤️','🔥','😂','😢','🎉'].map(em => `<span onclick="socket.emit('reactToMessage', {id:'${id}', emoji:'${em}'}); this.parentNode.remove()">${em}</span>`).join('');
+  menu.style.left = Math.min(e.pageX, window.innerWidth - 260) + 'px';
+  menu.style.top = (e.pageY - 60) + 'px';
+  document.body.appendChild(menu);
+  setTimeout(() => {
+    const close = () => { menu.remove(); document.removeEventListener('click', close); };
+    document.addEventListener('click', close);
+  }, 10);
 }
 
 $('#sb2').onclick = () => {
   const t = $('#mi').value.trim(); if (!t) return;
-  sendCurrent(t, 'text');
-  $('#mi').value = '';
-};
-
-let typingTimer = null;
-$('#mi').addEventListener('input', () => {
-  if (!state.activeChat && !state.activeGroup) return;
-  const payload = { typing: true };
+  const payload = { kind: 'text', text: t };
   if (state.activeGroup) payload.groupId = state.activeGroup;
   else payload.to = state.activeChat;
-  socket.emit('typing', payload);
-  clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => {
-    const p2 = { typing: false };
-    if (state.activeGroup) p2.groupId = state.activeGroup;
-    else p2.to = state.activeChat;
-    socket.emit('typing', p2);
-  }, 2000);
-});
-
-$('#ab').onclick = e => {
-  e.stopPropagation();
-  const menu = document.createElement('div');
-  menu.className = 'dd';
-  menu.style.bottom = '60px'; menu.style.left = '12px'; menu.style.top = 'auto'; menu.style.right = 'auto';
-  menu.innerHTML = `<button data-a="ph">Фото</button><button data-a="vd">Видео</button><button data-a="po">Опрос</button>`;
-  document.body.appendChild(menu);
-  const closeMenu = () => menu.remove();
-  setTimeout(() => document.addEventListener('click', closeMenu, { once: true }), 10);
-  menu.onclick = ev => {
-    const b = ev.target.closest('button'); if (!b) return;
-    const a = b.dataset.a; closeMenu();
-    if (a === 'ph') $('#phF').click();
-    else if (a === 'vd') $('#vdF').click();
-    else if (a === 'po') toast('Опрос в разработке');
-  };
+  socket.emit('sendMessage', payload);
+  $('#mi').value = '';
 };
+$('#mi').onkeydown = e => { if (e.key === 'Enter') $('#sb2').click(); };
 
-$('#phF').onchange = e => {
-  const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = () => { sendCurrent('', 'photo', { url: r.result }); };
-  r.readAsDataURL(f);
-  e.target.value = '';
-};
-$('#vdF').onchange = e => {
-  const f = e.target.files[0]; if (!f) return;
-  if (f.size > 15 * 1024 * 1024) return toast('Макс 15 МБ');
-  const r = new FileReader();
-  r.onload = () => { sendCurrent('', 'video', { url: r.result }); };
-  r.readAsDataURL(f);
-  e.target.value = '';
-};
+/* =========================================
+   ПРОФИЛЬ
+   ========================================= */
+function openProfile(code){
+  const f = state.friends.find(x => x.code === code) || state.user;
+  const online = state.online[f.code];
+  $('#profileContent').innerHTML = `
+    <div class="profile-top">
+      <div class="profile-avatar">${avFor(f.name, f.photo)}</div>
+      <div class="profile-name">${esc(f.name)}</div>
+      <div class="profile-status ${online ? 'online' : ''}">${online ? 'в сети' : 'был(а) недавно'}</div>
+    </div>
+    <div class="tg-section">
+      <div class="tg-row"><div class="tg-row-content"><div class="tg-row-main">${esc(f.name)}</div><div class="tg-row-sub">Имя</div></div></div>
+      <div class="tg-row"><div class="tg-row-content"><div class="tg-row-main">@${esc(f.code.toLowerCase())}</div><div class="tg-row-sub">Имя пользователя</div></div><div class="tg-row-icon">▦</div></div>
+      <div class="tg-row"><div class="tg-row-content"><div class="tg-row-main">${state.user.stars} ★</div><div class="tg-row-sub">Баланс</div></div><div class="tg-row-icon">⭐</div></div>
+    </div>
+    <div class="tg-section-title">Информация</div>
+    <div class="tg-section">
+      <div class="tg-row"><div class="tg-row-content"><div class="tg-row-main">Пользователь Volna</div><div class="tg-row-sub">О себе</div></div></div>
+      <div class="tg-row"><div class="tg-row-content"><div class="tg-row-main">${esc(f.code)}</div><div class="tg-row-sub">ID</div></div><div class="tg-row-icon">📅</div></div>
+    </div>
+  `;
+  $('#profileScreen').classList.remove('hidden');
+}
+function closeProfile(){ $('#profileScreen').classList.add('hidden'); }
+$('#profileBtn').onclick = () => openProfile(state.user.code);
 
+/* =========================================
+   МАГАЗИН
+   ========================================= */
+$('#starsBadge').onclick = () => {
+  $('#shopScreen').classList.remove('hidden');
+  switchShop('stars');
+};
+function switchShop(tab){
+  if (tab === 'stars') {
+    $('#tabStars').classList.add('active');
+    $('#tabPremium').classList.remove('active');
+    $('#viewStars').classList.remove('hidden');
+    $('#viewPremium').classList.add('hidden');
+  } else {
+    $('#tabPremium').classList.add('active');
+    $('#tabStars').classList.remove('active');
+    $('#viewPremium').classList.remove('hidden');
+    $('#viewStars').classList.add('hidden');
+  }
+}
+let pendingBuy = null;
+function buyStars(stars, price){
+  pendingBuy = { stars, price };
+  $('#payAmountDisplay').textContent = `${price} ₽ за ${stars} ★`;
+  $('#payModal').classList.remove('hidden');
+}
+function confirmPay(){
+  if (!pendingBuy) return;
+  socket.emit('requestStarPurchase', { stars: pendingBuy.stars, price: pendingBuy.price }, res => {
+    if (res.ok) toast('Заявка отправлена админу');
+    else toast('Ошибка');
+  });
+  $('#payModal').classList.add('hidden');
+  pendingBuy = null;
+}
+
+/* =========================================
+   МЕНЮ И ПРОЧЕЕ
+   ========================================= */
 $('#adBtn').onclick = e => { e.stopPropagation(); $('#adM').classList.toggle('hidden'); };
 document.addEventListener('click', e => { if (!e.target.closest('#adM') && !e.target.closest('#adBtn')) $('#adM').classList.add('hidden'); });
-
 $('#adM').onclick = e => {
   const b = e.target.closest('button'); if (!b) return;
-  const a = b.dataset.a; $('#adM').classList.add('hidden');
-  if (a === 'settings') document.getElementById('settingsModal').classList.remove('hidden');
-  else if (a === 'admin') { if (!state.user || !state.user.isAdmin) return toast('Только для админа'); openAdminPanel(); }
-  else if (a === 'requests') openRequestsPanel();
-  else if (a === 'nft') openNftGallery();
-  else if (a === 'group') openGroupModal();
-  else if (a === 'ex') exportData();
+  $('#adM').classList.add('hidden');
+  if (b.dataset.a === 'group') toast('Скоро');
+  else if (b.dataset.a === 'nft') toast('Скоро');
+  else if (b.dataset.a === 'settings') toast('Скоро');
 };
-
-document.querySelectorAll('.theme-btn').forEach(btn => {
-  btn.onclick = () => {
-    const theme = btn.dataset.theme;
-    document.body.setAttribute('data-theme', theme);
-    store.set('volna_theme', theme);
-    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    toast('Тема изменена');
-  };
-});
-document.querySelector('.theme-btn[data-theme="' + savedTheme + '"]') && document.querySelector('.theme-btn[data-theme="' + savedTheme + '"]').classList.add('active');
-
-document.getElementById('nftMintBtn').onclick = () => {
-  if (!state.user) return;
-  if (state.user.stars < NFT_COST && !state.user.isAdmin) return toast('Нужно ' + NFT_COST + ' ★');
-  if (!confirm('Создать NFT за ' + NFT_COST + ' ★?')) return;
-  const rarity = ['common','rare','epic','legendary','mythic'][Math.floor(Math.random() * 5)];
-  const name = 'NFT #' + Math.floor(Math.random() * 9000 + 1000);
-  socket.emit('mintNft', { name, rarity, cost: NFT_COST }, res => {
-    if (!res || !res.ok) return toast('Ошибка');
-    state.user.stars = res.stars;
-    document.getElementById('starCount').textContent = res.stars;
-    toast('NFT создан');
-    openNftGallery();
-  });
-};
-
-document.getElementById('starsBadge').addEventListener('click', () => {
-  if (!state.user) return;
-  document.getElementById('buyStarsModal').classList.remove('hidden');
-  document.getElementById('payQR').classList.add('hidden');
-  document.getElementById('buyConfirm').classList.add('hidden');
-});
-document.querySelectorAll('#buyStarsModal .pkg').forEach(btn => {
-  btn.onclick = () => {
-    const stars = +btn.dataset.stars, price = +btn.dataset.price;
-    document.getElementById('payQR').classList.remove('hidden');
-    document.getElementById('buyConfirm').classList.remove('hidden');
-    document.getElementById('payAmount').textContent = price + ' ₽ за ' + stars + ' ★';
-    const bc = document.getElementById('buyConfirm');
-    bc.textContent = state.user.isAdmin ? 'Начислить' : 'Я оплатил';
-    bc.dataset.stars = stars;
-    bc.dataset.price = price;
-    bc.dataset.mode = state.user.isAdmin ? 'admin' : 'pay';
-  };
-});
-document.getElementById('buyClose').onclick = () => document.getElementById('buyStarsModal').classList.add('hidden');
-document.getElementById('buyConfirm').onclick = () => {
-  const bc = document.getElementById('buyConfirm');
-  const stars = parseInt(bc.dataset.stars), mode = bc.dataset.mode;
-  if (mode === 'admin') {
-    socket.emit('buyStars', { stars, isAdmin: true }, res => {
-      if (res.ok) { state.user.stars = res.stars; document.getElementById('starCount').textContent = res.stars; toast('Начислено'); document.getElementById('buyStarsModal').classList.add('hidden'); }
-    });
-  } else {
-    socket.emit('requestStarPurchase', { stars, price: parseInt(bc.dataset.price) }, res => {
-      if (res.ok) { toast('Заявка отправлена'); document.getElementById('buyStarsModal').classList.add('hidden'); }
-    });
-  }
-};
-
-function openProfile(f){
-  socket.emit('getMyNfts', res => {
-    const myNfts = res.nfts || [];
-    const wornNftId = store.get('worn_nft_' + f.code, null);
-    const wornNft = myNfts.find(n => n.tokenId === wornNftId);
-    let nftHtml = '';
-    if (myNfts.length) {
-      nftHtml = '<h4 style="margin-top:16px;margin-bottom:8px;font-size:15px">Мои NFT</h4><div class="nft-grid">';
-      myNfts.forEach(n => {
-        const rar = NFT_RARITIES[n.rarity] || NFT_RARITIES.common;
-        const img = generateNftSvg(n.rarity, n.tokenId);
-        const isWorn = n.tokenId === wornNftId;
-        nftHtml += `<div class="nft-item ${isWorn ? 'worn' : ''}" onclick="wearNft('${f.code}', ${n.tokenId})"><div class="nft-art" style="background-image:url('${img}')"></div><div class="nft-name">${esc(n.name)}</div><div class="nft-rarity">${rar.label}</div></div>`;
-      });
-      nftHtml += '</div>';
-    } else nftHtml = '<p style="color:var(--text-secondary);font-size:14px;text-align:center;padding:20px">Нет NFT</p>';
-    $('#profileContent').innerHTML = `
-      <div class="profile-header">
-        <div class="profile-avatar">${wornNft ? `<img src="${generateNftSvg(wornNft.rarity, wornNft.tokenId)}" style="width:100%;height:100%;object-fit:cover">` : avFor(f.name, f.photo)}</div>
-        <div class="profile-name">${esc(f.name)}</div>
-        <div class="profile-code">${esc(f.code)}</div>
-      </div>
-      <div class="profile-stats">
-        <div class="profile-stat"><b>${state.friends.length}</b><span>друзей</span></div>
-        <div class="profile-stat"><b>${state.user.stars}</b><span>звёзд</span></div>
-      </div>
-      ${nftHtml}
-      <div class="ma2" style="margin-top:20px"><button class="btn secondary" id="profileClose">Закрыть</button></div>`;
-    document.getElementById('profileClose').onclick = () => document.getElementById('profileModal').classList.add('hidden');
-    document.getElementById('profileModal').classList.remove('hidden');
-  });
-}
-window.wearNft = function(userCode, tokenId){
-  store.set('worn_nft_' + userCode, tokenId);
-  toast('NFT надет');
-  openProfile({ code: userCode, name: state.user.name, photo: state.user.photo });
-};
-$('#profileBtn').onclick = () => { if (!state.user) return; openProfile({ code: state.user.code, name: state.user.name, photo: state.user.photo }); };
-
-function exportData(){
-  const data = { user: state.user, friends: state.friends, messages: state.messages };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'volna-export-' + Date.now() + '.json';
-  a.click();
-}
-
-// Поиск по чатам
 $('#sbSr').oninput = e => {
-  const q = e.target.value.toLowerCase().trim();
+  const q = e.target.value.toLowerCase();
   document.querySelectorAll('#fl .fr').forEach(el => {
-    const name = (el.querySelector('.fn')?.textContent || '').toLowerCase();
-    el.style.display = name.includes(q) ? '' : 'none';
-  });
-};
-
-// Настройки закрыть
-document.getElementById('settingsClose').onclick = () => document.getElementById('settingsModal').classList.add('hidden');
-document.getElementById('adminClose').onclick = () => document.getElementById('adminModal').classList.add('hidden');
-document.getElementById('requestsClose').onclick = () => document.getElementById('requestsModal').classList.add('hidden');
-document.getElementById('nftClose').onclick = () => document.getElementById('nftModal').classList.add('hidden');
-document.getElementById('groupCancel').onclick = () => document.getElementById('groupModal').classList.add('hidden');
-
-// Админ-панель (простая реализация)
-function openAdminPanel(){
-  const list = document.getElementById('adminUsersList');
-  if (!list) return;
-  const filter = (document.getElementById('adminSearch').value || '').toLowerCase();
-  const friends = state.friends.filter(f => !filter || f.name.toLowerCase().includes(filter) || f.code.toLowerCase().includes(filter));
-  list.innerHTML = friends.map(f => `
-    <div style="padding:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <div><b>${esc(f.name)}</b><div style="font-size:12px;color:var(--text-secondary)">${esc(f.code)}</div></div>
-      <div style="font-size:12px;color:${f.online ? 'var(--accent)' : 'var(--text-secondary)'}">${f.online ? 'онлайн' : 'офлайн'}</div>
-    </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--text-secondary)">Нет пользователей</div>';
-  document.getElementById('adminModal').classList.remove('hidden');
-}
-document.getElementById('adminSearch').oninput = () => openAdminPanel();
-
-// Группа
-function openGroupModal(){
-  const list = document.getElementById('groupMembers');
-  if (!list) return;
-  list.innerHTML = state.friends.map(f => `
-    <label style="padding:8px;display:flex;gap:8px;align-items:center;cursor:pointer">
-      <input type="checkbox" value="${esc(f.code)}"> <span>${esc(f.name)}</span>
-    </label>`).join('') || '<div style="padding:8px;color:var(--text-secondary);font-size:13px">Нет друзей</div>';
-  document.getElementById('groupName').value = '';
-  document.getElementById('groupModal').classList.remove('hidden');
-}
-document.getElementById('groupCreate').onclick = () => {
-  const name = document.getElementById('groupName').value.trim();
-  if (!name) return toast('Введите название');
-  const members = [...document.querySelectorAll('#groupMembers input:checked')].map(i => i.value);
-  if (!members.length) return toast('Выберите участников');
-  socket.emit('createGroup', { name, members }, res => {
-    if (!res || !res.ok) return toast('Ошибка');
-    if (!state.groups.find(g => g.id === res.group.id)) state.groups.push(res.group);
-    document.getElementById('groupModal').classList.add('hidden');
-    renderFriends();
-    toast('Группа создана');
+    el.style.display = el.querySelector('.fn').textContent.toLowerCase().includes(q) ? '' : 'none';
   });
 };
 </script>
