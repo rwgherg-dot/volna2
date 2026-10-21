@@ -1,160 +1,183 @@
-const express = require('express');
+// server.js
 const http = require('http');
-const path = require('path');
+const express = require('express');
 const { Server } = require('socket.io');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { maxHttpBufferSize: 20e6 });
-app.use(express.static(path.join(__dirname, 'public')));
+const io = new Server(server, { cors: { origin: '*' } });
 
-const users = {};
-const messages = {};
-const groups = {};
-const keyOf = (a, b) => [a, b].sort().join('|');
-const findSocket = (code) => {
-  const u = users[code];
-  return u && u.socketId ? io.sockets.sockets.get(u.socketId) : null;
-};
-const pub = (u) => ({ code: u.code, name: u.name, photo: u.photo, stars: u.stars, isAdmin: !!u.isAdmin });
-const pubF = (u) => ({ code: u.code, name: u.name, photo: u.photo, online: !!u.online });
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (_, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+const DB_FILE = path.join(__dirname, 'db.json');
+let db = { users: {}, messages: {}, groups: {} };
+if (fs.existsSync(DB_FILE)) {
+  try { db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); } catch (e) { console.error('DB load fail', e); }
+}
+const save = () => fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+const genId = () => Math.random().toString(36).slice(2, 10);
+
+// online: code -> socket.id
+const online = new Map();
+
+function publicUser(u) {
+  return { code: u.code, name: u.name, photo: u.photo || null, stars: u.stars || 0, online: online.has(u.code) };
+}
+function friendsOf(u) {
+  return (u.friends || []).map(c => db.users[c]).filter(Boolean).map(publicUser);
+}
+function groupsOf(u) {
+  return (u.groups || []).map(gid => db.groups[gid]).filter(Boolean).map(g => ({
+    id: g.id, name: g.name, members: g.members, photo: g.photo || null
+  }));
+}
 
 io.on('connection', (socket) => {
+  let myCode = null;
 
-  // ---------- РЕГИСТРАЦИЯ ----------
   socket.on('register', ({ code, name, pass, photo }, cb) => {
-    let u = users[code];
+    if (!code || !name || !pass) return cb?.({ ok: false, error: 'Missing fields' });
+    code = String(code).toUpperCase();
+    let u = db.users[code];
     if (u) {
-      if (u.pass !== pass) return cb({ ok: false, error: 'Неверный пароль' });
+      if (u.pass !== pass) return cb?.({ ok: false, error: 'Неверный пароль' });
       if (photo) u.photo = photo;
-      u.online = true;
-      u.socketId = socket.id;
     } else {
-      u = users[code] = {
-        code, name, pass, photo: photo || null,
-        stars: 100, friends: [], online: true, socketId: socket.id,
-        isAdmin: code === 'ADMIN' || code === 'ADMIN2'
-      };
+      u = { code, name, pass, photo: photo || null, stars: 0, friends: [], groups: [], createdAt: Date.now() };
+      db.users[code] = u;
+      save();
     }
-    socket.data.code = code;
-    const friends = u.friends.map(c => users[c]).filter(Boolean).map(pubF);
-    const myGroups = Object.values(groups).filter(g => g.members.includes(code));
-    cb({ ok: true, user: pub(u), friends, groups: myGroups });
-    u.friends.forEach(c => findSocket(c)?.emit('friendOnline', { code, online: true }));
-  });
+    myCode = code;
+    online.set(code, socket.id);
+    socket.join('user:' + code);
 
-  // ---------- ПОИСК ПОЛЬЗОВАТЕЛЕЙ ----------
-  socket.on('searchUsers', ({ query }, cb) => {
-    const me = socket.data.code;
-    if (!me) return cb({ ok: false });
-    const q = (query || '').toLowerCase().trim();
-    if (!q) return cb({ ok: true, users: [] });
-    const meUser = users[me];
-    const results = Object.values(users)
-      .filter(u => u.code !== me && !meUser.friends.includes(u.code))
-      .filter(u => u.name.toLowerCase().includes(q) || u.code.toLowerCase().includes(q))
-      .slice(0, 20)
-      .map(u => ({ ...pubF(u), isFriend: false }));
-    cb({ ok: true, users: results });
-  });
+    // уведомить друзей об онлайне
+    u.friends.forEach(c => {
+      const sid = online.get(c);
+      if (sid) io.to(sid).emit('friendOnline', { code, online: true });
+    });
 
-  // ---------- ДОБАВИТЬ ПО КОДУ ----------
-  socket.on('addFriendByCode', ({ code }, cb) => {
-    const me = socket.data.code;
-    if (!me) return cb({ ok: false });
-    const meUser = users[me];
-    const target = users[(code || '').toUpperCase().trim()];
-    if (!target) return cb({ ok: false, error: 'Пользователь не найден' });
-    if (target.code === me) return cb({ ok: false, error: 'Это вы' });
-    if (meUser.friends.includes(target.code)) return cb({ ok: false, error: 'Уже в друзьях' });
-    meUser.friends.push(target.code);
-    target.friends.push(meUser.code);
-    const selfData = pubF(meUser); selfData.online = true;
-    const targetData = pubF(target); targetData.online = !!target.online;
-    socket.emit('friendAdded', targetData);
-    findSocket(target.code)?.emit('friendAdded', selfData);
-    cb({ ok: true, friend: targetData });
-  });
-
-  // ---------- ИСТОРИЯ / СООБЩЕНИЯ ----------
-  socket.on('loadHistory', ({ withCode, groupId }, cb) => {
-    const me = socket.data.code;
-    if (!me) return cb({ history: [] });
-    const k = groupId || keyOf(me, withCode);
-    cb({ history: messages[k] || [] });
+    cb?.({
+      ok: true,
+      user: publicUser(u),
+      friends: friendsOf(u),
+      groups: groupsOf(u),
+    });
   });
 
   socket.on('sendMessage', (payload) => {
-    const from = socket.data.code;
-    if (!from) return;
+    if (!myCode) return;
     const msg = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      from, ts: Date.now(), ...payload
+      id: genId(),
+      from: myCode,
+      kind: payload.kind || 'text',
+      text: payload.text || '',
+      ts: Date.now(),
+      reactions: {},
     };
     if (payload.groupId) {
-      const g = groups[payload.groupId]; if (!g) return;
-      (messages[payload.groupId] = messages[payload.groupId] || []).push(msg);
-      g.members.forEach(c => { if (c !== from) findSocket(c)?.emit('newMessage', { from, message: msg }); });
+      const g = db.groups[payload.groupId];
+      if (!g || !g.members.includes(myCode)) return;
+      msg.groupId = payload.groupId;
+      (db.messages['g:' + payload.groupId] ||= []).push(msg);
+      save();
+      g.members.forEach(c => {
+        const sid = online.get(c);
+        if (sid) io.to(sid).emit('newMessage', { from: myCode, message: msg });
+      });
+      socket.emit('messageSent', { groupId: payload.groupId, message: msg });
     } else {
-      const k = keyOf(from, payload.to);
-      (messages[k] = messages[k] || []).push(msg);
-      findSocket(payload.to)?.emit('newMessage', { from, message: msg });
+      const to = String(payload.to || '').toUpperCase();
+      if (!db.users[to]) return;
+      msg.to = to;
+      (db.messages[myCode + ':' + to] ||= []).push(msg);
+      (db.messages[to + ':' + myCode] ||= []).push(msg);
+      save();
+      const sid = online.get(to);
+      if (sid) io.to(sid).emit('newMessage', { from: myCode, message: msg });
+      socket.emit('messageSent', { to, message: msg });
     }
-    socket.emit('messageSent', { to: payload.to, groupId: payload.groupId, message: msg });
   });
 
-  socket.on('markRead', ({ withCode }) => {
-    const me = socket.data.code;
-    if (!me || !withCode) return;
-    const k = keyOf(me, withCode);
-    (messages[k] || []).forEach(m => { if (m.from === withCode && !m.read_at) m.read_at = Date.now(); });
-    findSocket(withCode)?.emit('messagesRead', { by: me, at: Date.now() });
+  socket.on('loadHistory', ({ withCode, groupId }, cb) => {
+    if (groupId) {
+      cb?.({ history: db.messages['g:' + groupId] || [] });
+    } else {
+      const key = [myCode, withCode].sort().join(':');
+      cb?.({ history: db.messages[key] || [] });
+    }
   });
+
+  socket.on('markRead', () => {});
 
   socket.on('reactToMessage', ({ id, emoji }) => {
-    const me = socket.data.code;
-    for (const k in messages) {
-      const m = messages[k].find(x => x.id === id);
-      if (m) {
-        m.reactions = m.reactions || {};
-        m.reactions[emoji] = m.reactions[emoji] || [];
-        const idx = m.reactions[emoji].indexOf(me);
-        if (idx >= 0) m.reactions[emoji].splice(idx, 1);
-        else m.reactions[emoji].push(me);
-        if (!m.reactions[emoji].length) delete m.reactions[emoji];
-        io.emit('messageReacted', { id, reactions: m.reactions });
-        return;
-      }
+    if (!myCode) return;
+    let found = null, key = null;
+    for (const k of Object.keys(db.messages)) {
+      const m = db.messages[k].find(x => x.id === id);
+      if (m) { found = m; key = k; break; }
     }
+    if (!found) return;
+    found.reactions[emoji] ||= [];
+    const i = found.reactions[emoji].indexOf(myCode);
+    if (i >= 0) found.reactions[emoji].splice(i, 1);
+    else found.reactions[emoji].push(myCode);
+    if (!found.reactions[emoji].length) delete found.reactions[emoji];
+    save();
+
+    // Разослать всем участникам
+    const participants = new Set([found.from]);
+    if (found.groupId) {
+      db.groups[found.groupId].members.forEach(c => participants.add(c));
+    } else {
+      participants.add(found.to);
+    }
+    participants.forEach(c => {
+      const sid = online.get(c);
+      if (sid) io.to(sid).emit('messageReacted', { id, reactions: found.reactions });
+    });
   });
 
-  socket.on('typing', ({ to, groupId, typing }) => {
-    const me = socket.data.code;
-    if (groupId) {
-      groups[groupId]?.members.forEach(c => { if (c !== me) findSocket(c)?.emit('friendTyping', { from: me, groupId, typing }); });
-    } else if (to) {
-      findSocket(to)?.emit('friendTyping', { from: me, typing });
-    }
+  socket.on('searchUsers', ({ query }, cb) => {
+    const q = String(query || '').toLowerCase();
+    const users = Object.values(db.users)
+      .filter(u => u.code !== myCode && (u.name.toLowerCase().includes(q) || u.code.toLowerCase().includes(q)))
+      .slice(0, 20)
+      .map(publicUser);
+    cb?.({ ok: true, users });
   });
 
-  socket.on('createGroup', ({ name, members }, cb) => {
-    const me = socket.data.code;
-    if (!me || !name) return cb({ ok: false });
-    const id = 'g_' + Date.now().toString(36);
-    const all = Array.from(new Set([...(members || []), me]));
-    groups[id] = { id, name, members: all };
-    all.forEach(c => findSocket(c)?.emit('groupAdded', groups[id]));
-    cb({ ok: true, group: groups[id] });
+  socket.on('addFriendByCode', ({ code }, cb) => {
+    if (!myCode) return cb?.({ ok: false, error: 'Not registered' });
+    code = String(code || '').toUpperCase();
+    if (code === myCode) return cb?.({ ok: false, error: 'Это вы' });
+    const target = db.users[code];
+    if (!target) return cb?.({ ok: false, error: 'Пользователь не найден' });
+    const me = db.users[myCode];
+    if (!me.friends.includes(code)) me.friends.push(code);
+    if (!target.friends.includes(myCode)) target.friends.push(myCode);
+    save();
+
+    // Уведомить обе стороны
+    io.to(socket.id).emit('friendAdded', publicUser(target));
+    const sid = online.get(code);
+    if (sid) io.to(sid).emit('friendAdded', publicUser(me));
+
+    cb?.({ ok: true, friend: publicUser(target) });
   });
 
   socket.on('disconnect', () => {
-    const me = users[socket.data.code];
-    if (me && me.socketId === socket.id) {
-      me.online = false;
-      me.socketId = null;
-      me.friends.forEach(c => findSocket(c)?.emit('friendOnline', { code: me.code, online: false }));
-    }
+    if (!myCode) return;
+    if (online.get(myCode) === socket.id) online.delete(myCode);
+    const u = db.users[myCode];
+    if (u) u.friends.forEach(c => {
+      const sid = online.get(c);
+      if (sid) io.to(sid).emit('friendOnline', { code: myCode, online: false });
+    });
   });
 });
 
-server.listen(3000, () => console.log('Volna: http://localhost:3000'));
+server.listen(3000, () => console.log('Volna server on :3000'));
