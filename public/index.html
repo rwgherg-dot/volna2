@@ -23,16 +23,22 @@ button{font-family:inherit;cursor:pointer}
 @keyframes slideUp{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
 @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
 @keyframes floatUp{0%{transform:translate(-50%,-50%) scale(.3);opacity:1}50%{transform:translate(-50%,-80%) scale(1.3)}100%{transform:translate(-50%,-150%) scale(.8);opacity:0}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+.ic{width:22px;height:22px;display:inline-block;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ic.sm{width:18px;height:18px}
+.ic.lg{width:44px;height:44px;stroke-width:1.6}
+
 .auth-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bg);z-index:50}
 .auth{width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px;align-items:center;animation:fadeIn .3s}
-.logo{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#54a9eb,#3390ec);color:#fff;font-size:44px;display:flex;align-items:center;justify-content:center}
+.logo{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#54a9eb,#3390ec);color:#fff;display:flex;align-items:center;justify-content:center}
 .brand{font-size:30px;font-weight:700}
 .sub{color:var(--sec);font-size:15px;text-align:center}
-.avp{width:80px;height:80px;border-radius:50%;cursor:pointer;overflow:hidden;background:var(--hover);display:flex;align-items:center;justify-content:center;color:var(--sec);font-size:30px}
+.avp{width:80px;height:80px;border-radius:50%;cursor:pointer;overflow:hidden;background:var(--hover);display:flex;align-items:center;justify-content:center;color:var(--sec);position:relative}
 .avp img{width:100%;height:100%;object-fit:cover}
 .fld{width:100%;padding:14px 16px;border-radius:12px;background:var(--hover);border:1.5px solid transparent;transition:border-color .2s}
 .fld:focus{border-color:var(--accent)}
-.btn{width:100%;padding:13px;border-radius:12px;font-size:16px;font-weight:600;border:none;transition:transform .1s,opacity .2s}
+.btn{width:100%;padding:13px;border-radius:12px;font-size:16px;font-weight:600;border:none;transition:transform .1s,opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn:active{transform:scale(.97);opacity:.85}
 .btn.primary{background:var(--accent);color:#fff}
 .btn.secondary{background:var(--hover);color:var(--accent)}
@@ -40,11 +46,11 @@ button{font-family:inherit;cursor:pointer}
 #main{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--panel)}
 .top{display:flex;align-items:center;gap:10px;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top));min-height:56px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--border);z-index:20}
 .bsm{font-weight:700;font-size:21px}
-.stars{background:var(--hover);padding:5px 12px;border-radius:14px;font-size:14px;font-weight:600;color:var(--gold)}
-.ib{width:40px;height:40px;border-radius:50%;font-size:21px;display:flex;align-items:center;justify-content:center;color:var(--accent);background:none;border:none}
+.stars{background:var(--hover);padding:5px 12px;border-radius:14px;font-size:14px;font-weight:600;color:var(--gold);display:flex;align-items:center;gap:6px;cursor:pointer}
+.ib{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);background:none;border:none}
 .ib:active{background:var(--hover)}
-.dd{position:absolute;top:46px;right:0;background:var(--panel);border-radius:14px;padding:6px;display:flex;flex-direction:column;z-index:80;min-width:220px;box-shadow:0 8px 32px rgba(0,0,0,.2);border:.5px solid var(--border);animation:pop .15s;transform-origin:top right}
-.dd button{background:none;color:var(--text);padding:12px 14px;text-align:left;border-radius:8px;font-size:16px;border:none;display:flex;gap:12px}
+.dd{position:absolute;top:46px;right:0;background:var(--panel);border-radius:14px;padding:6px;display:flex;flex-direction:column;z-index:80;min-width:230px;box-shadow:0 8px 32px rgba(0,0,0,.2);border:.5px solid var(--border);animation:pop .15s;transform-origin:top right}
+.dd button{background:none;color:var(--text);padding:12px 14px;text-align:left;border-radius:8px;font-size:16px;border:none;display:flex;gap:12px;align-items:center}
 .dd button:hover{background:var(--hover)}
 .dd .sep{height:.5px;background:var(--border);margin:4px 0}
 
@@ -56,7 +62,7 @@ button{font-family:inherit;cursor:pointer}
 .fr{display:flex;align-items:center;gap:12px;padding:8px 12px;cursor:pointer}
 .fr:hover,.fr.act{background:var(--hover)}
 .avw{position:relative;flex-shrink:0}
-.av{width:54px;height:54px;border-radius:50%;overflow:hidden}
+.av{width:54px;height:54px;border-radius:50%;overflow:hidden;position:relative}
 .dot{position:absolute;bottom:1px;right:1px;width:14px;height:14px;border-radius:50%;background:#34c759;border:2.5px solid var(--panel)}
 .fi{flex:1;min-width:0}
 .fn{display:flex;justify-content:space-between;gap:8px;font-size:16px;font-weight:600}
@@ -66,11 +72,11 @@ button{font-family:inherit;cursor:pointer}
 
 #ca{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;background:var(--chat-bg)}
 .ch{display:flex;align-items:center;gap:10px;padding:6px 12px;min-height:56px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--border)}
-.avsm{width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0}
+.avsm{width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;position:relative}
 .cn{font-size:16px;font-weight:600}
 .cs{font-size:13px;color:var(--sec)}
 .cs.on{color:var(--accent)}
-.bk{display:none;background:none;border:none;color:var(--accent);font-size:26px;padding:4px 8px}
+.bk{display:none;background:none;border:none;color:var(--accent);padding:4px 8px}
 .msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:4px}
 .msg{display:flex;flex-direction:column;max-width:80%;animation:pop .15s}
 .msg.me{align-self:flex-end;align-items:flex-end}
@@ -82,29 +88,50 @@ button{font-family:inherit;cursor:pointer}
 .mt{font-size:12px;color:var(--sec);float:right;margin:6px 0 -2px 10px}
 .me .mt{color:var(--outt)}
 .rx{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
-.rx div{background:var(--panel);border:.5px solid var(--border);padding:2px 8px;border-radius:12px;font-size:13px}
+.rx div{background:var(--panel);border:.5px solid var(--border);padding:2px 8px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:4px}
+.rx .ic{width:14px;height:14px}
 .rmenu{position:fixed;background:var(--panel);border-radius:30px;padding:6px 10px;display:flex;gap:4px;box-shadow:0 8px 32px rgba(0,0,0,.3);z-index:250;animation:slideUp .15s}
-.rmenu span{font-size:26px;cursor:pointer;padding:4px;transition:transform .15s}
-.rmenu span:hover{transform:scale(1.2)}
-.heart{position:fixed;font-size:60px;pointer-events:none;z-index:260;animation:floatUp .8s ease-out forwards}
+.rmenu span{cursor:pointer;padding:6px;transition:transform .15s;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.rmenu span:hover{transform:scale(1.2);background:var(--hover)}
+.rmenu .ic{width:24px;height:24px}
+.heart{position:fixed;font-size:60px;pointer-events:none;z-index:260;animation:floatUp .8s ease-out forwards;color:#ff3b30}
+.heart .ic{width:60px;height:60px;stroke:#ff3b30;fill:#ff3b30}
 .cmp{display:flex;gap:8px;padding:8px 10px;padding-bottom:calc(8px + env(safe-area-inset-bottom));background:var(--panel);align-items:flex-end;border-top:.5px solid var(--border)}
 .mi{flex:1;padding:10px 14px;border-radius:20px;background:var(--hover);min-height:40px;max-height:120px;resize:none;line-height:1.35}
-.send{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;font-size:20px;border:none;flex-shrink:0}
+.send{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;border:none;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 #cempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--sec);background:var(--chat-bg)}
 #cempty span{background:rgba(0,0,0,.25);color:#fff;padding:6px 14px;border-radius:14px;font-size:14px}
 
-#profileScreen{position:fixed;inset:0;background:var(--hover);z-index:200;display:flex;flex-direction:column;animation:slideUp .2s}
+#profileScreen{position:fixed;inset:0;background:var(--hover);z-index:200;display:flex;flex-direction:column;animation:slideUp .2s;overflow:hidden}
 .nav{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));background:var(--glass);font-weight:600}
-.pt{display:flex;flex-direction:column;align-items:center;padding:20px 16px;background:var(--panel)}
-.pav{width:110px;height:110px;border-radius:50%;overflow:hidden;margin-bottom:12px}
+.pt{display:flex;flex-direction:column;align-items:center;padding:24px 16px 16px;background:var(--panel);position:relative}
+.pav{width:110px;height:110px;border-radius:50%;overflow:hidden;margin-bottom:12px;position:relative}
 .pn{font-size:22px;font-weight:600}
-.ps{font-size:15px;color:var(--sec)}.ps.on{color:var(--accent)}
+.ps{font-size:15px;color:var(--sec)}
+.ps.on{color:var(--accent)}
 .sec{margin:16px;background:var(--panel);border-radius:12px;overflow:hidden}
-.row{padding:12px 16px;border-bottom:.5px solid var(--border)}.row:last-child{border:none}
-.row div:first-child{font-size:16px}.row div:last-child{font-size:13px;color:var(--sec);margin-top:2px}
+.row{padding:12px 16px;border-bottom:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.row:last-child{border:none}
+.row .lbl{font-size:16px}
+.row .val{font-size:13px;color:var(--sec);margin-top:2px}
+.row .right{font-size:15px;color:var(--sec);display:flex;align-items:center;gap:6px}
+.gift-badge{position:absolute;right:-6px;bottom:-6px;width:44px;height:44px;border-radius:50%;background:var(--panel);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.gift-badge .ic{width:26px;height:26px}
+
+/* NFT */
+.nft-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;padding:12px}
+.nft-card{background:var(--panel);border-radius:14px;overflow:hidden;cursor:pointer;border:.5px solid var(--border);transition:transform .15s;position:relative}
+.nft-card:active{transform:scale(.96)}
+.nft-art{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef2ff,#fce7f3)}
+.nft-art svg{width:100%;height:100%;display:block}
+.nft-name{font-size:12px;padding:6px 8px;text-align:center;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nft-rar{position:absolute;top:6px;right:6px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(0,0,0,.6);color:#fff;letter-spacing:.5px}
+.nft-buy{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:14px;padding:4px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px}
+.nft-buy .ic{width:12px;height:12px;stroke:#ffd60a;fill:#ffd60a}
+
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:400;padding:16px}
 .modal.open{display:flex}
-.mc{width:100%;max-width:360px;background:var(--panel);border-radius:16px;padding:20px;animation:slideUp .2s;max-height:90vh;overflow-y:auto}
+.mc{width:100%;max-width:380px;background:var(--panel);border-radius:16px;padding:20px;animation:slideUp .2s;max-height:90vh;overflow-y:auto}
 .mtitle{font-size:20px;font-weight:700;text-align:center;margin-bottom:14px}
 .tabs{display:flex;background:var(--hover);border-radius:10px;padding:3px;margin-bottom:14px}
 .tab{flex:1;text-align:center;padding:8px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;color:var(--sec)}
@@ -113,39 +140,68 @@ button{font-family:inherit;cursor:pointer}
 .gm:hover{background:var(--hover)}
 .gm input{width:20px;height:20px;accent-color:var(--accent)}
 .gav{width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0}
-@media(max-width:700px){#sb{max-width:none}body.co2 #sb{display:none}body:not(.co2) #ca{display:none}.bk{display:block}}
+
+@media(max-width:700px){#sb{max-width:none}body.co2 #sb{display:none}body:not(.co2) #ca{display:none}.bk{display:flex}}
 </style>
 </head>
 <body data-theme="light">
 
+<!-- SVG-иконки в spрайт -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 17c2-3 4-3 6 0s4 3 6 0 4-3 6 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-friends" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M18 14.5c2.2.6 3.5 2.2 3.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14a8 8 0 1 1-9-9 6.5 6.5 0 0 0 9 9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-exit" viewBox="0 0 24 24"><path d="M14 4h5v16h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 12H3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 8l-3 4 3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4 4 0 0 1 12 7a4 4 0 0 1 7 3.5C19 15.6 12 20 12 20z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-fire" viewBox="0 0 24 24"><path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 1-5 0 1 1 2 2 2 0-2-1-3 1-5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-laugh" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 14s1.5 3 4 3 4-3 4-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 9h.01M15 9h.01" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-sad" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 16s1.5-2 4-2 4 2 4 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 9h.01M15 9h.01" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-party" viewBox="0 0 24 24"><path d="M4 20l4-12 8 8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 4l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-like" viewBox="0 0 24 24"><path d="M7 11v9H4v-9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7 11l4-7a2 2 0 0 1 3 2v4h4a2 2 0 0 1 2 2.3l-1.3 6A2 2 0 0 1 16.7 20H7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 20V5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M20 12H5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12l5 5 11-11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-diamond" viewBox="0 0 24 24"><path d="M12 3l9 6-9 12L3 9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 9h18M9 3l3 18M15 3l-3 18" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  </defs>
+</svg>
+
 <div id="authScr" class="auth-wrap">
   <div class="auth">
-    <div class="logo">🌊</div>
+    <div class="logo"><svg class="ic lg"><use href="#i-wave"/></svg></div>
     <h1 class="brand">Volna</h1>
     <p class="sub">Введите имя и пароль.<br>Новое имя — создастся аккаунт.</p>
-    <label class="avp"><img id="avPrev" alt="" class="hidden"><span id="avPlus">+</span><input type="file" id="phIn" accept="image/*" hidden></label>
+    <label class="avp"><img id="avPrev" alt="" class="hidden"><span id="avPlus"><svg class="ic"><use href="#i-plus"/></svg></span><input type="file" id="phIn" accept="image/*" hidden></label>
     <input id="nIn" class="fld" placeholder="Ваше имя" maxlength="24" autocomplete="off">
     <input id="pIn" class="fld" type="password" placeholder="Пароль" maxlength="64">
     <button id="aBtn" class="btn primary">Войти / Создать</button>
-    <button id="themeBtn" class="btn secondary" style="padding:10px;font-size:14px">Сменить тему</button>
+    <button id="themeBtn" class="btn secondary" style="padding:10px;font-size:14px"><svg class="ic sm"><use href="#i-moon"/></svg> Сменить тему</button>
   </div>
 </div>
 
 <div id="main" class="hidden">
   <header class="top">
     <div class="bsm">Volna</div>
-    <div class="stars">★ <span id="starCount">0</span></div>
+    <div class="stars" onclick="openStars()"><svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg><span id="starCount">0</span></div>
     <div style="margin-left:auto;position:relative;display:flex;gap:4px">
-      <button id="menuBtn" class="ib" style="color:var(--text)">☰</button>
-      <button id="profileBtn" class="ib">👤</button>
+      <button id="menuBtn" class="ib" style="color:var(--text)" aria-label="Меню"><svg class="ic"><use href="#i-menu"/></svg></button>
+      <button id="profileBtn" class="ib" aria-label="Профиль"><svg class="ic"><use href="#i-user"/></svg></button>
       <div id="adM" class="dd hidden">
-        <button data-a="addfriend">👥 Добавить друга</button>
+        <button data-a="addfriend"><svg class="ic sm"><use href="#i-friends"/></svg> Добавить друга</button>
+        <button data-a="group"><svg class="ic sm"><use href="#i-chat"/></svg> Создать группу</button>
         <div class="sep"></div>
-        <button data-a="group">💬 Создать группу</button>
+        <button data-a="nft"><svg class="ic sm"><use href="#i-diamond"/></svg> Мои NFT</button>
+        <button data-a="shop"><svg class="ic sm"><use href="#i-diamond"/></svg> Магазин NFT</button>
+        <button data-a="stars"><svg class="ic sm"><use href="#i-star"/></svg> Купить звёзды</button>
         <div class="sep"></div>
-        <button data-a="theme">🌓 Сменить тему</button>
-        <div class="sep"></div>
-        <button id="loBtn" style="color:var(--danger)">🚪 Выйти</button>
+        <button data-a="theme"><svg class="ic sm"><use href="#i-moon"/></svg> Сменить тему</button>
+        <button id="loBtn" style="color:var(--danger)"><svg class="ic sm"><use href="#i-exit"/></svg> Выйти</button>
       </div>
     </div>
   </header>
@@ -159,7 +215,7 @@ button{font-family:inherit;cursor:pointer}
       <div id="msgs" class="msgs"></div>
       <div class="cmp">
         <textarea id="mi" class="mi" placeholder="Сообщение" rows="1"></textarea>
-        <button id="sendBtn" class="send">↑</button>
+        <button id="sendBtn" class="send" aria-label="Отправить"><svg class="ic"><use href="#i-arrow-up"/></svg></button>
       </div>
       <div id="cempty"><span>Выберите чат, чтобы начать общение</span></div>
     </main>
@@ -167,10 +223,57 @@ button{font-family:inherit;cursor:pointer}
 </div>
 
 <div id="profileScreen" class="hidden">
-  <div class="nav"><button class="ib" id="profileBack">←</button><div>Профиль</div><div class="ib"></div></div>
+  <div class="nav"><button class="ib" id="profileBack" aria-label="Назад"><svg class="ic"><use href="#i-arrow-left"/></svg></button><div>Профиль</div><div class="ib"></div></div>
   <div id="profileContent" style="flex:1;overflow-y:auto"></div>
 </div>
 
+<!-- NFT коллекция -->
+<div id="nftScreen" class="hidden" style="position:fixed;inset:0;background:var(--hover);z-index:200;display:flex;flex-direction:column;animation:slideUp .2s">
+  <div class="nav"><button class="ib" onclick="closeNft()" aria-label="Назад"><svg class="ic"><use href="#i-arrow-left"/></svg></button><div>Мои NFT</div><div class="ib" onclick="openNftShop()" style="cursor:pointer" aria-label="Магазин"><svg class="ic"><use href="#i-diamond"/></svg></div></div>
+  <div style="flex:1;overflow-y:auto"><div id="nftGrid" class="nft-grid"></div></div>
+</div>
+
+<!-- Магазин NFT -->
+<div id="nftShopModal" class="modal"><div class="mc">
+  <h3 class="mtitle">Магазин NFT</h3>
+  <p class="sub" style="margin-bottom:12px;font-size:13px">Покупай уникальные подарки за звёзды. Каждый — с собственным кодом-рисунком.</p>
+  <div id="nftShopGrid" class="nft-grid" style="padding:0"></div>
+  <button class="btn secondary" onclick="closeNftShop()" style="margin-top:14px">Закрыть</button>
+</div></div>
+
+<!-- Просмотр NFT -->
+<div id="nftViewModal" class="modal"><div class="mc" style="max-width:320px;text-align:center">
+  <div id="nftViewArt" style="border-radius:16px;overflow:hidden;margin-bottom:14px;background:linear-gradient(135deg,#eef2ff,#fce7f3)"></div>
+  <div id="nftViewName" style="font-size:20px;font-weight:700"></div>
+  <div id="nftViewRar" class="sub" style="margin-top:4px;font-size:13px"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+    <button id="nftSetBtn" class="btn primary"><svg class="ic sm"><use href="#i-user"/></svg> Поставить в профиль</button>
+    <button id="nftSendBtn" class="btn secondary"><svg class="ic sm"><use href="#i-friends"/></svg> Отправить другу</button>
+    <button class="btn secondary" onclick="closeNftView()">Закрыть</button>
+  </div>
+</div></div>
+
+<!-- Выбор друга для отправки NFT -->
+<div id="nftSendModal" class="modal"><div class="mc">
+  <h3 class="mtitle">Кому отправить?</h3>
+  <div id="nftSendList" style="max-height:320px;overflow-y:auto;margin-bottom:12px"></div>
+  <button class="btn secondary" onclick="closeNftSend()">Отмена</button>
+</div></div>
+
+<!-- Звёзды -->
+<div id="starsModal" class="modal"><div class="mc">
+  <h3 class="mtitle">Звёзды</h3>
+  <p class="sub" style="margin-bottom:14px">Баланс: <b id="starsBalance">0</b></p>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+    <button class="btn secondary" onclick="buyStars(10)"><svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg> +10 — 10 ₽</button>
+    <button class="btn secondary" onclick="buyStars(50)"><svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg> +50 — 45 ₽</button>
+    <button class="btn secondary" onclick="buyStars(100)"><svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg> +100 — 80 ₽</button>
+  </div>
+  <p class="sub" style="font-size:12px;margin-bottom:10px">Демо-покупка: звёзды начисляются сразу.</p>
+  <button class="btn secondary" onclick="closeStars()">Закрыть</button>
+</div></div>
+
+<!-- Добавить друга -->
 <div id="addFriendModal" class="modal"><div class="mc">
   <h3 class="mtitle">Добавить друга</h3>
   <div class="tabs">
@@ -187,7 +290,7 @@ button{font-family:inherit;cursor:pointer}
     <p class="sub" style="margin-bottom:12px">Покажите этот QR-код другу</p>
     <div style="background:#fff;padding:12px;border-radius:16px;display:inline-block"><img id="myQrImg" alt="QR" style="width:180px;height:180px"></div>
     <div id="myCodeText" style="font-size:24px;font-weight:700;letter-spacing:2px;margin:12px 0 8px;color:var(--accent)">------</div>
-    <button class="btn secondary" onclick="copyMyCode()" style="padding:8px;font-size:14px">📋 Копировать код</button>
+    <button class="btn secondary" onclick="copyMyCode()" style="padding:8px;font-size:14px"><svg class="ic sm"><use href="#i-copy"/></svg> Копировать код</button>
   </div>
   <div id="viewScan" class="hidden">
     <div id="qrReader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:240px"></div>
@@ -196,6 +299,7 @@ button{font-family:inherit;cursor:pointer}
   <button class="btn secondary" onclick="closeAddFriend()" style="margin-top:14px">Закрыть</button>
 </div></div>
 
+<!-- Группа -->
 <div id="groupModal" class="modal"><div class="mc">
   <h3 class="mtitle">Создать группу</h3>
   <input id="grName" class="fld" placeholder="Название группы" maxlength="40" style="margin-bottom:12px">
@@ -225,6 +329,161 @@ function avFor(n,p){
   let x=0; for (const c of raw) x+=c.charCodeAt(0);
   return `<div style="width:100%;height:100%;background:${cs[x%cs.length]};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:20px">${esc(raw[0].toUpperCase())}</div>`;
 }
+
+/* ================= NFT ================= */
+// Каталог NFT. Каждый — уникальный SVG-рисунок, нарисованный кодом.
+// Редкость влияет на свечение рамки и цену.
+const NFT_CATALOG = [
+  {id:'wave-1', name:'Волна', rar:'common', price:5,
+    art:`<svg viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3390ec"/><stop offset="1" stop-color="#7bc862"/></linearGradient></defs><rect width="100" height="100" fill="url(#g1)"/><path d="M0 65 Q25 45 50 65 T100 65 V100 H0 Z" fill="#fff" opacity=".9"/><path d="M0 78 Q25 58 50 78 T100 78 V100 H0 Z" fill="#fff" opacity=".5"/></svg>`},
+  {id:'star-1', name:'Звезда', rar:'rare', price:25,
+    art:`<svg viewBox="0 0 100 100"><defs><radialGradient id="g2"><stop offset="0" stop-color="#fff8d0"/><stop offset="1" stop-color="#ffb400"/></radialGradient></defs><rect width="100" height="100" fill="#1a0033"/><circle cx="50" cy="50" r="42" fill="url(#g2)"/><path d="M50 20l7 20h21l-17 13 7 21-18-13-18 13 7-21-17-13h21z" fill="#fff" stroke="#ff8a00" stroke-width="2"/></svg>`},
+  {id:'diamond-1', name:'Алмаз', rar:'epic', price:60,
+    art:`<svg viewBox="0 0 100 100"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4ea4f6"/><stop offset=".5" stop-color="#b39ddb"/><stop offset="1" stop-color="#4ea4f6"/></linearGradient></defs><rect width="100" height="100" fill="#0b1020"/><polygon points="50,15 80,40 50,85 20,40" fill="url(#g3)" stroke="#fff" stroke-width="2"/><polygon points="20,40 50,40 50,85" fill="#fff" opacity=".25"/><polygon points="50,15 50,40 80,40" fill="#fff" opacity=".4"/></svg>`},
+  {id:'cat-1', name:'Кот', rar:'common', price:5,
+    art:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#fce7f3"/><circle cx="50" cy="55" r="28" fill="#333"/><polygon points="28,38 34,20 45,32" fill="#333"/><polygon points="72,38 66,20 55,32" fill="#333"/><circle cx="40" cy="52" r="4" fill="#fff"/><circle cx="60" cy="52" r="4" fill="#fff"/><path d="M46 66 Q50 70 54 66" stroke="#fff" stroke-width="2" fill="none"/></svg>`},
+  {id:'rocket-1', name:'Ракета', rar:'rare', price:25,
+    art:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0b1020"/><path d="M50 15 Q65 40 65 65 L50 80 L35 65 Q35 40 50 15Z" fill="#e5e5ea"/><circle cx="50" cy="45" r="7" fill="#4ea4f6"/><path d="M35 65 L25 78 L40 75Z" fill="#e17076"/><path d="M65 65 L75 78 L60 75Z" fill="#e17076"/><path d="M45 80 Q50 92 55 80" fill="#ffb400"/><circle cx="20" cy="20" r="1.5" fill="#fff"/><circle cx="80" cy="30" r="1" fill="#fff"/><circle cx="70" cy="15" r="1.5" fill="#fff"/></svg>`},
+  {id:'crown-1', name:'Корона', rar:'legendary', price:150,
+    art:`<svg viewBox="0 0 100 100"><defs><linearGradient id="g4"><stop offset="0" stop-color="#ffe066"/><stop offset="1" stop-color="#e6b800"/></linearGradient></defs><rect width="100" height="100" fill="#1a0033"/><path d="M20 75 L20 45 L35 58 L50 30 L65 58 L80 45 L80 75 Z" fill="url(#g4)" stroke="#fff" stroke-width="2"/><circle cx="50" cy="42" r="3" fill="#ff3b30"/><circle cx="30" cy="52" r="2" fill="#4ea4f6"/><circle cx="70" cy="52" r="2" fill="#4ea4f6"/><rect x="20" y="75" width="60" height="6" fill="#e6b800"/></svg>`},
+  {id:'heart-1', name:'Сердце', rar:'rare', price:25,
+    art:`<svg viewBox="0 0 100 100"><defs><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8fa3"/><stop offset="1" stop-color="#ff3b30"/></linearGradient></defs><rect width="100" height="100" fill="#fff0f3"/><path d="M50 82 L22 54 Q10 40 22 28 Q34 18 50 34 Q66 18 78 28 Q90 40 78 54 Z" fill="url(#g5)" stroke="#fff" stroke-width="2"/><circle cx="36" cy="38" r="4" fill="#fff" opacity=".6"/></svg>`},
+  {id:'moon-1', name:'Луна', rar:'epic', price:60,
+    art:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0b1020"/><circle cx="50" cy="50" r="34" fill="#fff8d0"/><circle cx="62" cy="42" r="30" fill="#0b1020"/><circle cx="30" cy="30" r="1.5" fill="#fff"/><circle cx="80" cy="70" r="1" fill="#fff"/><circle cx="20" cy="75" r="1.5" fill="#fff"/><circle cx="72" cy="22" r="1" fill="#fff"/></svg>`},
+];
+
+const RAR_STYLE = {
+  common:   {label:'COMMON',   ring:'#9aa0a6'},
+  rare:     {label:'RARE',     ring:'#4ea4f6'},
+  epic:     {label:'EPIC',     ring:'#b39ddb'},
+  legendary:{label:'LEGEND',   ring:'#ffb400'}
+};
+
+// Состояние NFT для пользователя: { owned: [ {id, uid, from} ], profileNft: uid|null }
+// Храним локально + синхронизируем с сервером при наличии.
+const nftState = {
+  owned: store.get('volna_nft', []),
+  profileNft: store.get('volna_nft_profile', null)
+};
+
+function saveNftState(){
+  store.set('volna_nft', nftState.owned);
+  store.set('volna_nft_profile', nftState.profileNft);
+}
+
+function nftById(id){ return NFT_CATALOG.find(n => n.id === id); }
+
+function nftArtHtml(id, size){
+  const n = nftById(id); if (!n) return '';
+  const s = size ? `width:${size}px;height:${size}px` : '';
+  return `<div style="${s};aspect-ratio:1;display:block">${n.art}</div>`;
+}
+
+function ownedUid(uid){ return nftState.owned.find(o => o.uid === uid); }
+
+function renderNftGrid(){
+  const grid = $('#nftGrid');
+  if (!nftState.owned.length){
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 16px;color:var(--sec)">Пока нет NFT.<br><br><button class="btn primary" style="max-width:220px;margin:0 auto" onclick="openNftShop()">Открыть магазин</button></div>';
+    return;
+  }
+  grid.innerHTML = nftState.owned.map(o => {
+    const n = nftById(o.id); if (!n) return '';
+    const r = RAR_STYLE[n.rar];
+    return `<div class="nft-card" onclick="openNftView('${o.uid}')">
+      <div class="nft-art">${n.art}</div>
+      <div class="nft-rar" style="background:${r.ring}">${r.label}</div>
+      <div class="nft-name">${esc(n.name)}</div>
+    </div>`;
+  }).join('');
+}
+
+function openNft(){
+  $('#nftScreen').classList.remove('hidden');
+  renderNftGrid();
+}
+function closeNft(){ $('#nftScreen').classList.add('hidden'); }
+
+function openNftShop(){
+  const grid = $('#nftShopGrid');
+  grid.innerHTML = NFT_CATALOG.map(n => {
+    const r = RAR_STYLE[n.rar];
+    return `<div class="nft-card">
+      <div class="nft-art">${n.art}</div>
+      <div class="nft-rar" style="background:${r.ring}">${r.label}</div>
+      <button class="nft-buy" onclick="buyNft('${n.id}')"><svg class="ic"><use href="#i-star"/></svg>${n.price}</button>
+      <div class="nft-name">${esc(n.name)}</div>
+    </div>`;
+  }).join('');
+  $('#nftShopModal').classList.add('open');
+}
+function closeNftShop(){ $('#nftShopModal').classList.remove('open'); }
+
+function buyNft(id){
+  const n = nftById(id); if (!n) return;
+  if (!state.user) return toast('Войдите');
+  if ((state.user.stars || 0) < n.price) return toast('Недостаточно звёзд');
+  // локально списываем и добавляем; на сервере — тот же вызов
+  socket.emit('buyNft', { nftId: id }, res => {
+    if (!res || !res.ok) return toast(res?.error || 'Ошибка покупки');
+    state.user.stars = res.stars;
+    $('#starCount').textContent = res.stars;
+    if (res.nft){
+      nftState.owned.push(res.nft);
+      saveNftState();
+      renderNftGrid();
+    }
+    toast('Куплено: ' + n.name);
+  });
+}
+
+function openNftView(uid){
+  const o = ownedUid(uid); if (!o) return;
+  const n = nftById(o.id); if (!n) return;
+  const r = RAR_STYLE[n.rar];
+  $('#nftViewArt').innerHTML = `<div style="width:220px;height:220px">${n.art}</div>`;
+  $('#nftViewName').textContent = n.name;
+  $('#nftViewRar').textContent = r.label;
+  $('#nftViewRar').style.color = r.ring;
+  $('#nftSetBtn').onclick = () => setProfileNft(uid);
+  $('#nftSendBtn').onclick = () => openNftSend(uid);
+  $('#nftViewModal').classList.add('open');
+}
+function closeNftView(){ $('#nftViewModal').classList.remove('open'); }
+
+function setProfileNft(uid){
+  nftState.profileNft = uid; saveNftState();
+  socket.emit('setProfileNft', { uid }, () => {});
+  toast('NFT установлен в профиль');
+  closeNftView();
+  renderProfileIfOpen();
+}
+
+function openNftSend(uid){
+  if (!state.friends.length) return toast('Сначала добавьте друзей');
+  $('#nftSendList').innerHTML = state.friends.map(f =>
+    `<div class="gm" onclick="confirmSendNft('${uid}','${esc(f.code)}')">
+      <div class="gav">${avFor(f.name,f.photo)}</div>
+      <div style="flex:1;font-weight:600;font-size:15px">${esc(f.name)}</div>
+    </div>`).join('');
+  $('#nftViewModal').classList.remove('open');
+  $('#nftSendModal').classList.add('open');
+}
+function closeNftSend(){ $('#nftSendModal').classList.remove('open'); }
+
+function confirmSendNft(uid, code){
+  socket.emit('sendNft', { uid, to: code }, res => {
+    if (!res || !res.ok) return toast(res?.error || 'Ошибка');
+    nftState.owned = nftState.owned.filter(o => o.uid !== uid);
+    if (nftState.profileNft === uid) nftState.profileNft = null;
+    saveNftState();
+    renderNftGrid();
+    closeNftSend();
+    toast('NFT отправлен');
+  });
+}
+
+/* ================= базовый стейт ================= */
 const applyTheme = t => { document.body.dataset.theme=t; store.set('volna_theme',t); };
 const toggleTheme = () => applyTheme(document.body.dataset.theme==='dark'?'light':'dark');
 applyTheme(store.get('volna_theme','light'));
@@ -263,6 +522,12 @@ socket.on('friendAdded', f => {
 socket.on('groupAdded', g => {
   if (!state.groups.find(x=>x.id===g.id)) { state.groups.push(g); renderFriends(); }
 });
+socket.on('nftReceived', ({nft}) => {
+  if (!nft) return;
+  nftState.owned.push(nft); saveNftState();
+  toast('Вам подарен NFT!');
+  if (!$('#nftScreen').classList.contains('hidden')) renderNftGrid();
+});
 
 function doRegister(code,name,pass,photo,silent){
   socket.emit('register',{code,name,pass,photo},res => {
@@ -273,6 +538,8 @@ function doRegister(code,name,pass,photo,silent){
     state.user=res.user; state.friends=res.friends||[]; state.groups=res.groups||[];
     state.friends.forEach(f=>state.online[f.code]=f.online);
     for (const k in (res.lasts||{})) if (!(state.messages[k]||[]).length) state.messages[k]=[res.lasts[k]];
+    if (Array.isArray(res.nft)) { nftState.owned = res.nft; saveNftState(); }
+    if (typeof res.profileNft !== 'undefined') { nftState.profileNft = res.profileNft; saveNftState(); }
     store.set('volna_profile',{code:res.user.code,name,pass,photo:res.user.photo});
     $('#authScr').classList.add('hidden'); $('#main').classList.remove('hidden');
     $('#starCount').textContent=res.user.stars;
@@ -292,7 +559,7 @@ $('#themeBtn').onclick = toggleTheme;
 $('#phIn').onchange = e => {
   const f=e.target.files[0]; if(!f) return;
   const img=new Image(), url=URL.createObjectURL(f);
-  img.onload = () => { // уменьшаем аватар до 256px
+  img.onload = () => {
     const c=document.createElement('canvas'), s=Math.min(256/img.width,256/img.height,1);
     c.width=img.width*s; c.height=img.height*s; c.getContext('2d').drawImage(img,0,0,c.width,c.height);
     state.pendingAvatar=c.toDataURL('image/jpeg',.8);
@@ -302,24 +569,24 @@ $('#phIn').onchange = e => {
   img.src=url;
 };
 
-/* ---------- список чатов ---------- */
+/* список чатов */
 const lastOf = c => { const a=state.messages[c]||[]; return a[a.length-1]; };
 function renderFriends(){
   const list=$('#fl'); if(!list||!state.user) return;
   const all=[...state.friends.map(f=>({...f,isGroup:false})),...state.groups.map(g=>({...g,isGroup:true,code:g.id}))];
   all.sort((a,b)=>(lastOf(b.code)?.ts||0)-(lastOf(a.code)?.ts||0));
   if (!all.length) {
-    list.innerHTML='<div style="text-align:center;padding:40px;color:var(--sec)">Нет чатов<br><br><button class="btn primary" onclick="openAddFriend()" style="max-width:200px;padding:10px">+ Добавить друга</button></div>';
+    list.innerHTML='<div style="text-align:center;padding:40px;color:var(--sec)">Нет чатов<br><br><button class="btn primary" onclick="openAddFriend()" style="max-width:200px;padding:10px;margin:0 auto">Добавить друга</button></div>';
     return;
   }
   list.innerHTML=all.map(f=>{
     const last=lastOf(f.code);
     let prev='Нет сообщений';
-    if (last) prev=(last.from===state.user.code?'Вы: ':'')+(last.text||'📎');
+    if (last) prev=(last.from===state.user.code?'Вы: ':'')+(last.text||'[файл]');
     const act=f.code===activeKey()?' act':'';
     return `<div class="fr${act}" data-code="${esc(f.code)}" onclick="${f.isGroup?'openGroup':'openChat'}('${esc(f.code)}')">
-      <div class="avw"><div class="av">${f.isGroup?avFor(f.name,null):avFor(f.name,f.photo)}</div>${!f.isGroup&&state.online[f.code]?'<div class="dot"></div>':''}</div>
-      <div class="fi"><div class="fn"><span>${f.isGroup?'👥 ':''}${esc(f.name)}</span><span class="ft">${last?fmtTime(last.ts):''}</span></div>
+      <div class="avw"><div class="av">${avFor(f.name,f.photo)}</div>${!f.isGroup&&state.online[f.code]?'<div class="dot"></div>':''}</div>
+      <div class="fi"><div class="fn"><span>${esc(f.name)}</span><span class="ft">${last?fmtTime(last.ts):''}</span></div>
       <div class="fl">${esc(prev).slice(0,80)}</div></div></div>`;
   }).join('');
   filterList();
@@ -330,7 +597,7 @@ function filterList(){
 }
 $('#sbSr').oninput = filterList;
 
-/* ---------- чаты ---------- */
+/* чаты */
 function openChat(code){
   if (!state.friends.find(x=>x.code===code)) return;
   state.activeChat=code; state.activeGroup=null; showChat();
@@ -347,16 +614,36 @@ function showChat(){
 }
 function closeChat(){ state.activeChat=state.activeGroup=null; document.body.classList.remove('co2'); $('#cempty').style.display=''; renderFriends(); }
 function updateChatHeader(){
-  const back='<button class="bk" onclick="closeChat()">←</button>';
+  const back='<button class="bk" onclick="closeChat()" aria-label="Назад"><svg class="ic"><use href="#i-arrow-left"/></svg></button>';
   if (state.activeChat){
     const f=state.friends.find(x=>x.code===state.activeChat); if(!f) return;
     const on=state.online[f.code];
-    $('#chd').innerHTML=`${back}<div class="avsm">${avFor(f.name,f.photo)}</div><div style="flex:1;cursor:pointer" onclick="openProfile('${esc(f.code)}')"><div class="cn">${esc(f.name)}</div><div class="cs ${on?'on':''}">${on?'в сети':'был(а) недавно'}</div></div>`;
+    const nft = getProfileNftFor(f.code);
+    $('#chd').innerHTML=`${back}<div class="avsm">${avFor(f.name,f.photo)}${nft?`<div style="position:absolute;right:-3px;bottom:-3px;width:18px;height:18px;border-radius:50%;overflow:hidden;border:1.5px solid var(--panel)">${nft.art}</div>`:''}</div><div style="flex:1;cursor:pointer" onclick="openProfile('${esc(f.code)}')"><div class="cn">${esc(f.name)}</div><div class="cs ${on?'on':''}">${on?'в сети':'был(а) недавно'}</div></div>`;
   } else if (state.activeGroup){
     const g=state.groups.find(x=>x.id===state.activeGroup); if(!g) return;
     $('#chd').innerHTML=`${back}<div class="avsm">${avFor(g.name,null)}</div><div style="flex:1"><div class="cn">${esc(g.name)}</div><div class="cs">${g.members.length} участников</div></div>`;
   }
 }
+function getProfileNftFor(code){
+  if (code === state.user?.code && nftState.profileNft){
+    const o = ownedUid(nftState.profileNft); return o ? nftById(o.id) : null;
+  }
+  // для друзей приходит с сервера в f.profileNftId
+  const f = state.friends.find(x=>x.code===code);
+  if (f && f.profileNftId) return nftById(f.profileNftId);
+  return null;
+}
+
+const REACTIONS = {
+  like:  '<svg class="ic"><use href="#i-like"/></svg>',
+  heart: '<svg class="ic" style="stroke:#ff3b30"><use href="#i-heart"/></svg>',
+  fire:  '<svg class="ic" style="stroke:#ff8a00"><use href="#i-fire"/></svg>',
+  laugh: '<svg class="ic" style="stroke:#ffb400"><use href="#i-laugh"/></svg>',
+  sad:   '<svg class="ic" style="stroke:#4ea4f6"><use href="#i-sad"/></svg>',
+  party: '<svg class="ic" style="stroke:#b39ddb"><use href="#i-party"/></svg>'
+};
+
 function renderMessages(){
   const key=activeKey(); if(!key) return;
   const ms=state.messages[key]||[], a=$('#msgs');
@@ -364,41 +651,40 @@ function renderMessages(){
   const nearBottom = a.scrollHeight-a.scrollTop-a.clientHeight<150;
   a.innerHTML=ms.map(m=>{
     const mine=m.from===state.user.code;
-    const rx=m.reactions&&Object.keys(m.reactions).length?'<div class="rx">'+Object.keys(m.reactions).map(e=>`<div>${e} ${m.reactions[e].length}</div>`).join('')+'</div>':'';
+    const rx=m.reactions&&Object.keys(m.reactions).length?'<div class="rx">'+Object.keys(m.reactions).map(k=>`<div>${REACTIONS[k]||''} ${m.reactions[k].length}</div>`).join('')+'</div>':'';
     const who=state.activeGroup&&!mine?`<div class="sn">${esc((state.friends.find(f=>f.code===m.from)||{}).name||m.from)}</div>`:'';
-    return `<div class="msg ${mine?'me':'th'}" data-id="${m.id}" ondblclick="quickReact(event,'${m.id}','❤️')" oncontextmenu="showReactionsMenu(event,'${m.id}');return false">
-      <div class="bub">${who}${esc(m.text||'')}<span class="mt">${fmtTime(m.ts)}${mine?' ✓✓':''}</span></div>${rx}</div>`;
+    return `<div class="msg ${mine?'me':'th'}" data-id="${m.id}" ondblclick="quickReact(event,'${m.id}')" oncontextmenu="showReactionsMenu(event,'${m.id}');return false">
+      <div class="bub">${who}${esc(m.text||'')}<span class="mt">${fmtTime(m.ts)}${mine?' <svg class="ic" style="width:12px;height:12px;stroke:var(--outt)"><use href="#i-check"/></svg>':''}</span></div>${rx}</div>`;
   }).join('');
   if (nearBottom || ms.length<=1 || ms[ms.length-1].from===state.user.code) a.scrollTop=a.scrollHeight;
 }
-function quickReact(e,id,emoji){
-  e.preventDefault(); socket.emit('reactToMessage',{id,emoji});
-  const h=document.createElement('div'); h.className='heart'; h.textContent=emoji;
+function quickReact(e,id){
+  e.preventDefault(); socket.emit('reactToMessage',{id,emoji:'heart'});
+  const h=document.createElement('div'); h.className='heart'; h.innerHTML=REACTIONS.heart;
   h.style.left=e.clientX+'px'; h.style.top=e.clientY+'px';
   document.body.appendChild(h); setTimeout(()=>h.remove(),800);
 }
 function showReactionsMenu(e,id){
   e.preventDefault(); document.querySelectorAll('.rmenu').forEach(m=>m.remove());
   const menu=document.createElement('div'); menu.className='rmenu';
-  menu.innerHTML=['👍','❤️','🔥','😂','😢','🎉'].map(em=>`<span data-em="${em}">${em}</span>`).join('');
+  menu.innerHTML=Object.entries(REACTIONS).map(([k,svg])=>`<span data-em="${k}" title="${k}">${svg}</span>`).join('');
   menu.onclick=ev=>{ const s=ev.target.closest('span[data-em]'); if(s){ socket.emit('reactToMessage',{id,emoji:s.dataset.em}); menu.remove(); } };
   menu.style.left=Math.max(8,Math.min(e.clientX,innerWidth-270))+'px';
   menu.style.top=Math.max(10,e.clientY-60)+'px';
   document.body.appendChild(menu);
   setTimeout(()=>{ const close=()=>{menu.remove();document.removeEventListener('click',close)}; document.addEventListener('click',close); },50);
 }
-/* долгое нажатие на телефоне = меню реакций, двойной тап = ❤️ */
 let lp, lastTap=0;
 $('#msgs').addEventListener('touchstart',e=>{
   const m=e.target.closest('.msg'); if(!m) return; const t=e.touches[0];
   const now=Date.now();
-  if (now-lastTap<300){ clearTimeout(lp); quickReact({preventDefault(){},clientX:t.clientX,clientY:t.clientY},m.dataset.id,'❤️'); lastTap=0; return; }
+  if (now-lastTap<300){ clearTimeout(lp); quickReact({preventDefault(){},clientX:t.clientX,clientY:t.clientY},m.dataset.id); lastTap=0; return; }
   lastTap=now;
   lp=setTimeout(()=>showReactionsMenu({preventDefault(){},clientX:t.clientX,clientY:t.clientY},m.dataset.id),500);
 },{passive:true});
 ['touchend','touchmove','touchcancel'].forEach(ev=>$('#msgs').addEventListener(ev,()=>clearTimeout(lp),{passive:true}));
 
-/* ---------- отправка ---------- */
+/* отправка */
 const mi=$('#mi');
 const autoResize=()=>{ mi.style.height='auto'; mi.style.height=Math.min(mi.scrollHeight,120)+'px'; };
 mi.addEventListener('input',autoResize);
@@ -413,23 +699,38 @@ function send(){
 $('#sendBtn').onclick=send;
 mi.onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } };
 
-/* ---------- меню ---------- */
+/* меню */
 $('#menuBtn').onclick=e=>{ e.stopPropagation(); $('#adM').classList.toggle('hidden'); };
 document.addEventListener('click',e=>{ if(!e.target.closest('#adM')&&!e.target.closest('#menuBtn')) $('#adM').classList.add('hidden'); });
 $('#adM').onclick=e=>{
   const b=e.target.closest('button'); if(!b) return; $('#adM').classList.add('hidden');
-  if (b.dataset.a==='addfriend') openAddFriend();
-  else if (b.dataset.a==='group') openGroupModal();
-  else if (b.dataset.a==='theme') toggleTheme();
+  const a=b.dataset.a;
+  if (a==='addfriend') openAddFriend();
+  else if (a==='group') openGroupModal();
+  else if (a==='theme') toggleTheme();
+  else if (a==='stars') openStars();
+  else if (a==='nft') openNft();
+  else if (a==='shop') openNftShop();
 };
 
-/* ---------- профиль ---------- */
-function profileHtml(u,self){
-  return `<div class="pt"><div class="pav">${avFor(u.name,u.photo)}</div><div class="pn">${esc(u.name)}</div>
-    <div class="ps ${u.online?'on':''}">${u.online?'в сети':'был(а) недавно'}</div></div>
-    <div class="sec"><div class="row"><div>${esc(u.name)}</div><div>Имя</div></div>
-    <div class="row"><div>${esc(u.code)}</div><div>Код пользователя</div></div>
-    ${self?`<div class="row"><div>${u.stars||0} ★</div><div>Баланс</div></div>`:''}</div>`;
+/* профиль */
+function profileHtml(u, self){
+  const nft = getProfileNftFor(u.code);
+  return `<div class="pt">
+    <div class="pav">${avFor(u.name,u.photo)}${nft?`<div class="gift-badge">${nft.art}</div>`:''}</div>
+    <div class="pn">${esc(u.name)}</div>
+    <div class="ps ${u.online?'on':''}">${u.online?'в сети':'был(а) недавно'}</div>
+  </div>
+  <div class="sec">
+    <div class="row"><div><div class="lbl">${esc(u.name)}</div><div class="val">Имя</div></div></div>
+    <div class="row"><div><div class="lbl">${esc(u.code)}</div><div class="val">Код</div></div></div>
+    ${self?`<div class="row"><div class="lbl">Баланс</div><div class="right"><svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg>${u.stars||0}</div></div>
+    <div class="row" onclick="openNft()" style="cursor:pointer"><div class="lbl">Мои NFT</div><div class="right">${nftState.owned.length} <svg class="ic sm"><use href="#i-arrow-right"/></svg></div></div>`:''}
+  </div>`;
+}
+function renderProfileIfOpen(){
+  if ($('#profileScreen').classList.contains('hidden') || !state.user) return;
+  $('#profileContent').innerHTML = profileHtml({...state.user, online:true}, true);
 }
 $('#profileBtn').onclick=()=>{ if(!state.user) return; $('#profileContent').innerHTML=profileHtml({...state.user,online:true},true); $('#profileScreen').classList.remove('hidden'); };
 $('#profileBack').onclick=()=>$('#profileScreen').classList.add('hidden');
@@ -439,7 +740,7 @@ function openProfile(code){
   $('#profileScreen').classList.remove('hidden');
 }
 
-/* ---------- друзья ---------- */
+/* друзья */
 function openAddFriend(){ $('#addFriendModal').classList.add('open'); switchAddTab('search'); }
 function closeAddFriend(){ $('#addFriendModal').classList.remove('open'); stopQRScanner(); }
 function switchAddTab(tab){
@@ -473,7 +774,7 @@ function searchFriend(){
       return `<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--hover);border-radius:10px;margin-bottom:8px">
         <div class="gav" style="width:44px;height:44px">${avFor(u.name,u.photo)}</div>
         <div style="flex:1;min-width:0"><div style="font-weight:600">${esc(u.name)}</div><div class="sub" style="font-size:13px;text-align:left">${esc(u.code)}</div></div>
-        ${isF?'<span class="sub" style="font-size:13px">уже друг</span>':`<button class="btn primary" style="width:auto;padding:8px 14px;font-size:14px" onclick="addFriendByCode('${esc(u.code)}')">+</button>`}</div>`;
+        ${isF?'<span class="sub" style="font-size:13px">уже друг</span>':`<button class="btn primary" style="width:auto;padding:8px 14px;font-size:14px" onclick="addFriendByCode('${esc(u.code)}')"><svg class="ic sm"><use href="#i-plus"/></svg></button>`}</div>`;
     }).join('');
   });
 }
@@ -500,7 +801,7 @@ function stopQRScanner(){
   try{ s.stop().then(()=>s.clear()).catch(()=>{}); }catch(e){}
 }
 
-/* ---------- группы ---------- */
+/* группы */
 function openGroupModal(){
   if(!state.friends.length) return toast('Сначала добавьте друзей');
   $('#grName').value=''; refreshGroupMembers(); $('#groupModal').classList.add('open');
@@ -519,7 +820,31 @@ function submitCreateGroup(){
     toast('Группа создана'); closeGroupModal();
   });
 }
-Object.assign(window,{openAddFriend,closeAddFriend,switchAddTab,copyMyCode,searchFriend,addFriendByCode,openChat,openGroup,closeChat,openProfile,quickReact,showReactionsMenu,submitCreateGroup,closeGroupModal});
+
+/* звёзды */
+function openStars(){
+  if (!state.user) return;
+  $('#starsBalance').textContent = state.user.stars || 0;
+  $('#starsModal').classList.add('open');
+}
+function closeStars(){ $('#starsModal').classList.remove('open'); }
+function buyStars(amount){
+  socket.emit('buyStars',{amount},res=>{
+    if (!res || !res.ok) return toast(res?.error||'Ошибка покупки');
+    state.user.stars = res.stars;
+    $('#starCount').textContent = res.stars;
+    $('#starsBalance').textContent = res.stars;
+    toast('Начислено '+amount+' звёзд');
+  });
+}
+
+Object.assign(window,{
+  openAddFriend,closeAddFriend,switchAddTab,copyMyCode,searchFriend,addFriendByCode,
+  openChat,openGroup,closeChat,openProfile,quickReact,showReactionsMenu,submitCreateGroup,closeGroupModal,
+  openStars,closeStars,buyStars,
+  openNft,closeNft,openNftShop,closeNftShop,buyNft,openNftView,closeNftView,setProfileNft,
+  openNftSend,closeNftSend,confirmSendNft
+});
 </script>
 </body>
 </html>
