@@ -1,515 +1,571 @@
-'use strict';
-
 const express = require('express');
 const http = require('http');
-const path = require('path');
-const fs = require('fs');
 const { Server } = require('socket.io');
+const Database = require('better-sqlite3');
+const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { maxHttpBufferSize: 30 * 1024 * 1024 });
+const io = new Server(server, { cors: { origin: '*', maxHttpBufferSize: 1e8 } });
 
-/* ========== СТАТИКА И ДИАГНОСТИКА ========== */
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Health check для Render
-app.get('/health', (req, res) => res.status(200).send('OK'));
+// ================== БАЗА ДАННЫХ ==================
+const db = new Database('volna.db');
+db.pragma('journal_mode = WAL');
 
-// Диагностика: список файлов рядом с server.js
-app.get('/debug', (req, res) => {
-  let files = [];
-  try { files = fs.readdirSync(__dirname); } catch (e) {}
-  res.json({
-    dir: __dirname,
-    files,
-    hasIndex: fs.existsSync(path.join(__dirname, 'index.html')),
-    port: process.env.PORT || 3000,
-    node: process.version
-  });
-});
+db.exec(`
+CREATE TABLE IF NOT EXISTS users (
+  code TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  pass TEXT NOT NULL,
+  photo TEXT,
+  stars INTEGER DEFAULT 0,
+  premium INTEGER DEFAULT 0,
+  premium_until INTEGER DEFAULT 0,
+  worn_gifts TEXT DEFAULT '[]',
+  my_gifts TEXT DEFAULT '[]',
+  is_admin INTEGER DEFAULT 0,
+  banned INTEGER DEFAULT 0,
+  created INTEGER DEFAULT (strftime('%s','now'))
+);
 
-// Главная страница
-app.get('/', (req, res) => {
-  const p = path.join(__dirname, 'index.html');
-  if (fs.existsSync(p)) return res.sendFile(p);
-  res.status(404).send('index.html не найден рядом с server.js');
-});
+CREATE TABLE IF NOT EXISTS friends (
+  user_code TEXT NOT NULL,
+  friend_code TEXT NOT NULL,
+  created INTEGER DEFAULT (strftime('%s','now')),
+  PRIMARY KEY (user_code, friend_code)
+);
 
-// Всё остальное — тоже index.html (SPA-фолбэк)
-app.get('*', (req, res) => {
-  const p = path.join(__dirname, 'index.html');
-  if (fs.existsSync(p)) return res.sendFile(p);
-  res.status(404).send('Not Found');
-});
+CREATE TABLE IF NOT EXISTS messages (
+  id TEXT PRIMARY KEY,
+  from_code TEXT NOT NULL,
+  to_code TEXT NOT NULL,
+  group_id TEXT,
+  kind TEXT DEFAULT 'text',
+  text TEXT,
+  data TEXT,
+  ts INTEGER DEFAULT (strftime('%s','now') * 1000),
+  read_at INTEGER DEFAULT 0,
+  reply_to TEXT,
+  edited INTEGER DEFAULT 0,
+  reactions TEXT DEFAULT '{}',
+  eph INTEGER DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_msg_to ON messages(to_code, ts);
+CREATE INDEX IF NOT EXISTS idx_msg_group ON messages(group_id, ts);
 
-/* ========== ХРАНИЛИЩЕ ========== */
-const DB_FILE = path.join(__dirname, 'db.json');
+CREATE TABLE IF NOT EXISTS groups_tbl (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  photo TEXT,
+  host_code TEXT NOT NULL,
+  members TEXT DEFAULT '[]',
+  created INTEGER DEFAULT (strftime('%s','now') * 1000)
+);
 
-let db = {
-  users: {},
-  friends: {},
-  groups: {},
-  messages: [],
-  gifts: [],
-  reviews: [],
-  stories: [],
-  purchaseRequests: []
-};
+CREATE TABLE IF NOT EXISTS reviews (
+  id TEXT PRIMARY KEY,
+  from_code TEXT NOT NULL,
+  to_code TEXT NOT NULL,
+  text TEXT NOT NULL,
+  ts INTEGER DEFAULT (strftime('%s','now') * 1000)
+);
 
-if (fs.existsSync(DB_FILE)) {
-  try { db = Object.assign(db, JSON.parse(fs.readFileSync(DB_FILE, 'utf8'))); }
-  catch (e) { console.error('DB load error', e); }
-}
-function save() {
-  fs.writeFile(DB_FILE, JSON.stringify(db, null, 2), (e) => {
-    if (e) console.error('DB save error', e);
-  });
-}
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
-function genCode() {
+CREATE TABLE IF NOT EXISTS stories (
+  id TEXT PRIMARY KEY,
+  author_code TEXT NOT NULL,
+  author_name TEXT NOT NULL,
+  media TEXT NOT NULL,
+  ts INTEGER DEFAULT (strftime('%s','now') * 1000)
+);
+`);
+
+const ADMIN_CODES = ['ADMIN', 'ADMIN2'];
+const ADMIN_PASSWORDS = { ADMIN: 'admin123', ADMIN2: 'admin456' };
+
+// ================== УТИЛИТЫ ==================
+const hashPass = s => crypto.createHash('sha256').update(s).digest('hex');
+const genCode = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let c;
-  do {
-    c = '';
-    for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
-  } while (db.users[c]);
-  return c;
-}
-function pubUser(u) {
+  let r = ''; for (let i = 0; i < 6; i++) r += chars[Math.floor(Math.random() * chars.length)];
+  return r;
+};
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+// ================== ONLINE ==================
+const onlineUsers = new Map(); // code -> socket.id
+
+function publicUser(code) {
+  const u = db.prepare('SELECT * FROM users WHERE code = ?').get(code);
+  if (!u) return null;
   return {
-    code: u.code,
-    name: u.name,
-    photo: u.photo || null,
-    stars: u.stars || 0,
-    premium: !!(u.premiumUntil && u.premiumUntil > Date.now()),
-    premiumUntil: u.premiumUntil || 0,
-    isAdmin: !!u.isAdmin,
-    online: online.has(u.code)
+    code: u.code, name: u.name, photo: u.photo,
+    stars: u.stars,
+    premium: !!(u.premium && u.premium_until > Date.now()),
+    premiumUntil: u.premium_until,
+    wornGifts: JSON.parse(u.worn_gifts || '[]'),
+    myGifts: JSON.parse(u.my_gifts || '[]'),
+    isAdmin: !!u.is_admin,
+    online: onlineUsers.has(u.code)
   };
 }
 
-/* ========== ONLINE ========== */
-const online = new Set();
-const sockets = new Map();
-function emitTo(code, event, data) {
-  const set = sockets.get(code);
-  if (set) set.forEach((id) => io.to(id).emit(event, data));
-}
-function broadcastAdmins(event, data) {
-  for (const c in db.users) if (db.users[c].isAdmin) emitTo(c, event, data);
+function notifyFriends(code, event, payload) {
+  const friends = db.prepare('SELECT friend_code FROM friends WHERE user_code = ?').all(code);
+  friends.forEach(f => {
+    const sid = onlineUsers.get(f.friend_code);
+    if (sid) io.to(sid).emit(event, payload);
+  });
 }
 
-/* ========== SOCKET ========== */
-io.on('connection', (socket) => {
-  let myCode = null;
+function notifyGroupMembers(groupId, event, payload, exceptCode) {
+  const g = db.prepare('SELECT members FROM groups_tbl WHERE id = ?').get(groupId);
+  if (!g) return;
+  const members = JSON.parse(g.members || '[]');
+  members.forEach(m => {
+    if (m.code === exceptCode) return;
+    const sid = onlineUsers.get(m.code);
+    if (sid) io.to(sid).emit(event, payload);
+  });
+}
 
+function msgForClient(m) {
+  return {
+    id: m.id, from: m.from_code,
+    to: m.to_code, groupId: m.group_id,
+    kind: m.kind, text: m.text,
+    data: m.data ? JSON.parse(m.data) : null,
+    ts: m.ts, read_at: m.read_at,
+    reply_to: m.reply_to, edited: !!m.edited,
+    reactions: JSON.parse(m.reactions || '{}'),
+    eph: m.eph
+  };
+}
+
+io.on('connection', socket => {
+
+  // ============ РЕГИСТРАЦИЯ ============
   socket.on('register', ({ code, name, pass, photo }, cb) => {
     try {
-      let user = code && db.users[code];
+      const isAdmin = ADMIN_CODES.includes(code);
+      let user = db.prepare('SELECT * FROM users WHERE code = ?').get(code);
 
-      if (!user) {
-        const byName = Object.values(db.users).find(
-          (u) => u.name.toLowerCase() === (name || '').toLowerCase()
-        );
-        if (byName) {
-          if (byName.pass !== pass) return cb({ ok: false, error: 'Неверный пароль' });
-          if (byName.banned) return cb({ ok: false, error: 'Вы забанены' });
-          user = byName;
+      if (user && user.banned) {
+        return cb({ ok: false, error: '🚫 Вы забанены' });
+      }
+
+      if (user) {
+        if (user.pass !== hashPass(pass) && !(isAdmin && ADMIN_PASSWORDS[code] === pass)) {
+          return cb({ ok: false, error: 'Неверный пароль' });
         }
+        db.prepare('UPDATE users SET name = ?, photo = ? WHERE code = ?').run(name, photo, code);
       } else {
-        if (user.pass !== pass) return cb({ ok: false, error: 'Неверный пароль' });
-        if (user.banned) return cb({ ok: false, error: 'Вы забанены' });
+        if (isAdmin) {
+          if (ADMIN_PASSWORDS[code] !== pass) return cb({ ok: false, error: 'Неверный пароль админа' });
+        }
+        db.prepare(`INSERT INTO users (code, name, pass, photo, stars, premium, premium_until, is_admin)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
+          code, name, hashPass(pass), photo,
+          isAdmin ? 1000000 : 0,
+          isAdmin ? 1 : 0,
+          isAdmin ? Date.now() + 1000 * 60 * 60 * 24 * 365 * 10 : 0,
+          isAdmin ? 1 : 0
+        );
       }
 
-      if (!user) {
-        let newCode = (name === 'ADMIN' || name === 'ADMIN2') ? name : genCode();
-        if (db.users[newCode]) newCode = genCode();
-        user = {
-          code: newCode,
-          name,
-          pass,
-          photo: photo || null,
-          stars: 0,
-          premiumUntil: 0,
-          isAdmin: name === 'ADMIN' || name === 'ADMIN2',
-          banned: false,
-          createdAt: Date.now()
-        };
-        db.users[newCode] = user;
-        db.friends[newCode] = [];
-        save();
-      } else {
-        if (photo) user.photo = photo;
-        if (!db.friends[user.code]) db.friends[user.code] = [];
-        save();
-      }
+      socket.data.code = code;
+      onlineUsers.set(code, socket.id);
 
-      myCode = user.code;
-      socket.code = user.code;
-      if (!sockets.has(myCode)) sockets.set(myCode, new Set());
-      sockets.get(myCode).add(socket.id);
-      online.add(myCode);
+      const me = publicUser(code);
+      const friends = db.prepare('SELECT friend_code FROM friends WHERE user_code = ?').all(code)
+        .map(f => publicUser(f.friend_code)).filter(Boolean);
+      const stories = db.prepare('SELECT * FROM stories WHERE ts > ?').all(Date.now() - 24 * 60 * 60 * 1000);
+      const groups = db.prepare('SELECT * FROM groups_tbl').all()
+        .filter(g => JSON.parse(g.members || '[]').some(m => m.code === code))
+        .map(g => ({ id: g.id, name: g.name, photo: g.photo, hostCode: g.host_code, members: JSON.parse(g.members || '[]') }));
 
-      const friends = (db.friends[myCode] || [])
-        .map((c) => db.users[c] ? pubUser(db.users[c]) : null)
-        .filter(Boolean);
-      const groups = Object.values(db.groups).filter((g) => g.members.includes(myCode));
-      const stories = db.stories.filter((s) => Date.now() - s.ts < 86400000);
+      cb({ ok: true, user: me, friends, stories, groups });
 
-      cb({ ok: true, user: pubUser(user), friends, groups, stories });
-
-      friends.forEach((f) => emitTo(f.code, 'friendOnline', { code: myCode, online: true }));
+      notifyFriends(code, 'friendOnline', { code, online: true });
     } catch (e) {
       console.error(e);
-      cb({ ok: false, error: 'Ошибка сервера' });
+      cb({ ok: false, error: e.message });
     }
   });
 
-  /* ---------- ДРУЗЬЯ ---------- */
+  // ============ ОБНОВИТЬ ПРОФИЛЬ ============
+  socket.on('updateProfile', ({ name, photo }) => {
+    const code = socket.data.code; if (!code) return;
+    db.prepare('UPDATE users SET name = ?, photo = ? WHERE code = ?').run(name, photo, code);
+    notifyFriends(code, 'friendProfile', { code, name, photo });
+  });
+
+  // ============ ПОИСК ============
+  socket.on('searchUsers', ({ query }, cb) => {
+    const q = (query || '').toLowerCase().trim();
+    if (!q) return cb({ results: [] });
+    const rows = db.prepare('SELECT * FROM users WHERE LOWER(name) LIKE ? AND banned = 0 LIMIT 30').all('%' + q + '%');
+    cb({ results: rows.map(publicUser) });
+  });
+
+  socket.on('getAllUsers', cb => {
+    const code = socket.data.code;
+    if (!ADMIN_CODES.includes(code)) return cb({ ok: false });
+    const rows = db.prepare('SELECT * FROM users ORDER BY created DESC').all();
+    cb({ ok: true, users: rows.map(publicUser) });
+  });
+
+  // ============ ДРУЗЬЯ ============
   socket.on('addFriend', ({ friendCode }, cb) => {
-    if (!myCode) return cb({ ok: false, error: 'Нет авторизации' });
-    const target = db.users[friendCode];
-    if (!target) return cb({ ok: false, error: 'Пользователь не найден' });
-    if (target.code === myCode) return cb({ ok: false, error: 'Это вы' });
-
-    db.friends[myCode] = db.friends[myCode] || [];
-    db.friends[target.code] = db.friends[target.code] || [];
-    if (!db.friends[myCode].includes(target.code)) db.friends[myCode].push(target.code);
-    if (!db.friends[target.code].includes(myCode)) db.friends[target.code].push(myCode);
-    save();
-
-    emitTo(target.code, 'friendAdded', pubUser(db.users[myCode]));
-    cb({ ok: true, friend: pubUser(target) });
+    const code = socket.data.code;
+    if (code === friendCode) return cb({ ok: false, error: 'Это ваш код' });
+    const target = db.prepare('SELECT * FROM users WHERE code = ?').get(friendCode);
+    if (!target) return cb({ ok: false, error: 'Не найден' });
+    db.prepare('INSERT OR IGNORE INTO friends (user_code, friend_code) VALUES (?, ?)').run(code, friendCode);
+    db.prepare('INSERT OR IGNORE INTO friends (user_code, friend_code) VALUES (?, ?)').run(friendCode, code);
+    cb({ ok: true, friend: publicUser(friendCode) });
+    const sid = onlineUsers.get(friendCode);
+    if (sid) io.to(sid).emit('friendAdded', publicUser(code));
   });
 
   socket.on('forceAddFriend', ({ targetCode }, cb) => {
-    const me = db.users[myCode];
-    if (!me || !me.isAdmin) return cb({ ok: false, error: 'Нет прав' });
-    const target = db.users[targetCode];
-    if (!target) return cb({ ok: false, error: 'Не найден' });
-    db.friends[myCode] = db.friends[myCode] || [];
-    db.friends[target.code] = db.friends[target.code] || [];
-    if (!db.friends[myCode].includes(target.code)) db.friends[myCode].push(target.code);
-    if (!db.friends[target.code].includes(myCode)) db.friends[target.code].push(myCode);
-    save();
-    cb({ ok: true, friend: pubUser(target) });
+    const code = socket.data.code;
+    if (!ADMIN_CODES.includes(code)) return cb({ ok: false, error: 'Только для админа' });
+    db.prepare('INSERT OR IGNORE INTO friends (user_code, friend_code) VALUES (?, ?)').run(code, targetCode);
+    db.prepare('INSERT OR IGNORE INTO friends (user_code, friend_code) VALUES (?, ?)').run(targetCode, code);
+    cb({ ok: true, friend: publicUser(targetCode) });
+    const sid = onlineUsers.get(targetCode);
+    if (sid) io.to(sid).emit('friendAdded', publicUser(code));
   });
 
-  socket.on('searchUsers', ({ query }, cb) => {
-    const q = (query || '').toLowerCase();
-    const results = Object.values(db.users)
-      .filter((u) => u.code !== myCode && u.name.toLowerCase().includes(q))
-      .slice(0, 30)
-      .map(pubUser);
-    cb({ results });
+  // ============ ГРУППЫ ============
+  socket.on('createGroup', ({ name, photo, members }, cb) => {
+    const code = socket.data.code;
+    const id = code + '-' + genCode().slice(0, 4);
+    const me = publicUser(code);
+    const membersList = [{ code, name: me.name, photo: me.photo }, ...members];
+    db.prepare('INSERT INTO groups_tbl (id, name, photo, host_code, members) VALUES (?, ?, ?, ?, ?)')
+      .run(id, name, photo || null, code, JSON.stringify(membersList));
+    const g = { id, name, photo, hostCode: code, members: membersList };
+    membersList.forEach(m => {
+      const sid = onlineUsers.get(m.code);
+      if (sid) io.to(sid).emit('groupAdded', g);
+    });
+    cb({ ok: true, group: g });
   });
 
-  socket.on('getAllUsers', (cb) => {
-    const me = db.users[myCode];
-    if (!me || !me.isAdmin) return cb({ ok: false });
-    cb({ ok: true, users: Object.values(db.users).map(pubUser) });
+  socket.on('joinGroup', ({ groupId }, cb) => {
+    const code = socket.data.code;
+    const g = db.prepare('SELECT * FROM groups_tbl WHERE id = ?').get(groupId);
+    if (!g) return cb({ ok: false, error: 'Группа не найдена' });
+    const members = JSON.parse(g.members || '[]');
+    if (!members.find(m => m.code === code)) {
+      const me = publicUser(code);
+      members.push({ code, name: me.name, photo: me.photo });
+      db.prepare('UPDATE groups_tbl SET members = ? WHERE id = ?').run(JSON.stringify(members), groupId);
+    }
+    cb({ ok: true, group: { id: g.id, name: g.name, photo: g.photo, hostCode: g.host_code, members } });
   });
 
-  /* ---------- ГРУППЫ ---------- */
-  socket.on('createGroup', ({ name, members }, cb) => {
-    if (!myCode) return cb({ ok: false });
-    const id = 'g_' + uid();
-    const memberCodes = [...new Set([myCode, ...members.map((m) => m.code)])];
-    const group = { id, name, photo: null, owner: myCode, members: memberCodes, createdAt: Date.now() };
-    db.groups[id] = group;
-    save();
-    memberCodes.forEach((c) => emitTo(c, 'groupAdded', group));
-    cb({ ok: true, group });
-  });
-
-  /* ---------- ИСТОРИЯ ---------- */
+  // ============ ИСТОРИЯ ============
   socket.on('loadHistory', ({ withCode, groupId }, cb) => {
-    let history = [];
+    const code = socket.data.code;
+    let rows;
     if (groupId) {
-      history = db.messages.filter((m) => m.groupId === groupId);
-    } else if (withCode) {
-      history = db.messages.filter(
-        (m) => (m.from === myCode && m.to === withCode) || (m.from === withCode && m.to === myCode)
-      );
+      rows = db.prepare('SELECT * FROM messages WHERE group_id = ? ORDER BY ts ASC LIMIT 500').all(groupId);
+    } else {
+      rows = db.prepare(`SELECT * FROM messages WHERE group_id IS NULL AND
+        ((from_code = ? AND to_code = ?) OR (from_code = ? AND to_code = ?))
+        ORDER BY ts ASC LIMIT 500`).all(code, withCode, withCode, code);
     }
-    if (withCode) {
-      const now = Date.now();
-      history.forEach((m) => {
-        if (m.from === withCode && m.to === myCode && !m.read_at) m.read_at = now;
-      });
-      save();
-      emitTo(withCode, 'messagesRead', { by: myCode, at: now });
-    }
-    cb({ history });
+    cb({ history: rows.map(msgForClient) });
   });
 
-  /* ---------- СООБЩЕНИЯ ---------- */
-  socket.on('sendMessage', (payload) => {
-    if (!myCode) return;
-    const msg = {
-      id: uid(),
-      from: myCode,
-      to: payload.to || null,
-      groupId: payload.groupId || null,
-      kind: payload.kind || 'text',
-      text: payload.text || '',
-      data: payload.data || null,
-      ts: Date.now(),
-      read_at: null,
-      edited: false,
-      reactions: {},
-      replyTo: payload.replyTo || null,
-      eph: payload.eph || 0
-    };
-    db.messages.push(msg);
-    save();
+  // ============ ОТПРАВКА СООБЩЕНИЯ ============
+  socket.on('sendMessage', ({ to, groupId, kind, text, data, replyTo, eph }) => {
+    const from = socket.data.code; if (!from) return;
+    const id = uid();
+    const ts = Date.now();
+    db.prepare(`INSERT INTO messages (id, from_code, to_code, group_id, kind, text, data, ts, reply_to, eph)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(id, from, to || '', groupId || null, kind || 'text', text || '',
+        data ? JSON.stringify(data) : null, ts, replyTo || null, eph || 0);
+    const row = db.prepare('SELECT * FROM messages WHERE id = ?').get(id);
+    const msg = msgForClient(row);
 
-    if (msg.groupId) {
-      const g = db.groups[msg.groupId];
-      if (g) g.members.forEach((c) => { if (c !== myCode) emitTo(c, 'newMessage', { from: myCode, message: msg }); });
-      emitTo(myCode, 'messageSent', { groupId: msg.groupId, message: msg });
+    if (groupId) {
+      notifyGroupMembers(groupId, 'newMessage', { groupId, message: msg });
+      const sid = onlineUsers.get(from);
+      if (sid) io.to(sid).emit('messageSent', { groupId, message: msg });
     } else {
-      emitTo(msg.to, 'newMessage', { from: myCode, message: msg });
-      emitTo(myCode, 'messageSent', { to: msg.to, message: msg });
+      const sid = onlineUsers.get(to);
+      if (sid) io.to(sid).emit('newMessage', { from, message: msg });
+      socket.emit('messageSent', { to, message: msg });
+    }
+
+    if (eph > 0) {
+      setTimeout(() => {
+        db.prepare('DELETE FROM messages WHERE id = ?').run(id);
+        if (groupId) notifyGroupMembers(groupId, 'messageDeleted', { groupId, id });
+        else {
+          const sid = onlineUsers.get(to);
+          if (sid) io.to(sid).emit('messageDeleted', { from, id });
+          socket.emit('messageDeleted', { to, id });
+        }
+      }, eph * 1000);
+    }
+  });
+
+  // ============ РЕДАКТИРОВАНИЕ ============
+  socket.on('editMessage', ({ id, text }) => {
+    const from = socket.data.code;
+    const row = db.prepare('SELECT * FROM messages WHERE id = ?').get(id);
+    if (!row || row.from_code !== from) return;
+    db.prepare('UPDATE messages SET text = ?, edited = 1 WHERE id = ?').run(text, id);
+    const payload = { id, text, edited: true };
+    if (row.group_id) notifyGroupMembers(row.group_id, 'messageEdited', payload);
+    else {
+      const sid = onlineUsers.get(row.to_code);
+      if (sid) io.to(sid).emit('messageEdited', payload);
+      socket.emit('messageEdited', payload);
     }
   });
 
   socket.on('deleteMessage', ({ id }) => {
-    const idx = db.messages.findIndex((m) => m.id === id && m.from === myCode);
-    if (idx === -1) return;
-    const m = db.messages[idx];
-    db.messages.splice(idx, 1);
-    save();
-    if (m.groupId) {
-      const g = db.groups[m.groupId];
-      if (g) g.members.forEach((c) => emitTo(c, 'messageDeleted', { from: m.from, groupId: m.groupId, id }));
-    } else {
-      emitTo(m.to, 'messageDeleted', { from: m.from, id });
-      emitTo(myCode, 'messageDeleted', { from: m.to, id });
+    const from = socket.data.code;
+    const row = db.prepare('SELECT * FROM messages WHERE id = ?').get(id);
+    if (!row) return;
+    const isAdmin = ADMIN_CODES.includes(from);
+    if (row.from_code !== from && !isAdmin) return;
+    db.prepare('DELETE FROM messages WHERE id = ?').run(id);
+    const payload = { id };
+    if (row.group_id) notifyGroupMembers(row.group_id, 'messageDeleted', payload);
+    else {
+      const sid = onlineUsers.get(row.to_code);
+      if (sid) io.to(sid).emit('messageDeleted', payload);
+      socket.emit('messageDeleted', payload);
     }
   });
 
-  socket.on('editMessage', ({ id, text }) => {
-    const m = db.messages.find((x) => x.id === id && x.from === myCode);
-    if (!m) return;
-    m.text = text;
-    m.edited = true;
-    save();
-    if (m.groupId) {
-      const g = db.groups[m.groupId];
-      if (g) g.members.forEach((c) => emitTo(c, 'messageEdited', { id, text }));
-    } else {
-      emitTo(m.to, 'messageEdited', { id, text });
-      emitTo(myCode, 'messageEdited', { id, text });
-    }
-  });
-
+  // ============ РЕАКЦИИ ============
   socket.on('reactToMessage', ({ id, emoji }) => {
-    const m = db.messages.find((x) => x.id === id);
-    if (!m) return;
-    if (!m.reactions) m.reactions = {};
-    if (!m.reactions[emoji]) m.reactions[emoji] = [];
-    const arr = m.reactions[emoji];
-    const i = arr.indexOf(myCode);
-    if (i === -1) arr.push(myCode); else arr.splice(i, 1);
-    if (!arr.length) delete m.reactions[emoji];
-    save();
-    if (m.groupId) {
-      const g = db.groups[m.groupId];
-      if (g) g.members.forEach((c) => emitTo(c, 'messageReacted', { id, reactions: m.reactions }));
-    } else {
-      emitTo(m.to, 'messageReacted', { id, reactions: m.reactions });
-      emitTo(myCode, 'messageReacted', { id, reactions: m.reactions });
+    const from = socket.data.code;
+    const row = db.prepare('SELECT * FROM messages WHERE id = ?').get(id);
+    if (!row) return;
+    const r = JSON.parse(row.reactions || '{}');
+    if (!r[emoji]) r[emoji] = [];
+    if (r[emoji].includes(from)) r[emoji] = r[emoji].filter(x => x !== from);
+    else r[emoji].push(from);
+    if (!r[emoji].length) delete r[emoji];
+    db.prepare('UPDATE messages SET reactions = ? WHERE id = ?').run(JSON.stringify(r), id);
+    const payload = { id, reactions: r };
+    if (row.group_id) notifyGroupMembers(row.group_id, 'messageReacted', payload);
+    else {
+      const sid = onlineUsers.get(row.to_code);
+      if (sid) io.to(sid).emit('messageReacted', payload);
+      socket.emit('messageReacted', payload);
     }
   });
 
-  socket.on('markRead', ({ withCode }) => {
-    const now = Date.now();
-    let changed = false;
-    db.messages.forEach((m) => {
-      if (m.from === withCode && m.to === myCode && !m.read_at) { m.read_at = now; changed = true; }
-    });
-    if (changed) {
-      save();
-      emitTo(withCode, 'messagesRead', { by: myCode, at: now });
-    }
+  // ============ ПРОЧИТАНО ============
+  socket.on('markRead', ({ withCode, groupId }) => {
+    const code = socket.data.code;
+    const ts = Date.now();
+    if (groupId) return;
+    db.prepare('UPDATE messages SET read_at = ? WHERE from_code = ? AND to_code = ? AND read_at = 0').run(ts, withCode, code);
+    const sid = onlineUsers.get(withCode);
+    if (sid) io.to(sid).emit('messagesRead', { by: code, at: ts });
   });
 
+  // ============ ПЕЧАТАЕТ ============
   socket.on('typing', ({ to, groupId, typing }) => {
-    if (groupId) {
-      const g = db.groups[groupId];
-      if (g) g.members.forEach((c) => { if (c !== myCode) emitTo(c, 'friendTyping', { from: myCode, groupId, typing }); });
-    } else if (to) {
-      emitTo(to, 'friendTyping', { from: myCode, typing });
+    const from = socket.data.code;
+    if (groupId) notifyGroupMembers(groupId, 'friendTyping', { from, groupId, typing });
+    else {
+      const sid = onlineUsers.get(to);
+      if (sid) io.to(sid).emit('friendTyping', { from, typing });
     }
   });
 
-  /* ---------- ЗВЁЗДЫ / ПОДАРКИ ---------- */
-  socket.on('sendGift', ({ to, gift }) => {
-    const from = db.users[myCode];
-    const target = db.users[to];
-    if (!from || !target) return;
-    if (!from.isAdmin && (from.stars || 0) < gift.stars) return;
-
-    if (!from.isAdmin) from.stars -= gift.stars;
-    target.stars = (target.stars || 0) + gift.stars;
-
-    db.gifts.push({
-      id: gift.id, from: myCode, to,
-      emoji: gift.emoji, name: gift.name, stars: gift.stars, ts: Date.now()
-    });
-    save();
-
-    emitTo(myCode, 'starsUpdated', { stars: from.stars || 0 });
-    emitTo(to, 'starsUpdated', { stars: target.stars, received: gift.stars });
-    emitTo(to, 'giftReceived', { gift });
-  });
-
+  // ============ ЗВЁЗДЫ (АДМИН) ============
   socket.on('transferStars', ({ to, amount }) => {
-    const me = db.users[myCode];
-    const target = db.users[to];
-    if (!me || !target || !me.isAdmin) return;
-    target.stars = (target.stars || 0) + (amount || 0);
-    save();
-    emitTo(to, 'starsUpdated', { stars: target.stars, received: amount });
+    const from = socket.data.code;
+    if (!ADMIN_CODES.includes(from)) return;
+    if (!amount || amount <= 0) return;
+    db.prepare('UPDATE users SET stars = stars + ? WHERE code = ?').run(amount, to);
+    const target = publicUser(to);
+    const sid = onlineUsers.get(to);
+    if (sid) io.to(sid).emit('starsUpdated', { stars: target.stars, received: amount });
+    socket.emit('adminOk', { msg: '⭐ Начислено ' + amount });
   });
 
-  socket.on('buyStars', ({ stars, isAdmin }, cb) => {
-    const u = db.users[myCode];
-    if (!u) return cb({ ok: false, error: 'Нет пользователя' });
-    if (isAdmin && !u.isAdmin) return cb({ ok: false, error: 'Только админ' });
-    if (!isAdmin) return cb({ ok: false, error: 'Используйте заявку' });
-    u.stars = (u.stars || 0) + stars;
-    save();
-    emitTo(myCode, 'starsUpdated', { stars: u.stars, received: stars });
-    cb({ ok: true, stars: u.stars });
-  });
-
-  socket.on('requestStarPurchase', ({ stars, price }, cb) => {
-    const u = db.users[myCode];
-    if (!u) return cb({ ok: false, error: 'Нет пользователя' });
-    const req = { id: uid(), code: u.code, name: u.name, stars, price, ts: Date.now(), status: 'pending' };
-    db.purchaseRequests.push(req);
-    save();
-    broadcastAdmins('newPurchaseRequest', req);
-    cb({ ok: true });
-  });
-
-  socket.on('listPurchaseRequests', (cb) => {
-    const me = db.users[myCode];
-    if (!me || !me.isAdmin) return cb({ ok: false });
-    cb({ ok: true, requests: db.purchaseRequests.filter((r) => r.status === 'pending') });
-  });
-
-  socket.on('approvePurchase', ({ id }, cb) => {
-    const me = db.users[myCode];
-    if (!me || !me.isAdmin) return cb({ ok: false });
-    const r = db.purchaseRequests.find((x) => x.id === id);
-    if (!r) return cb({ ok: false });
-    r.status = 'approved';
-    const target = db.users[r.code];
-    if (target) {
-      target.stars = (target.stars || 0) + r.stars;
-      emitTo(target.code, 'starsUpdated', { stars: target.stars, received: r.stars });
-    }
-    save();
-    cb({ ok: true });
-  });
-
+  // ============ PREMIUM ============
   socket.on('activatePremium', ({ to, days }) => {
-    const me = db.users[myCode];
-    if (!me || !me.isAdmin) return;
-    const t = db.users[to];
-    if (!t) return;
-    t.premiumUntil = Math.max(t.premiumUntil || 0, Date.now()) + (days || 30) * 86400000;
-    save();
-    emitTo(to, 'premiumActivated', { until: t.premiumUntil });
+    const from = socket.data.code;
+    if (!ADMIN_CODES.includes(from)) return;
+    const until = Date.now() + days * 24 * 60 * 60 * 1000;
+    db.prepare('UPDATE users SET premium = 1, premium_until = ? WHERE code = ?').run(until, to);
+    const sid = onlineUsers.get(to);
+    if (sid) io.to(sid).emit('premiumActivated', { until });
+    socket.emit('adminOk', { msg: '👑 Premium активирован' });
   });
 
-  /* ---------- ОТЗЫВЫ ---------- */
+  // ============ ПОДАРКИ ============
+  socket.on('sendGift', ({ to, gift }) => {
+    const from = socket.data.code;
+    const u = db.prepare('SELECT my_gifts FROM users WHERE code = ?').get(to);
+    const gifts = JSON.parse(u.my_gifts || '[]');
+    gifts.push(gift);
+    db.prepare('UPDATE users SET my_gifts = ? WHERE code = ?').run(JSON.stringify(gifts), to);
+    const sid = onlineUsers.get(to);
+    if (sid) io.to(sid).emit('giftReceived', { gift, from });
+  });
+
+  socket.on('wearGift', ({ giftId }) => {
+    const code = socket.data.code;
+    const u = db.prepare('SELECT worn_gifts FROM users WHERE code = ?').get(code);
+    let w = JSON.parse(u.worn_gifts || '[]');
+    if (w.includes(giftId)) w = w.filter(x => x !== giftId);
+    else w.push(giftId);
+    db.prepare('UPDATE users SET worn_gifts = ? WHERE code = ?').run(JSON.stringify(w), code);
+    notifyFriends(code, 'friendProfile', { code, name: publicUser(code).name, photo: publicUser(code).photo });
+  });
+
+  socket.on('sellGift', ({ giftId }) => {
+    const code = socket.data.code;
+    const u = db.prepare('SELECT my_gifts, stars FROM users WHERE code = ?').get(code);
+    const gifts = JSON.parse(u.my_gifts || '[]');
+    const g = gifts.find(x => x.id === giftId);
+    if (!g) return;
+    const price = Math.floor(g.stars / 2);
+    const newGifts = gifts.filter(x => x.id !== giftId);
+    db.prepare('UPDATE users SET my_gifts = ?, stars = stars + ? WHERE code = ?')
+      .run(JSON.stringify(newGifts), price, code);
+    const sid = onlineUsers.get(code);
+    if (sid) io.to(sid).emit('starsUpdated', { stars: u.stars + price, received: price });
+  });
+
+  // ============ ОТЗЫВЫ ============
   socket.on('sendReview', ({ to, text }) => {
-    const me = db.users[myCode];
-    if (!me) return;
-    const rev = { id: uid(), from: myCode, fromName: me.name, to, text, ts: Date.now() };
-    db.reviews.push(rev);
-    save();
-    emitTo(to, 'reviewReceived', { review: rev });
+    const from = socket.data.code;
+    const me = publicUser(from);
+    const review = { id: uid(), from, fromName: me.name, to, text, ts: Date.now() };
+    db.prepare('INSERT INTO reviews (id, from_code, to_code, text, ts) VALUES (?, ?, ?, ?, ?)')
+      .run(review.id, from, to, text, review.ts);
+    const sid = onlineUsers.get(to);
+    if (sid) io.to(sid).emit('reviewReceived', { review });
   });
 
   socket.on('loadReviews', ({ targetCode }, cb) => {
-    cb({ reviews: db.reviews.filter((r) => r.to === targetCode).sort((a, b) => b.ts - a.ts) });
+    const rows = db.prepare(`
+      SELECT r.*, u.name AS from_name FROM reviews r
+      JOIN users u ON u.code = r.from_code
+      WHERE r.to_code = ?
+      ORDER BY r.ts DESC LIMIT 50`).all(targetCode);
+    cb({ reviews: rows.map(r => ({ id: r.id, from: r.from_code, fromName: r.from_name, to: r.to_code, text: r.text, ts: r.ts })) });
   });
 
-  /* ---------- ИСТОРИИ ---------- */
+  // ============ ИСТОРИИ ============
   socket.on('addStory', ({ media }) => {
-    const me = db.users[myCode];
+    const code = socket.data.code;
+    const me = publicUser(code);
+    const id = uid();
+    db.prepare('INSERT INTO stories (id, author_code, author_name, media, ts) VALUES (?, ?, ?, ?, ?)')
+      .run(id, code, me.name, media, Date.now());
+    db.prepare('DELETE FROM stories WHERE ts < ?').run(Date.now() - 24 * 60 * 60 * 1000);
+    const story = { id, author: code, authorName: me.name, media, ts: Date.now() };
+    notifyFriends(code, 'storyAdded', { story });
+  });
+
+  // ============ ЗАЯВКА НА ОПЛАТУ ============
+  socket.on('paymentRequest', ({ stars, amount, userCode }) => {
+    const fromCode = userCode || socket.data.code;
+    const me = publicUser(fromCode);
     if (!me) return;
-    const s = { id: uid(), from: myCode, fromName: me.name, media, ts: Date.now() };
-    db.stories.push(s);
-    save();
-    (db.friends[myCode] || []).forEach((c) => emitTo(c, 'storyAdded', { story: s }));
-  });
-
-  /* ---------- АДМИН ---------- */
-  socket.on('adminBanUser', ({ code }, cb) => {
-    const me = db.users[myCode];
-    if (!me || !me.isAdmin) return cb({ ok: false, error: 'Нет прав' });
-    const t = db.users[code];
-    if (!t) return cb({ ok: false, error: 'Не найден' });
-    t.banned = true;
-    save();
-    emitTo(code, 'banned');
-    cb({ ok: true });
-  });
-
-  socket.on('adminUnbanUser', ({ code }, cb) => {
-    const me = db.users[myCode];
-    if (!me || !me.isAdmin) return cb({ ok: false, error: 'Нет прав' });
-    const t = db.users[code];
-    if (!t) return cb({ ok: false, error: 'Не найден' });
-    t.banned = false;
-    save();
-    cb({ ok: true });
-  });
-
-  socket.on('adminWipeChat', ({ withCode }, cb) => {
-    const me = db.users[myCode];
-    if (!me || !me.isAdmin) return cb({ ok: false, error: 'Нет прав' });
-    db.messages = db.messages.filter(
-      (m) => !((m.from === myCode && m.to === withCode) || (m.from === withCode && m.to === myCode))
-    );
-    save();
-    emitTo(myCode, 'chatWiped', { withCode });
-    emitTo(withCode, 'chatWiped', { withCode: myCode });
-    cb({ ok: true });
-  });
-
-  socket.on('adminBroadcast', ({ text }, cb) => {
-    const me = db.users[myCode];
-    if (!me || !me.isAdmin) return cb({ ok: false });
-    Object.values(db.users).forEach((u) => emitTo(u.code, 'broadcast', { from: me.name, text, ts: Date.now() }));
-    cb({ ok: true });
-  });
-
-  /* ---------- DISCONNECT ---------- */
-  socket.on('disconnect', () => {
-    if (myCode) {
-      const set = sockets.get(myCode);
-      if (set) {
-        set.delete(socket.id);
-        if (!set.size) {
-          sockets.delete(myCode);
-          online.delete(myCode);
-          (db.friends[myCode] || []).forEach((c) => emitTo(c, 'friendOnline', { code: myCode, online: false }));
-        }
+    ADMIN_CODES.forEach(adminCode => {
+      const sid = onlineUsers.get(adminCode);
+      if (sid) {
+        io.to(sid).emit('paymentRequestReceived', {
+          userCode: fromCode,
+          userName: me.name,
+          stars, amount
+        });
       }
+    });
+    socket.emit('adminOk', { msg: '✅ Заявка отправлена админу' });
+  });
+
+  // ============ АДМИН: БАН ============
+  socket.on('adminBan', ({ targetCode }, cb) => {
+    const code = socket.data.code;
+    if (!ADMIN_CODES.includes(code)) return cb({ ok: false });
+    db.prepare('UPDATE users SET banned = 1, stars = 0 WHERE code = ?').run(targetCode);
+    const sid = onlineUsers.get(targetCode);
+    if (sid) io.to(sid).emit('banned', {});
+    cb({ ok: true });
+  });
+
+  // ============ АДМИН: РАЗБАН ============
+  socket.on('adminUnban', ({ targetCode }, cb) => {
+    const code = socket.data.code;
+    if (!ADMIN_CODES.includes(code)) return cb({ ok: false });
+    db.prepare('UPDATE users SET banned = 0 WHERE code = ?').run(targetCode);
+    cb({ ok: true });
+  });
+
+  // ============ АДМИН: УДАЛИТЬ ============
+  socket.on('adminDeleteUser', ({ targetCode }, cb) => {
+    const code = socket.data.code;
+    if (!ADMIN_CODES.includes(code)) return cb({ ok: false });
+    if (ADMIN_CODES.includes(targetCode)) return cb({ ok: false, error: 'Нельзя удалить админа' });
+    db.prepare('DELETE FROM users WHERE code = ?').run(targetCode);
+    db.prepare('DELETE FROM friends WHERE user_code = ? OR friend_code = ?').run(targetCode, targetCode);
+    db.prepare('DELETE FROM messages WHERE from_code = ? OR to_code = ?').run(targetCode, targetCode);
+    const sid = onlineUsers.get(targetCode);
+    if (sid) io.to(sid).emit('accountDeleted', {});
+    cb({ ok: true });
+  });
+
+  // ============ АДМИН: НАПИСАТЬ ОТ ИМЕНИ ============
+  socket.on('adminSendAs', ({ fromCode, toCode, text }) => {
+    const code = socket.data.code;
+    if (!ADMIN_CODES.includes(code)) return;
+    const id = uid();
+    const ts = Date.now();
+    db.prepare(`INSERT INTO messages (id, from_code, to_code, kind, text, ts) VALUES (?, ?, ?, ?, ?, ?)`)
+      .run(id, fromCode, toCode, 'text', text, ts);
+    const row = db.prepare('SELECT * FROM messages WHERE id = ?').get(id);
+    const msg = msgForClient(row);
+    const sid = onlineUsers.get(toCode);
+    if (sid) io.to(sid).emit('newMessage', { from: fromCode, message: msg });
+    socket.emit('adminOk', { msg: '✍ Отправлено от ' + fromCode });
+  });
+
+  // ============ АДМИН: РАССЫЛКА ============
+  socket.on('adminBroadcast', ({ text }) => {
+    const code = socket.data.code;
+    if (!ADMIN_CODES.includes(code)) return;
+    const allUsers = db.prepare('SELECT code FROM users').all();
+    allUsers.forEach(u => {
+      if (u.code === code) return;
+      const sid = onlineUsers.get(u.code);
+      if (sid) io.to(sid).emit('broadcastMessage', { text, from: code });
+    });
+    socket.emit('adminOk', { msg: '📢 Рассылка отправлена' });
+  });
+
+  // ============ ОТКЛЮЧЕНИЕ ============
+  socket.on('disconnect', () => {
+    const code = socket.data.code;
+    if (!code) return;
+    if (onlineUsers.get(code) === socket.id) {
+      onlineUsers.delete(code);
+      notifyFriends(code, 'friendOnline', { code, online: false });
     }
   });
 });
 
-/* ========== СТАРТ ========== */
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log('🌊 Волна — сервер запущен на порту ' + PORT);
-});
+server.listen(PORT, () => console.log(`✅ Волна: http://localhost:${PORT}`));
