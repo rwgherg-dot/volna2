@@ -1,12 +1,16 @@
 {
   "name": "volna-messenger",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "express": "^4.19.2",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "better-sqlite3": "^12.9.0"
   }
 }
