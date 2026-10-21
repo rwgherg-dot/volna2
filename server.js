@@ -1,4 +1,4 @@
- 'use strict';
+'use strict';
 const path = require('path');
 const fs = require('fs');
 const express = require('express');
@@ -19,7 +19,7 @@ const normCode = s => String(s || '').trim().toUpperCase();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { maxHttpBufferSize: 10e6 });
+const io = new Server(server, { maxHttpBufferSize: 20e6 }); // 20MB для видео
 
 app.use(express.static(path.join(__dirname, 'public')));
 const sockets = {};
@@ -37,16 +37,17 @@ io.on('connection', socket => {
 
     if (name.toUpperCase() === 'ADMIN') {
        if (pass !== 'admin123') return cb?.({ ok: false, error: 'Неверный пароль админа' });
-       u = db.users['ADMIN'] || { code: 'ADMIN', name: 'ADMIN', pass: 'admin123', stars: 99999, friends: [], bio: 'Создатель DERZUS', nft: [], profileNft: null, premium: true, created: Date.now() };
+       u = db.users['ADMIN'] || { code: 'ADMIN', name: 'ADMIN', pass: 'admin123', stars: 99999, friends: [], bio: 'Создатель DERZUS', nft: [], profileNft: null, premium: true, created: Date.now(), blocked: [] };
        db.users['ADMIN'] = u;
     } else if (u) {
        if (u.pass !== pass) return cb?.({ ok: false, error: 'Это имя уже занято другим паролем' });
+       if (u.banned) return cb?.({ ok: false, error: 'Аккаунт заблокирован админом' });
        if (photo) u.photo = photo;
     } else {
        const taken = Object.values(db.users).find(x => x.name.toLowerCase() === name.toLowerCase());
        if (taken) return cb?.({ ok: false, error: 'Имя занято' });
        const newCode = normCode(code) || rnd(6).toUpperCase();
-       u = { code: newCode, name, pass, photo, stars: 0, bio: 'Привет, я в DERZUS!', friends: [], nft: [], profileNft: null, premium: false, created: Date.now() };
+       u = { code: newCode, name, pass, photo, stars: 0, bio: 'Привет, я в DERZUS!', friends: [], nft: [], profileNft: null, premium: false, created: Date.now(), blocked: [] };
        db.users[newCode] = u;
     }
 
@@ -69,6 +70,86 @@ io.on('connection', socket => {
     save();
   });
 
+  socket.on('sendBroadcast', ({ text }, cb) => {
+    if (socket.data.code !== 'ADMIN') return cb?.({ ok: false, error: 'Только админ' });
+    const broadcastMsg = { id: 'm_' + uid(), from: 'ADMIN', text: `[РАССЫЛКА] ${text}`, ts: Date.now(), reactions: {}, isBroadcast: true };
+    
+    Object.values(db.users).forEach(u => {
+      if (u.code === 'ADMIN') return;
+      const msg = { ...broadcastMsg, to: u.code };
+      db.messages.push(msg);
+      sockets[u.code]?.forEach(sid => io.to(sid).emit('newMessage', { from: 'ADMIN', message: msg }));
+    });
+    cb?.({ ok: true });
+    save();
+  });
+
+  socket.on('deleteAccount', (cb) => {
+    const me = db.users[socket.data.code];
+    if (!me || me.code === 'ADMIN') return cb?.({ ok: false, error: 'Нельзя удалить этот аккаунт' });
+    me.friends.forEach(c => {
+      const f = db.users[c];
+      if (f) {
+        f.friends = f.friends.filter(x => x !== me.code);
+        sockets[c]?.forEach(sid => io.to(sid).emit('friendRemoved', { code: me.code }));
+      }
+    });
+    Object.values(db.groups).forEach(g => {
+       if (g.owner === me.code) {
+          g.members.forEach(c => sockets[c]?.forEach(sid => io.to(sid).emit('groupRemoved', { id: g.id })));
+          delete db.groups[g.id];
+       } else {
+          g.members = g.members.filter(c => c !== me.code);
+       }
+    });
+    db.messages = db.messages.filter(m => m.from !== me.code && m.to !== me.code);
+    delete db.users[me.code];
+    (sockets[me.code] || []).forEach(sid => io.to(sid).emit('accountDeleted'));
+    delete sockets[me.code];
+    cb?.({ ok: true });
+    save();
+  });
+
+  socket.on('removeFriend', ({ code }, cb) => {
+    const me = db.users[socket.data.code];
+    const target = db.users[code];
+    if (!me || !target) return cb?.({ ok: false });
+    me.friends = me.friends.filter(c => c !== code);
+    target.friends = target.friends.filter(c => c !== me.code);
+    sockets[target.code]?.forEach(sid => io.to(sid).emit('friendRemoved', { code: me.code }));
+    cb?.({ ok: true });
+    save();
+  });
+
+  socket.on('blockUser', ({ code }, cb) => {
+    const me = db.users[socket.data.code];
+    if (!me) return cb?.({ ok: false });
+    me.blocked ||= [];
+    if (!me.blocked.includes(code)) me.blocked.push(code);
+    cb?.({ ok: true });
+    save();
+  });
+
+  socket.on('unblockUser', ({ code }, cb) => {
+    const me = db.users[socket.data.code];
+    if (!me) return cb?.({ ok: false });
+    me.blocked = (me.blocked || []).filter(c => c !== code);
+    cb?.({ ok: true });
+    save();
+  });
+
+  socket.on('clearHistory', ({ withCode, groupId }, cb) => {
+    const me = db.users[socket.data.code];
+    if (!me) return cb?.({ ok: false });
+    if (groupId) {
+      db.messages = db.messages.filter(m => m.groupId !== groupId);
+    } else if (withCode) {
+      db.messages = db.messages.filter(m => !(m.to && ((m.from === me.code && m.to === withCode) || (m.from === withCode && m.to === me.code))));
+    }
+    cb?.({ ok: true });
+    save();
+  });
+
   socket.on('updateProfile', ({ name, bio, photo }, cb) => {
     const u = db.users[socket.data.code];
     if (!u) return cb?.({ ok: false });
@@ -87,7 +168,7 @@ io.on('connection', socket => {
   socket.on('searchUsers', ({ query }, cb) => {
     const q = String(query || '').toLowerCase().trim();
     if (!q) return cb?.({ ok: true, users: [] });
-    const list = Object.values(db.users).filter(u => u.name.toLowerCase().includes(q) || u.code.toLowerCase() === q).slice(0, 20).map(u => ({ code: u.code, name: u.name, photo: u.photo, bio: u.bio, premium: u.premium, online: !!sockets[u.code]?.size }));
+    const list = Object.values(db.users).filter(u => !u.banned && (u.name.toLowerCase().includes(q) || u.code.toLowerCase() === q)).slice(0, 20).map(u => ({ code: u.code, name: u.name, photo: u.photo, bio: u.bio, premium: u.premium, online: !!sockets[u.code]?.size }));
     cb?.({ ok: true, users: list });
   });
 
@@ -97,6 +178,7 @@ io.on('connection', socket => {
     if (!me) return cb?.({ ok: false, error: 'Вы не авторизованы' });
     if (!target) return cb?.({ ok: false, error: 'Пользователь не найден' });
     if (target.code === me.code) return cb?.({ ok: false, error: 'Это вы' });
+    if (me.blocked?.includes(target.code)) return cb?.({ ok: false, error: 'Вы заблокировали этого пользователя' });
 
     me.friends ||= []; target.friends ||= [];
     const already = me.friends.includes(target.code);
@@ -144,6 +226,10 @@ io.on('connection', socket => {
   socket.on('sendMessage', (p) => {
     const me = db.users[socket.data.code];
     if (!me) return;
+    if (p.to && me.blocked?.includes(normCode(p.to))) return;
+    const peer = p.to ? db.users[normCode(p.to)] : null;
+    if (peer && peer.blocked?.includes(me.code)) return;
+
     const msg = { id: 'm_' + uid(), from: me.code, text: p.text, kind: p.kind, ts: Date.now(), reactions: {} };
     if (p.groupId && db.groups[p.groupId]) {
       msg.groupId = p.groupId;
@@ -233,8 +319,15 @@ io.on('connection', socket => {
 
   socket.on('getAdminUsers', () => {
     if (socket.data.code !== 'ADMIN') return;
-    const users = Object.values(db.users).map(u => ({ code: u.code, name: u.name, stars: u.stars, online: !!sockets[u.code]?.size }));
+    const users = Object.values(db.users).map(u => ({ code: u.code, name: u.name, stars: u.stars, online: !!sockets[u.code]?.size, banned: !!u.banned }));
     socket.emit('adminUsers', users);
+  });
+
+  socket.on('adminBanUser', ({ code }, cb) => {
+    if (socket.data.code !== 'ADMIN') return cb?.({ ok: false });
+    const u = db.users[code];
+    if (u && code !== 'ADMIN') { u.banned = !u.banned; cb?.({ ok: true, banned: u.banned }); }
+    save();
   });
 
   socket.on('adminGiveStars', ({ target, amount }, cb) => {
@@ -269,6 +362,7 @@ io.on('connection', socket => {
     if (u) { u.profileNft = nftId; save(); }
   });
 
+  // --- ЗВОНКИ ---
   socket.on('callUser', ({ to, offer }) => { sockets[to]?.forEach(sid => io.to(sid).emit('incomingCall', { from: socket.data.code, offer })); });
   socket.on('answerCall', ({ to, answer }) => { sockets[to]?.forEach(sid => io.to(sid).emit('callAnswered', { answer })); });
   socket.on('iceCandidate', ({ to, candidate }) => { sockets[to]?.forEach(sid => io.to(sid).emit('iceCandidate', { candidate })); });
