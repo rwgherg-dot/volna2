@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -10,8 +10,7 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
-/* ВАШ ОРИГИНАЛЬНЫЙ ДИЗАЙН */
-:root{--bg:#fff;--panel:#fff;--chat-bg:#dfe8d6;--text:#000;--sec:#8e8e93;--accent:#3390ec;--border:#e5e5ea;--hover:#f2f2f7;--in:#fff;--out:#eeffde;--outt:#4fae4e;--glass:rgba(255,255,255,.85);--danger:#ff453a;--gold:#e6b800;
+:root{--bg:#fff;--panel:#fff;--chat-bg:#dfe8d6;--text:#000;--sec:#8e8e93;--accent:#3390ec;--border:#e5e5ea;--hover:#f2f2f7;--in:#fff;--out:#eeffde;--outt:#4fae4e;--glass:rgba(255,255,255,.85);--danger:#ff453a;--gold:#e6b800;--premium:#ffd700;
 --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 [data-theme=dark]{--bg:#0f0f10;--panel:#1c1c1e;--chat-bg:#0e1621;--text:#fff;--accent:#4ea4f6;--border:#2c2c2e;--hover:#2a2a2d;--in:#182533;--out:#2b5278;--outt:#8fc4ee;--glass:rgba(28,28,30,.85)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -42,6 +41,7 @@ button{font-family:inherit;cursor:pointer}
 .btn:active{transform:scale(.97);opacity:.85}
 .btn.primary{background:var(--accent);color:#fff}
 .btn.secondary{background:var(--hover);color:var(--accent)}
+.btn.gold{background:var(--gold);color:#000}
 
 #main{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--panel)}
 .top{display:flex;align-items:center;gap:10px;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top));min-height:56px;background:var(--glass);backdrop-filter:blur(20px);border-bottom:.5px solid var(--border);z-index:20}
@@ -62,6 +62,7 @@ button{font-family:inherit;cursor:pointer}
 .fr:hover,.fr.act{background:var(--hover)}
 .avw{position:relative;flex-shrink:0}
 .av{width:54px;height:54px;border-radius:50%;overflow:hidden;position:relative}
+.av.premium{border:2px solid var(--premium)}
 .dot{position:absolute;bottom:1px;right:1px;width:14px;height:14px;border-radius:50%;background:#34c759;border:2.5px solid var(--panel)}
 .fi{flex:1;min-width:0}
 .fn{display:flex;justify-content:space-between;gap:8px;font-size:16px;font-weight:600}
@@ -106,6 +107,7 @@ button{font-family:inherit;cursor:pointer}
 .nav{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));background:var(--glass);font-weight:600}
 .pt{display:flex;flex-direction:column;align-items:center;padding:20px 16px;background:var(--panel);position:relative}
 .pav{width:110px;height:110px;border-radius:50%;overflow:hidden;margin-bottom:12px;position:relative}
+.pav.premium{border:3px solid var(--premium)}
 .pn{font-size:22px;font-weight:600}
 .ps{font-size:15px;color:var(--sec)}
 .ps.on{color:var(--accent)}
@@ -127,7 +129,6 @@ button{font-family:inherit;cursor:pointer}
 .gm input{width:20px;height:20px;accent-color:var(--accent)}
 .gav{width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0}
 
-/* Прайс, Админка, NFT */
 .pay-box{background:var(--hover);border-radius:16px;padding:16px;text-align:center;margin-bottom:16px}
 .qr-img{width:180px;height:180px;border-radius:12px;margin:10px auto;display:block}
 .price-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
@@ -176,13 +177,14 @@ button{font-family:inherit;cursor:pointer}
 <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></symbol>
 <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
 <symbol id="i-admin" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></symbol>
+<symbol id="i-crown" viewBox="0 0 24 24"><path d="M2 20h20M4 20V10l4 4 4-8 4 8 4-4v10"/></symbol>
 </defs></svg>
 
 <div id="authScr" class="auth-wrap">
   <div class="auth">
     <div class="logo"><svg class="ic lg"><use href="#i-logo"/></svg></div>
     <h1 class="brand">DERZUS</h1>
-    <p class="sub">Введите имя и пароль. Имя уникально.</p>
+    <p class="sub">Имя пользователя должно быть уникальным.</p>
     <label class="avp"><img id="avPrev" alt="" class="hidden"><span id="avPlus"><svg class="ic"><use href="#i-plus"/></svg></span><input type="file" id="phIn" accept="image/*" hidden></label>
     <input id="nIn" class="fld" placeholder="Ваше имя" maxlength="24" autocomplete="off">
     <input id="pIn" class="fld" type="password" placeholder="Пароль" maxlength="64">
@@ -262,7 +264,6 @@ button{font-family:inherit;cursor:pointer}
     <p class="sub" style="margin-bottom:10px">Переведите на номер:</p>
     <div style="font-size:20px;font-weight:900;">+7 902 016-75-09</div>
     <div style="color:var(--sec)">Данил К.</div>
-    <div style="font-size:12px;color:var(--sec);margin-top:8px">После перевода нажмите "Я оплатил".</div>
   </div>
   <button class="btn primary" onclick="requestStars()" style="margin-top:16px">Я оплатил(а)</button>
   <button class="btn secondary" onclick="closeStars()" style="margin-top:10px">Закрыть</button>
@@ -275,8 +276,16 @@ button{font-family:inherit;cursor:pointer}
 </div></div>
 
 <div id="adminModal" class="modal"><div class="mc" style="max-width:500px">
-  <h3 class="mtitle">Админ Панель</h3>
-  <div id="adminUsersList" style="max-height:400px;overflow-y:auto;margin-bottom:16px"></div>
+  <div class="tabs" style="margin-bottom:16px">
+    <div id="tabAdminUsers" class="tab active" onclick="switchAdminTab('users')">Пользователи</div>
+    <div id="tabAdminReqs" class="tab" onclick="switchAdminTab('reqs')">Заявки <span id="reqBadge" class="hidden" style="background:var(--danger);color:#fff;padding:2px 6px;border-radius:10px;font-size:10px;margin-left:4px">0</span></div>
+  </div>
+  <div id="adminViewUsers">
+    <div id="adminUsersList" style="max-height:400px;overflow-y:auto;margin-bottom:16px"></div>
+  </div>
+  <div id="adminViewReqs" class="hidden">
+    <div id="adminReqsList" style="max-height:400px;overflow-y:auto;margin-bottom:16px"></div>
+  </div>
   <button class="btn secondary" onclick="closeAdminPanel()">Закрыть</button>
 </div></div>
 
@@ -335,7 +344,7 @@ function toast(t){
   e.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:12px 20px;border-radius:22px;font-size:15px;z-index:500;max-width:90%;text-align:center';
   document.body.appendChild(e); setTimeout(()=>e.remove(),2500);
 }
-function avFor(n,p){
+function avFor(n,p,premium){
   if (p) return `<img src="${p}" style="width:100%;height:100%;object-fit:cover">`;
   const raw = (n||'?').trim()||'?', cs=['#3390ec','#e17076','#7bc862','#e5ca77','#6ec9cb'];
   let x=0; for (const c of raw) x+=c.charCodeAt(0);
@@ -345,7 +354,7 @@ const applyTheme = t => { document.body.dataset.theme=t; store.set('derzus_theme
 const toggleTheme = () => applyTheme(document.body.dataset.theme==='dark'?'light':'dark');
 applyTheme(store.get('derzus_theme','light'));
 
-const state = {user:null,friends:[],groups:[],messages:{},activeChat:null,activeGroup:null,online:{},qrScanner:null,pendingAvatar:null,editAvatar:null,selectedPrice:null,isRecording:false,mediaRecorder:null,audioChunks:[],callData:null};
+const state = {user:null,friends:[],groups:[],messages:{},activeChat:null,activeGroup:null,online:{},qrScanner:null,pendingAvatar:null,editAvatar:null,selectedPrice:null,isRecording:false,mediaRecorder:null,audioChunks:[],callData:null, adminReqs:[], viewingProfileCode:null};
 const activeKey = () => state.activeGroup || state.activeChat;
 const socket = io();
 let pc, localStream;
@@ -393,15 +402,15 @@ socket.on('friendAdded', f => {
 });
 socket.on('friendUpdated', f => {
   const friend = state.friends.find(x=>x.code===f.code);
-  if (friend) { friend.name = f.name; friend.bio = f.bio; friend.photo = f.photo; renderFriends(); if(state.activeChat===f.code) updateChatHeader(); }
+  if (friend) { friend.name = f.name; friend.bio = f.bio; friend.photo = f.photo; friend.premium = f.premium; renderFriends(); if(state.activeChat===f.code) updateChatHeader(); }
 });
 socket.on('groupAdded', g => {
   if (!state.groups.find(x=>x.id===g.id)) { state.groups.push(g); renderFriends(); }
 });
-socket.on('nftReceived', ({nft}) => {
-  state.user.nft.push(nft); toast('Вам подарен NFT!');
-});
+socket.on('nftReceived', ({nft}) => { state.user.nft.push(nft); toast('Вам подарен NFT!'); });
 socket.on('adminUsers', (users) => renderAdminUsers(users));
+socket.on('starsRequests', (reqs) => { state.adminReqs = reqs; renderAdminReqs(); });
+socket.on('newStarsRequest', (req) => { state.adminReqs.push(req); renderAdminReqs(); updateReqBadge(); });
 
 function doRegister(code,name,pass,photo,silent){
   socket.emit('register',{code,name,pass,photo},res => {
@@ -455,7 +464,7 @@ function renderFriends(){
     if (last) prev=(last.from===state.user.code?'Вы: ':'')+(last.kind==='voice'?'[Голосовое]':(last.text||'[файл]'));
     const act=f.code===activeKey()?' act':'';
     return `<div class="fr${act}" data-code="${esc(f.code)}" onclick="${f.isGroup?'openGroup':'openChat'}('${esc(f.code)}')">
-      <div class="avw"><div class="av">${avFor(f.name,f.photo)}</div>${!f.isGroup&&state.online[f.code]?'<div class="dot"></div>':''}</div>
+      <div class="avw"><div class="av ${f.premium?'premium':''}">${avFor(f.name,f.photo)}</div>${!f.isGroup&&state.online[f.code]?'<div class="dot"></div>':''}</div>
       <div class="fi"><div class="fn"><span>${f.isGroup?'[Группа] ':''}${esc(f.name)}</span><span class="ft">${last?fmtTime(last.ts):''}</span></div>
       <div class="fl">${esc(prev).slice(0,80)}</div></div></div>`;
   }).join('');
@@ -468,7 +477,8 @@ function filterList(){
 $('#sbSr').oninput = filterList;
 
 function openChat(code){
-  if (!state.friends.find(x=>x.code===code)) return;
+  const f = state.friends.find(x=>x.code===code);
+  if (!f) return toast('Сначала добавьте в друзья');
   state.activeChat=code; state.activeGroup=null; showChat();
   socket.emit('loadHistory',{withCode:code},res=>{ state.messages[code]=res.history||[]; renderMessages(); renderFriends(); });
 }
@@ -487,7 +497,7 @@ function updateChatHeader(){
   if (state.activeChat){
     const f=state.friends.find(x=>x.code===state.activeChat); if(!f) return;
     const on=state.online[f.code];
-    $('#chd').innerHTML=`${back}<div class="avsm">${avFor(f.name,f.photo)}</div><div style="flex:1;cursor:pointer" onclick="openProfile('${esc(f.code)}')"><div class="cn">${esc(f.name)}</div><div class="cs ${on?'on':''}">${on?'в сети':'был(а) недавно'}</div></div>
+    $('#chd').innerHTML=`${back}<div class="avsm ${f.premium?'premium':''}">${avFor(f.name,f.photo)}</div><div style="flex:1;cursor:pointer" onclick="openProfile('${esc(f.code)}')"><div class="cn">${esc(f.name)}</div><div class="cs ${on?'on':''}">${on?'в сети':'был(а) недавно'}</div></div>
     <button class="ib" onclick="startCall('${f.code}','${esc(f.name)}')"><svg class="ic"><use href="#i-phone"/></svg></button>`;
   } else if (state.activeGroup){
     const g=state.groups.find(x=>x.id===state.activeGroup); if(!g) return;
@@ -511,10 +521,8 @@ function renderMessages(){
     const mine=m.from===state.user.code;
     const rx=m.reactions&&Object.keys(m.reactions).length?'<div class="rx">'+Object.keys(m.reactions).map(k=>`<div>${REACTIONS[k]||''} ${m.reactions[k].length}</div>`).join('')+'</div>':'';
     const who=state.activeGroup&&!mine?`<div class="sn">${esc((state.friends.find(f=>f.code===m.from)||{}).name||m.from)}</div>`:'';
-    
     let content = esc(m.text||'');
     if(m.kind==='voice') content = `<audio controls src="${m.text}" style="max-width:200px;height:36px;"></audio>`;
-
     return `<div class="msg ${mine?'me':'th'}" data-id="${m.id}" ondblclick="quickReact(event,'${m.id}')" oncontextmenu="showReactionsMenu(event,'${m.id}','${mine}');return false">
       <div class="bub">${who}${content}<span class="mt">${fmtTime(m.ts)}${mine?' <svg class="ic" style="width:12px;height:12px;stroke:var(--outt)"><use href="#i-check"/></svg>':''}</span></div>${rx}</div>`;
   }).join('');
@@ -568,7 +576,6 @@ function send(){
 $('#sendBtn').onclick=send;
 mi.onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } };
 
-// Голосовые
 $('#micBtn').onclick = async () => {
   if (state.isRecording) {
     state.mediaRecorder.stop(); state.isRecording = false; $('#micBtn').classList.remove('recording');
@@ -603,23 +610,51 @@ $('#adM').onclick=e=>{
   else if (a==='theme') toggleTheme();
 };
 
-function profileHtml(u,self){
+function profileHtml(u, self){
   const nftId = self ? state.user.profileNft : null; 
   const nftArt = nftId && NFT_CATALOG[nftId] ? NFT_CATALOG[nftId].art : '';
-  return `<div class="pt"><div class="pav">${avFor(u.name,u.photo)}${nftId?`<div class="gift-badge">${nftArt}</div>`:''}</div>
-    <div class="pn">${esc(u.name)}</div>
-    <div class="ps ${u.online?'on':''}">${esc(u.bio || (u.online?'в сети':'был(а) недавно'))}</div></div>
+  const isFriend = state.friends.some(f => f.code === u.code);
+  
+  let actions = '';
+  if (!self) {
+    actions = `
+      <div style="display:flex;gap:8px;margin-top:16px;width:100%;padding:0 16px">
+        <button class="btn primary" onclick="openChat('${u.code}')">Написать</button>
+        <button class="btn secondary" onclick="startCall('${u.code}','${esc(u.name)}')"><svg class="ic"><use href="#i-phone"/></svg></button>
+        ${!isFriend ? `<button class="btn secondary" onclick="addFriendByCode('${u.code}', true)"><svg class="ic"><use href="#i-plus"/></svg></button>` : ''}
+      </div>
+    `;
+  }
+
+  return `<div class="pt">
+    <div class="pav ${u.premium?'premium':''}">${avFor(u.name,u.photo)}${nftId?`<div class="gift-badge">${nftArt}</div>`:''}</div>
+    <div class="pn">${esc(u.name)} ${u.premium?'<svg class="ic sm" style="stroke:var(--premium);vertical-align:middle"><use href="#i-crown"/></svg>':''}</div>
+    <div class="ps ${u.online?'on':''}">${esc(u.bio || (u.online?'в сети':'был(а) недавно'))}</div>
+    ${actions}
+    </div>
     <div class="sec">
     <div class="row"><div style="font-size:16px">${esc(u.name)}</div><div style="font-size:13px;color:var(--sec)">Имя</div></div>
     <div class="row"><div style="font-size:16px">${esc(u.code)}</div><div style="font-size:13px;color:var(--sec)">Код пользователя</div></div>
     ${self?`<div class="row" style="cursor:pointer" onclick="openNft()"><div style="font-size:16px;color:var(--accent)">NFT Подарки</div><div style="font-size:13px;color:var(--sec)">${(state.user.nft||[]).length} шт.</div></div>`:''}
-    ${self?`<div class="row"><div style="font-size:16px">${u.stars||0} <svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg></div><div style="font-size:13px;color:var(--sec)">Баланс</div></div>`:''}</div>`;
+    ${self?`<div class="row"><div style="font-size:16px">${u.stars||0} <svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg></div><div style="font-size:13px;color:var(--sec)">Баланс</div></div>`:''}
+    ${self&&!state.user.premium?`<div class="row" style="cursor:pointer" onclick="buyPremium()"><div style="font-size:16px;color:var(--gold)">Купить Premium</div><div style="font-size:13px;color:var(--sec)">1000 <svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg></div></div>`:''}
+    </div>`;
 }
-$('#profileBtn').onclick=()=>{ if(!state.user) return; $('#profileContent').innerHTML=profileHtml({...state.user,online:true},true); $('#profileScreen').classList.remove('hidden'); };
-$('#profileBack').onclick=()=>$('#profileScreen').classList.add('hidden');
+
+$('#profileBtn').onclick=()=>{ if(!state.user) return; state.viewingProfileCode = state.user.code; $('#profileContent').innerHTML=profileHtml({...state.user,online:true},true); $('#profileScreen').classList.remove('hidden'); };
+$('#profileBack').onclick=()=>{ $('#profileScreen').classList.add('hidden'); state.viewingProfileCode=null; };
+
 function openProfile(code){
-  const f=state.friends.find(x=>x.code===code); if(!f) return;
-  $('#profileContent').innerHTML=profileHtml({...f,online:!!state.online[code]},false);
+  // Ищем в друзьях или ищем по коду (если это админ, он мог перейти из админки)
+  let f = state.friends.find(x=>x.code===code);
+  if (!f && state.user.code === 'ADMIN') {
+     // Админ может смотреть профиль любого, но данные нужно найти. 
+     // В упрощенном виде возьмем из списка. Если нет - заглушка.
+     f = { code, name: 'User', online: false };
+  }
+  if (!f) return toast('Пользователь не найден в друзьях');
+  state.viewingProfileCode = code;
+  $('#profileContent').innerHTML=profileHtml({...f,online:!!state.online[code]}, false);
   $('#profileScreen').classList.remove('hidden');
 }
 
@@ -654,6 +689,16 @@ function saveProfile(){
     state.user.name = name; state.user.bio = bio; state.user.photo = state.editAvatar;
     toast('Профиль обновлен');
     closeEditProfile();
+    $('#profileContent').innerHTML = profileHtml({...state.user, online:true}, true);
+  });
+}
+
+function buyPremium(){
+  socket.emit('buyPremium', res => {
+    if (!res || !res.ok) return toast(res?.error || 'Ошибка');
+    state.user.stars = res.stars; state.user.premium = true;
+    $('#starCount').textContent = res.stars;
+    toast('Premium активирован!');
     $('#profileContent').innerHTML = profileHtml({...state.user, online:true}, true);
   });
 }
@@ -694,12 +739,32 @@ function buyNft(id){
   });
 }
 
-function openAdminPanel(){ socket.emit('getAdminUsers'); $('#adminModal').classList.add('open'); }
+// --- АДМИНКА (УЛУЧШЕННАЯ) ---
+function openAdminPanel(){ 
+  socket.emit('getAdminUsers'); 
+  socket.emit('getStarsRequests');
+  $('#adminModal').classList.add('open'); 
+}
 function closeAdminPanel(){ $('#adminModal').classList.remove('open'); }
+function switchAdminTab(tab){
+  if(tab === 'users') {
+    $('#tabAdminUsers').classList.add('active'); $('#tabAdminReqs').classList.remove('active');
+    $('#adminViewUsers').classList.remove('hidden'); $('#adminViewReqs').classList.add('hidden');
+  } else {
+    $('#tabAdminUsers').classList.remove('active'); $('#tabAdminReqs').classList.add('active');
+    $('#adminViewUsers').classList.add('hidden'); $('#adminViewReqs').classList.remove('hidden');
+    renderAdminReqs();
+  }
+}
+function updateReqBadge(){
+  const b = $('#reqBadge');
+  b.textContent = state.adminReqs.length;
+  if(state.adminReqs.length > 0) b.classList.remove('hidden'); else b.classList.add('hidden');
+}
 function renderAdminUsers(users){
   $('#adminUsersList').innerHTML = users.map(u => `
     <div class="admin-row">
-      <div>
+      <div style="cursor:pointer" onclick="openProfile('${u.code}')">
         <div style="font-weight:700">${esc(u.name)} <span style="color:var(--sec);font-size:12px">(${u.code})</span></div>
         <div style="color:var(--gold);font-size:14px;font-weight:700">★ ${u.stars}</div>
       </div>
@@ -715,6 +780,28 @@ function giveStars(code){
   if(!amt) return;
   socket.emit('adminGiveStars', { target: code, amount: amt }, res => {
     if(res.ok) { toast('Звёзды выданы!'); socket.emit('getAdminUsers'); }
+  });
+}
+function renderAdminReqs(){
+  updateReqBadge();
+  if(!state.adminReqs.length) {
+    $('#adminReqsList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--sec)">Нет активных заявок</div>';
+    return;
+  }
+  $('#adminReqsList').innerHTML = state.adminReqs.map(r => `
+    <div class="admin-row">
+      <div>
+        <div style="font-weight:700">${esc(r.userName)} <span style="color:var(--sec);font-size:12px">(${r.userCode})</span></div>
+        <div style="color:var(--accent);font-weight:600">Запрос: ${r.amount} звёзд (${r.price} руб.)</div>
+      </div>
+      <button class="btn primary" style="padding:6px 12px;width:auto" onclick="resolveReq('${r.id}', '${r.amount}')">Выдать</button>
+    </div>
+  `).join('');
+}
+function resolveReq(id, amount){
+  socket.emit('resolveStarsRequest', { id, amount }, () => {
+    toast('Заявка выполнена!');
+    socket.emit('getStarsRequests');
   });
 }
 
@@ -748,18 +835,23 @@ function searchFriend(){
     box.innerHTML=res.users.map(u=>{
       const isF=state.friends.some(f=>f.code===u.code);
       return `<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--hover);border-radius:10px;margin-bottom:8px">
-        <div class="gav" style="width:44px;height:44px">${avFor(u.name,u.photo)}</div>
-        <div style="flex:1;min-width:0"><div style="font-weight:600">${esc(u.name)}</div><div class="sub" style="font-size:13px;text-align:left">${esc(u.code)}</div></div>
+        <div class="gav" style="width:44px;height:44px;cursor:pointer" onclick="openProfile('${u.code}')">${avFor(u.name,u.photo)}</div>
+        <div style="flex:1;min-width:0;cursor:pointer" onclick="openProfile('${u.code}')"><div style="font-weight:600">${esc(u.name)}</div><div class="sub" style="font-size:13px;text-align:left">${esc(u.code)}</div></div>
         ${isF?'<span class="sub" style="font-size:13px">уже друг</span>':`<button class="btn primary" style="width:auto;padding:8px 14px;font-size:14px" onclick="addFriendByCode('${esc(u.code)}')"><svg class="ic sm"><use href="#i-plus"/></svg></button>`}</div>`;
     }).join('');
   });
 }
-function addFriendByCode(code){
+function addFriendByCode(code, closeModal=false){
   socket.emit('addFriendByCode',{code},res=>{
     if(!res||!res.ok) return toast(res?.error||'Ошибка');
     if(!state.friends.find(x=>x.code===res.friend.code)){ state.friends.push(res.friend); state.online[res.friend.code]=res.friend.online; }
     toast((res.already?'Уже в друзьях: ':'Друг добавлен: ')+res.friend.name);
-    renderFriends(); closeAddFriend();
+    renderFriends(); 
+    if(!closeModal) closeAddFriend();
+    else {
+      // Обновляем кнопки в профиле, если он открыт
+      if(state.viewingProfileCode === code) openProfile(code);
+    }
   });
 }
 function startQRScanner(){
@@ -849,4 +941,4 @@ function endCall() {
 }
 </script>
 </body>
-</html> 
+</html>
