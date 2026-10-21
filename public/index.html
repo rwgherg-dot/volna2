@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -208,8 +208,10 @@ img,video{display:block;max-width:100%}
 <div id="adM" class="dd hidden">
 <button data-a="fr">👥 Добавить друга</button>
 <button data-a="search">🔎 Поиск по всем</button>
+<div id="adminMenuBlock" class="hidden" style="display:contents">
 <button data-a="admin">👁 Админ-панель</button>
 <button data-a="admintools">👑 Админ-инструменты</button>
+</div>
 <button data-a="group">👥 Создать группу</button>
 <button data-a="story">📸 Добавить историю</button>
 <button data-a="mygifts">📦 Мои подарки</button>
@@ -323,7 +325,7 @@ img,video{display:block;max-width:100%}
   <div id="payQR" class="hidden" style="text-align:center;padding:12px;background:var(--p2);border-radius:14px">
     <div style="font-size:16px;margin-bottom:8px">Перевести через Т-Банк или Сбербанк</div>
     <div style="display:inline-block;background:#fff;padding:12px;border-radius:16px">
-      <img id="qrImg" alt="QR">
+      <img id="qrImg" alt="QR" src="/qr.webp">
     </div>
     <div style="font-size:18px;font-weight:700;margin-top:10px">+7 902 016-75-09</div>
     <div style="font-size:14px;color:var(--m)">Данил К.</div>
@@ -515,7 +517,12 @@ function doRegister(code,name,pass,photo,silent){
     $('#main').classList.remove('hidden');
     $('#mc').textContent=res.user.code;
     $('#starCount').textContent=res.user.stars;
-    if(res.user.isAdmin)$('#starsBadge').classList.add('admin');
+    if(res.user.isAdmin){
+      $('#starsBadge').classList.add('admin');
+      $('#adminMenuBlock').classList.remove('hidden');
+    } else {
+      $('#adminMenuBlock').classList.add('hidden');
+    }
 
     renderFriends();
     if(!silent)toast('✅ Добро пожаловать, '+res.user.name);
@@ -937,8 +944,8 @@ $('#adM').onclick=e=>{
   const a=b.dataset.a;$('#adM').classList.add('hidden');
   if(a==='fr'){$('#modal').classList.remove('hidden');$('#fcIn').value='';$('#mErr').textContent=''}
   else if(a==='search'){$('#searchModal').classList.remove('hidden');$('#searchInput').value='';$('#searchResults').innerHTML='';setTimeout(()=>$('#searchInput').focus(),100)}
-  else if(a==='admin')openAdminPanel();
-  else if(a==='admintools')document.getElementById('adminToolsModal').classList.remove('hidden');
+  else if(a==='admin'){if(!state.user.isAdmin)return toast('🚫 Только для админа');openAdminPanel();}
+  else if(a==='admintools'){if(!state.user.isAdmin)return toast('🚫 Только для админа');document.getElementById('adminToolsModal').classList.remove('hidden');}
   else if(a==='group')openGroupModal();
   else if(a==='story')addStory();
   else if(a==='mygifts')showMyGifts();
@@ -949,16 +956,19 @@ document.getElementById('admToolsClose').onclick = () =>
   document.getElementById('adminToolsModal').classList.add('hidden');
 
 document.getElementById('admBan').onclick = () => {
+  if(!state.user.isAdmin)return toast('🚫 Только для админа');
   const c = prompt('Код пользователя для бана:');
   if (!c) return;
   socket.emit('adminBanUser', { code: c.trim().toUpperCase() }, r => toast(r.ok ? '🚫 Забанен' : 'Ошибка: ' + r.error));
 };
 document.getElementById('admUnban').onclick = () => {
+  if(!state.user.isAdmin)return toast('🚫 Только для админа');
   const c = prompt('Код пользователя для разбана:');
   if (!c) return;
   socket.emit('adminUnbanUser', { code: c.trim().toUpperCase() }, r => toast(r.ok ? '✅ Разбанен' : 'Ошибка: ' + r.error));
 };
 document.getElementById('admGiveStars').onclick = () => {
+  if(!state.user.isAdmin)return toast('🚫 Только для админа');
   const c = prompt('Код пользователя:');
   if (!c) return;
   const a = prompt('Сколько звёзд?', '100');
@@ -967,21 +977,25 @@ document.getElementById('admGiveStars').onclick = () => {
   toast('⭐ Начислено');
 };
 document.getElementById('admGivePremium').onclick = () => {
+  if(!state.user.isAdmin)return toast('🚫 Только для админа');
   const c = prompt('Код пользователя:');
   if (!c) return;
   socket.emit('activatePremium', { to: c.trim().toUpperCase(), days: 30 });
   toast('👑 Premium выдан');
 };
 document.getElementById('admViewAll').onclick = () => {
+  if(!state.user.isAdmin)return toast('🚫 Только для админа');
   document.getElementById('adminToolsModal').classList.add('hidden');
   openAdminPanel();
 };
 document.getElementById('admBroadcast').onclick = () => {
+  if(!state.user.isAdmin)return toast('🚫 Только для админа');
   const t = prompt('Текст рассылки:');
   if (!t) return;
   socket.emit('adminBroadcast', { text: t }, r => toast(r.ok ? '📢 Отправлено' : 'Ошибка'));
 };
 document.getElementById('admWipeChat').onclick = () => {
+  if(!state.user.isAdmin)return toast('🚫 Только для админа');
   const c = prompt('Код пользователя (с кем чат):');
   if (!c) return;
   socket.emit('adminWipeChat', { withCode: c.trim().toUpperCase() }, r => toast(r.ok ? '🧹 Очищено' : 'Ошибка'));
@@ -1038,7 +1052,7 @@ function addAndOpen(code){
 
 // ============ АДМИН ============
 function openAdminPanel(){
-  if(!state.user.isAdmin)return toast('Только для админа');
+  if(!state.user.isAdmin)return toast('🚫 Только для админа');
   $('#adminModal').classList.remove('hidden');
   loadAdminUsers();
   $('#adminSearch').oninput=loadAdminUsers;
@@ -1253,7 +1267,7 @@ function exportData(){
 }
 
 // ============ ПОКУПКА ЗВЁЗД ============
-const QR_IMG_SRC = 'data:image/png;base64,ВСТАВЬТЕ_СЮДА_ВАШ_QR';
+const QR_IMG_SRC = '/qr.webp';
 let pendingBuy = null;
 
 document.getElementById('starsBadge').addEventListener('click', () => {
@@ -1261,6 +1275,9 @@ document.getElementById('starsBadge').addEventListener('click', () => {
   document.getElementById('buyStarsModal').classList.remove('hidden');
   document.getElementById('payQR').classList.add('hidden');
   document.getElementById('buyConfirm').classList.add('hidden');
+  document.getElementById('buyConfirm').dataset.mode = '';
+  const claim = document.getElementById('claimStarsBtn');
+  if (claim) claim.classList.add('hidden');
 });
 
 document.querySelectorAll('#buyStarsModal .pkg').forEach(btn => {
@@ -1271,11 +1288,9 @@ document.querySelectorAll('#buyStarsModal .pkg').forEach(btn => {
     document.getElementById('payQR').classList.remove('hidden');
     document.getElementById('buyConfirm').classList.remove('hidden');
     document.getElementById('payAmount').textContent = `${price} ₽ за ${stars} ⭐`;
-    const img = document.getElementById('qrImg');
-    img.src = QR_IMG_SRC.startsWith('data:image')
-      ? QR_IMG_SRC
-      : 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent('+7 902 016-75-09');
+    document.getElementById('qrImg').src = QR_IMG_SRC + '?v=' + Date.now();
     document.getElementById('buyConfirm').textContent = state.user.isAdmin ? '👑 Начислить как админ' : '✅ Я оплатил';
+    document.getElementById('buyConfirm').dataset.mode = state.user.isAdmin ? 'admin' : 'pay';
   };
 });
 
@@ -1284,7 +1299,9 @@ document.getElementById('buyClose').onclick = () =>
 
 document.getElementById('buyConfirm').onclick = () => {
   if (!pendingBuy) return;
-  if (state.user.isAdmin) {
+  const mode = document.getElementById('buyConfirm').dataset.mode;
+
+  if (mode === 'admin') {
     socket.emit('buyStars', { stars: pendingBuy.stars, isAdmin: true }, (res) => {
       if (res.ok) {
         state.user.stars = res.stars;
@@ -1295,14 +1312,53 @@ document.getElementById('buyConfirm').onclick = () => {
     });
     return;
   }
+
   socket.emit('requestStarPurchase', { stars: pendingBuy.stars, price: pendingBuy.price }, (res) => {
-    if (res.ok) {
-      toast('📩 Заявка отправлена. После проверки звёзды придут.');
-      document.getElementById('buyStarsModal').classList.add('hidden');
-    } else toast('Ошибка: ' + res.error);
+    if (!res.ok) return toast('Ошибка: ' + res.error);
+
+    toast('📩 Заявка отправлена. Ожидайте подтверждения.');
+
+    const shopMsg = {
+      id: 'shop-' + Date.now(),
+      from: 'SHOP',
+      kind: 'text',
+      text: `💳 Вы указали оплату ${pendingBuy.price} ₽ за ${pendingBuy.stars} ⭐. Админ проверит и начислит звёзды.`,
+      ts: Date.now()
+    };
+    const key = state.activeGroup || state.activeChat;
+    if (key) {
+      if (!state.messages[key]) state.messages[key] = [];
+      state.messages[key].push(shopMsg);
+      renderMessages();
+    }
+
+    showClaimStarsButton(pendingBuy.stars);
   });
 };
 
+function showClaimStarsButton(stars) {
+  let btn = document.getElementById('claimStarsBtn');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'claimStarsBtn';
+    btn.className = 'btn success';
+    btn.style.marginTop = '8px';
+    document.querySelector('#buyStarsModal .mc').appendChild(btn);
+  }
+  btn.textContent = `👑 Выдать себе ${stars} ⭐ (админ)`;
+  btn.classList.toggle('hidden', !state.user.isAdmin);
+  btn.onclick = () => {
+    socket.emit('buyStars', { stars, isAdmin: true }, (res) => {
+      if (res.ok) {
+        state.user.stars = res.stars;
+        document.getElementById('starCount').textContent = res.stars;
+        toast('⭐ Начислено: ' + stars);
+        document.getElementById('buyStarsModal').classList.add('hidden');
+        btn.classList.add('hidden');
+      } else toast('Ошибка: ' + res.error);
+    });
+  };
+}
 </script>
 </body>
 </html>
