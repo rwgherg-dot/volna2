@@ -2,130 +2,76 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>Tear Down Mobile</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Tear Down</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body {
-    margin: 0; padding: 0; height: 100%; overflow: hidden;
-    background: #1a1a2e; color: #eee;
-    font-family: -apple-system, Arial, sans-serif;
-    user-select: none; -webkit-user-select: none;
-    touch-action: manipulation;
-  }
-  #app {
-    position: fixed; inset: 0;
-    display: flex; flex-direction: column;
-  }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#1a1a2e;color:#eee;
+  font-family:-apple-system,Arial,sans-serif;user-select:none;-webkit-user-select:none}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
 
-  /* Лобби */
-  #lobby {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 20px; text-align: center;
-  }
-  #lobby h1 { font-size: 22px; margin: 0 0 20px; }
-  #lobby button {
-    padding: 14px 24px; font-size: 16px; font-weight: bold;
-    border: none; border-radius: 10px; cursor: pointer;
-    background: #4fc3f7; color: #000; margin: 6px;
-    width: 220px;
-  }
-  #lobby button:active { transform: scale(0.97); }
-  #lobby input {
-    padding: 12px; font-size: 16px; border-radius: 10px;
-    border: 2px solid #4fc3f7; background: #0f3460; color: #fff;
-    width: 220px; text-align: center; margin: 6px;
-  }
-  #lobby .hint { font-size: 12px; color: #888; margin: 6px 0; }
-  #status { font-size: 13px; color: #aaa; margin-top: 14px; min-height: 20px; }
+/* Лобби */
+#lobby{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
+#lobby h1{font-size:24px;margin:0 0 8px}
+#lobby .sub{font-size:13px;color:#888;margin-bottom:20px}
+#lobby button{padding:14px 20px;font-size:16px;font-weight:bold;border:none;border-radius:12px;
+  cursor:pointer;background:#4fc3f7;color:#000;width:240px;margin:6px}
+#lobby button:active{transform:scale(.97)}
+#lobby button.gray{background:#555;color:#fff}
+#lobby input{padding:14px;font-size:16px;border-radius:12px;border:2px solid #4fc3f7;
+  background:#0f3460;color:#fff;width:240px;text-align:center;margin:6px}
+#status{font-size:13px;color:#aaa;margin-top:16px;min-height:22px;line-height:1.5}
+#status.err{color:#e94560}
+#roomBox{background:#0f3460;border:2px dashed #4fc3f7;border-radius:12px;
+  padding:14px 18px;margin:14px 0;display:none}
+#roomBox .label{font-size:12px;color:#888}
+#roomBox .id{font-size:20px;font-weight:bold;color:#4fc3f7;letter-spacing:1px;
+  word-break:break-all;margin:6px 0}
+#copyBtn{font-size:13px;padding:8px 16px;background:#4fc3f7;color:#000;border:none;
+  border-radius:8px;font-weight:bold;cursor:pointer;width:auto}
 
-  /* Игра */
-  #gameWrap {
-    flex: 1; position: relative; display: none;
-  }
-  #gameWrap.active { display: block; }
-  canvas {
-    display: block; width: 100%; height: 100%;
-    background: #0f3460;
-    touch-action: none;
-  }
-
-  /* HUD сверху */
-  #hud {
-    position: absolute; top: 0; left: 0; right: 0;
-    display: flex; justify-content: space-between;
-    padding: 8px 12px; font-size: 15px; font-weight: bold;
-    pointer-events: none;
-  }
-  #hud .p1 { color: #4fc3f7; }
-  #hud .p2 { color: #ff7043; }
-
-  /* Сенсорные кнопки */
-  #controls {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    display: flex; justify-content: space-between;
-    padding: 12px; padding-bottom: max(12px, env(safe-area-inset-bottom));
-    pointer-events: none;
-  }
-  .pad {
-    display: grid; gap: 8px;
-    pointer-events: auto;
-    grid-template-areas:
-      ". up ."
-      "left down right";
-    grid-template-columns: 56px 56px 56px;
-    grid-template-rows: 56px 56px;
-  }
-  .btn {
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,0.15);
-    border: 2px solid rgba(255,255,255,0.3);
-    border-radius: 14px;
-    font-size: 22px; color: #fff; font-weight: bold;
-    touch-action: none; cursor: pointer;
-  }
-  .btn:active { background: rgba(255,255,255,0.4); transform: scale(0.95); }
-  .btn.up { grid-area: up; }
-  .btn.down { grid-area: down; }
-  .btn.left { grid-area: left; }
-  .btn.right { grid-area: right; }
-
-  /* Цвета для каждого игрока */
-  .pad.p1 .btn { border-color: #4fc3f7; color: #4fc3f7; }
-  .pad.p2 .btn { border-color: #ff7043; color: #ff7043; }
-
-  /* Сообщение */
-  #msg {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    font-size: 18px; text-align: center;
-    text-shadow: 0 2px 8px #000;
-    pointer-events: none;
-  }
-
-  /* Кнопка "заново" */
-  #resetBtn {
-    position: absolute; top: 50px; left: 50%;
-    transform: translateX(-50%);
-    padding: 8px 16px; font-size: 13px;
-    background: #e94560; color: #fff; border: none;
-    border-radius: 8px; cursor: pointer; display: none;
-  }
+/* Игра */
+#gameWrap{flex:1;position:relative;display:none}
+#gameWrap.active{display:block}
+canvas{display:block;width:100%;height:100%;background:#0f3460;touch-action:none}
+#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;
+  padding:8px 12px;font-size:15px;font-weight:bold;pointer-events:none}
+#hud .p1{color:#4fc3f7}#hud .p2{color:#ff7043}
+#controls{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:center;
+  padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom));pointer-events:none}
+.pad{display:grid;gap:10px;pointer-events:auto;
+  grid-template-areas:". up ." "left down right";
+  grid-template-columns:64px 64px 64px;grid-template-rows:64px 64px}
+.btn{display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);
+  border-radius:16px;font-size:24px;color:#fff;font-weight:bold;touch-action:none;cursor:pointer}
+.btn:active{background:rgba(255,255,255,.4);transform:scale(.95)}
+.btn.up{grid-area:up}.btn.down{grid-area:down}.btn.left{grid-area:left}.btn.right{grid-area:right}
+.pad.p1 .btn{border-color:#4fc3f7;color:#4fc3f7}
+.pad.p2 .btn{border-color:#ff7043;color:#ff7043}
 </style>
 </head>
 <body>
 <div id="app">
+
   <!-- Лобби -->
   <div id="lobby">
     <h1>🔨 Tear Down</h1>
-    <div class="hint">Игра на двоих по сети</div>
+    <div class="sub">Игра на двоих по сети</div>
+
     <button id="hostBtn">Создать игру</button>
-    <input id="roomInput" placeholder="ID комнаты друга" inputmode="text" autocapitalize="off">
-    <button id="joinBtn">Подключиться</button>
-    <div id="status">Готов к игре</div>
+
+    <div id="roomBox">
+      <div class="label">ID комнаты:</div>
+      <div class="id" id="roomId">—</div>
+      <button id="copyBtn">📋 Скопировать</button>
+    </div>
+
+    <input id="roomInput" placeholder="Вставь ID друга" autocapitalize="off" autocomplete="off" spellcheck="false">
+    <button id="joinBtn" class="gray">Подключиться</button>
+
+    <div id="status">Готов</div>
   </div>
 
   <!-- Игра -->
@@ -135,68 +81,72 @@
       <div class="p1" id="hud1">P1: 0</div>
       <div class="p2" id="hud2">P2: 0</div>
     </div>
-    <div id="msg"></div>
-    <button id="resetBtn">🔄 Заново</button>
-
     <div id="controls">
       <div class="pad p1" id="pad1">
-        <div class="btn up"    data-p="0" data-k="up">▲</div>
-        <div class="btn left"  data-p="0" data-k="left">◀</div>
-        <div class="btn down"  data-p="0" data-k="down">▼</div>
-        <div class="btn right" data-p="0" data-k="right">▶</div>
+        <div class="btn up"    data-k="up">▲</div>
+        <div class="btn left"  data-k="left">◀</div>
+        <div class="btn down"  data-k="down">▼</div>
+        <div class="btn right" data-k="right">▶</div>
       </div>
       <div class="pad p2" id="pad2">
-        <div class="btn up"    data-p="1" data-k="up">▲</div>
-        <div class="btn left"  data-p="1" data-k="left">◀</div>
-        <div class="btn down"  data-p="1" data-k="down">▼</div>
-        <div class="btn right" data-p="1" data-k="right">▶</div>
+        <div class="btn up"    data-k="up">▲</div>
+        <div class="btn left"  data-k="left">◀</div>
+        <div class="btn down"  data-k="down">▼</div>
+        <div class="btn right" data-k="right">▶</div>
       </div>
     </div>
   </div>
+
 </div>
 
 <script>
-/* ============ Настройка canvas под экран ============ */
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const hud1 = document.getElementById('hud1');
-const hud2 = document.getElementById('hud2');
-const msgEl = document.getElementById('msg');
-const resetBtn = document.getElementById('resetBtn');
-const lobbyEl = document.getElementById('lobby');
-const gameWrap = document.getElementById('gameWrap');
-const statusEl = document.getElementById('status');
+/* ==================== PeerJS config ==================== */
+// Явно задаём сервер и STUN/TURN — это фиксит большую часть "peer-unavailable"
+const PEER_CONFIG = {
+  debug: 1,
+  config: {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' }
+    ]
+  }
+};
 
-let W = 800, H = 500;
-let GROUND, GRAVITY = 0.5;
+/* ==================== DOM ==================== */
+const $ = id => document.getElementById(id);
+const canvas = $('game'), ctx = canvas.getContext('2d');
+const lobby = $('lobby'), gameWrap = $('gameWrap');
+const statusEl = $('status'), roomBox = $('roomBox'), roomIdEl = $('roomId');
+const hud1 = $('hud1'), hud2 = $('hud2');
 
-function resize() {
-  const rect = gameWrap.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width  = rect.width  * dpr;
-  canvas.height = rect.height * dpr;
-  W = rect.width; H = rect.height;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  GROUND = H - 40;
-  if (started && isHost) buildTower(); // перестроить башню под новый размер
-}
-window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', () => setTimeout(resize, 200));
-
-/* ============ Состояние игры ============ */
-let blocks = [];
-let players = [];
-let started = false;
-let isHost = false;
-let myId = 0;       // 0 = хост (слева), 1 = гость (справа)
+/* ==================== Состояние ==================== */
+let W = 0, H = 0, GROUND = 0;
+const GRAVITY = 0.5;
+let blocks = [], players = [];
+let started = false, isHost = false, myId = 0;
 let peer = null, conn = null;
 
+/* ==================== Canvas ==================== */
+function resize() {
+  const r = gameWrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = r.width  * dpr;
+  canvas.height = r.height * dpr;
+  W = r.width; H = r.height;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  GROUND = H - 40;
+  if (started && isHost) { buildTower(); }
+}
+addEventListener('resize', resize);
+addEventListener('orientationchange', () => setTimeout(resize, 150));
+
+/* ==================== Игроки и башня ==================== */
 function makePlayers() {
   return [
-    { x: W*0.25, y: GROUND-40, w:40, h:40, vx:0, vy:0, color:'#4fc3f7',
+    { x:W*0.25, y:GROUND-40, w:40, h:40, vx:0, vy:0, color:'#4fc3f7',
       onGround:true, score:0, jumpCd:0, downCd:0, hitDown:false,
       input:{left:false,right:false,up:false,down:false} },
-    { x: W*0.75, y: GROUND-40, w:40, h:40, vx:0, vy:0, color:'#ff7043',
+    { x:W*0.75, y:GROUND-40, w:40, h:40, vx:0, vy:0, color:'#ff7043',
       onGround:true, score:0, jumpCd:0, downCd:0, hitDown:false,
       input:{left:false,right:false,up:false,down:false} }
   ];
@@ -204,78 +154,110 @@ function makePlayers() {
 
 function buildTower() {
   blocks = [];
-  const bw = Math.min(45, W/9);
-  const bh = 22;
+  const bw = Math.min(45, W/9), bh = 22;
   const baseX = W/2 - bw*2;
-  for (let row = 0; row < 12; row++) {
-    for (let col = 0; col < 4; col++) {
+  for (let row = 0; row < 12; row++)
+    for (let col = 0; col < 4; col++)
       blocks.push({
         x: baseX + col*bw + (row%2 ? bw/2 : 0) - (row%2 ? bw/4 : 0),
         y: GROUND - (row+1)*bh - row,
         w: bw-2, h: bh-2, vx:0, vy:0, broken:false
       });
-    }
-  }
 }
 
-/* ============ Лобби / PeerJS ============ */
-document.getElementById('hostBtn').onclick = () => {
-  statusEl.textContent = 'Создание комнаты...';
-  peer = new Peer();
+/* ==================== Статус ==================== */
+function setStatus(text, isErr) {
+  statusEl.textContent = text;
+  statusEl.className = isErr ? 'err' : '';
+}
+
+/* ==================== Хост ==================== */
+$('hostBtn').onclick = () => {
+  setStatus('Создание комнаты...');
+  $('hostBtn').disabled = true;
+  peer = new Peer(PEER_CONFIG);
   peer.on('open', id => {
     isHost = true; myId = 0;
-    statusEl.innerHTML = `Комната создана!<br>ID: <b style="color:#4fc3f7">${id}</b><br>Скинь другу`;
+    roomIdEl.textContent = id;
+    roomBox.style.display = 'block';
+    setStatus('Комната создана. Ждём друга...');
+    $('hostBtn').style.display = 'none';
   });
   peer.on('connection', c => {
     conn = c;
-    c.on('open', () => { statusEl.textContent = 'Подключено!'; startGame(); });
+    c.on('open', () => { setStatus('Подключено!'); startGame(); });
     c.on('data', onData);
+    c.on('close', () => { setStatus('Друг отключился', true); });
   });
-  peer.on('error', e => statusEl.textContent = 'Ошибка: ' + e.type);
+  peer.on('error', e => {
+    handlePeerError(e);
+    $('hostBtn').disabled = false;
+  });
 };
 
-document.getElementById('joinBtn').onclick = () => {
-  const rid = document.getElementById('roomInput').value.trim();
-  if (!rid) { statusEl.textContent = 'Введи ID комнаты'; return; }
-  statusEl.textContent = 'Подключение...';
-  peer = new Peer();
+/* ==================== Гость ==================== */
+$('joinBtn').onclick = () => {
+  const rid = $('roomInput').value.trim().toLowerCase();
+  if (!rid) { setStatus('Введи ID комнаты', true); return; }
+  setStatus('Подключение...');
+  $('joinBtn').disabled = true;
+
+  peer = new Peer(PEER_CONFIG);
   peer.on('open', () => {
-    conn = peer.connect(rid);
+    conn = peer.connect(rid, { reliable: true });
     conn.on('open', () => {
       isHost = false; myId = 1;
-      statusEl.textContent = 'Подключено!';
+      setStatus('Подключено!');
       startGame();
       conn.on('data', onData);
     });
-    conn.on('error', e => statusEl.textContent = 'Ошибка соединения');
+    conn.on('error', () => setStatus('Не удалось соединиться', true));
   });
-  peer.on('error', e => statusEl.textContent = 'Ошибка: ' + e.type);
+  peer.on('error', e => {
+    handlePeerError(e);
+    $('joinBtn').disabled = false;
+  });
 };
 
+/* ==================== Обработка ошибок PeerJS ==================== */
+function handlePeerError(e) {
+  const t = e.type;
+  if (t === 'peer-unavailable') {
+    setStatus('Комната не найдена. Проверь ID (не перепутал 0/O?) и что хост открыл игру', true);
+  } else if (t === 'network') {
+    setStatus('Проблема с сетью. Проверь интернет', true);
+  } else if (t === 'server-error') {
+    setStatus('Сервер PeerJS недоступен. Попробуй ещё раз', true);
+  } else if (t === 'unavailable-id') {
+    setStatus('Этот ID уже занят. Попробуй снова', true);
+  } else if (t === 'browser-incompatible') {
+    setStatus('Браузер не поддерживается. Открой в Chrome/Safari', true);
+  } else {
+    setStatus('Ошибка: ' + t, true);
+  }
+}
+
+/* ==================== Копирование ID ==================== */
+$('copyBtn').onclick = () => {
+  const id = roomIdEl.textContent;
+  navigator.clipboard?.writeText(id).then(
+    () => { $('copyBtn').textContent = '✅ Скопировано'; setTimeout(() => $('copyBtn').textContent = '📋 Скопировать', 1500); },
+    () => setStatus('Скопируй ID вручную: ' + id)
+  );
+};
+
+/* ==================== Старт игры ==================== */
 function startGame() {
-  lobbyEl.style.display = 'none';
+  lobby.style.display = 'none';
   gameWrap.classList.add('active');
   resize();
   players = makePlayers();
   buildTower();
   started = true;
 
-  // Показать только свой pad
-  document.getElementById('pad1').style.display = myId === 0 ? 'grid' : 'none';
-  document.getElementById('pad2').style.display = myId === 1 ? 'grid' : 'none';
-  // HUD — раскрасить под мою сторону
-  hud1.style.opacity = myId === 0 ? 1 : 0.5;
-  hud2.style.opacity = myId === 1 ? 1 : 0.5;
-
-  resetBtn.style.display = 'block';
-  resetBtn.onclick = () => {
-    if (isHost) {
-      buildTower();
-      players.forEach(p => p.score = 0);
-    } else if (conn && conn.open) {
-      conn.send({ t:'reset' });
-    }
-  };
+  // Показываем только свой пад
+  $('pad1').style.display = myId === 0 ? 'grid' : 'none';
+  $('pad2').style.display = myId === 1 ? 'grid' : 'none';
 
   if (isHost) {
     setInterval(sendState, 33);
@@ -285,166 +267,134 @@ function startGame() {
   }
 }
 
-/* ============ Сеть ============ */
+/* ==================== Сеть ==================== */
 function sendState() {
   if (!conn || !conn.open) return;
   conn.send({
-    t: 'state',
-    blocks,
-    players: players.map(p => ({ x:p.x, y:p.y, vx:p.vx, vy:p.vy, score:p.score }))
+    t: 's',
+    b: blocks.map(b => [b.x, b.y, b.vx, b.vy]),   // компактно
+    p: players.map(p => [p.x, p.y, p.score])
   });
 }
 
-function onData(data) {
-  if (data.t === 'state' && !isHost) {
-    blocks = data.blocks;
-    data.players.forEach((s,i) => {
-      players[i].x = s.x; players[i].y = s.y;
-      players[i].score = s.score;
-    });
+function onData(d) {
+  if (d.t === 's' && !isHost) {
+    for (let i = 0; i < d.b.length; i++) {
+      const b = blocks[i]; if (!b) continue;
+      b.x = d.b[i][0]; b.y = d.b[i][1]; b.vx = d.b[i][2]; b.vy = d.b[i][3];
+    }
+    for (let i = 0; i < d.p.length; i++) {
+      const p = players[i]; if (!p) continue;
+      p.x = d.p[i][0]; p.y = d.p[i][1]; p.score = d.p[i][2];
+    }
   }
-  if (data.t === 'input' && isHost) {
-    players[data.id].input = data.input;
-  }
-  if (data.t === 'reset' && isHost) {
-    buildTower();
-    players.forEach(p => p.score = 0);
+  if (d.t === 'i' && isHost) {
+    players[d.id].input = d.in;
   }
 }
 
-/* ============ Сенсорное управление ============ */
-function bindPad() {
-  document.querySelectorAll('.btn').forEach(btn => {
-    const p = +btn.dataset.p;
-    const k = btn.dataset.k;
-    const setInput = (val) => {
-      if (!started || p !== myId) return;
-      players[p].input[k] = val;
-      if (!isHost && conn && conn.open) {
-        conn.send({ t:'input', id:myId, input: players[myId].input });
-      }
-    };
-    btn.addEventListener('touchstart', e => { e.preventDefault(); setInput(true); }, {passive:false});
-    btn.addEventListener('touchend',   e => { e.preventDefault(); setInput(false); }, {passive:false});
-    btn.addEventListener('touchcancel',e => { e.preventDefault(); setInput(false); }, {passive:false});
-    btn.addEventListener('mousedown',  e => { e.preventDefault(); setInput(true); });
-    btn.addEventListener('mouseup',    e => { e.preventDefault(); setInput(false); });
-    btn.addEventListener('mouseleave', e => { setInput(false); });
-  });
-}
+/* ==================== Сенсор ==================== */
+document.querySelectorAll('.btn').forEach(btn => {
+  const k = btn.dataset.k;
+  const pad = btn.closest('.pad');
+  const p = pad.id === 'pad1' ? 0 : 1;
+  const set = val => {
+    if (!started || p !== myId) return;
+    players[p].input[k] = val;
+    if (!isHost && conn?.open) conn.send({ t:'i', id:myId, in: players[myId].input });
+  };
+  btn.addEventListener('touchstart', e => { e.preventDefault(); set(true); }, {passive:false});
+  btn.addEventListener('touchend',   e => { e.preventDefault(); set(false); }, {passive:false});
+  btn.addEventListener('touchcancel',e => { e.preventDefault(); set(false); }, {passive:false});
+  btn.addEventListener('mousedown',  e => { e.preventDefault(); set(true); });
+  btn.addEventListener('mouseup',    e => { e.preventDefault(); set(false); });
+  btn.addEventListener('mouseleave', () => set(false));
+});
 
-/* ============ Физика (только хост) ============ */
-function rectHit(a,b) {
-  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
-}
+/* ==================== Физика ==================== */
+const hit = (a,b) => a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
 
 function step() {
   players.forEach(p => {
-    const speed = 5;
+    const sp = 5;
     p.vx = 0;
-    if (p.input.left) p.vx = -speed;
-    if (p.input.right) p.vx = speed;
+    if (p.input.left) p.vx = -sp;
+    if (p.input.right) p.vx = sp;
     p.x += p.vx;
     if (p.x < 0) p.x = 0;
-    if (p.x + p.w > W) p.x = W - p.w;
+    if (p.x+p.w > W) p.x = W-p.w;
     p.vy += GRAVITY;
     p.y += p.vy;
-    if (p.y + p.h >= GROUND) { p.y = GROUND-p.h; p.vy = 0; p.onGround = true; }
+    if (p.y+p.h >= GROUND) { p.y = GROUND-p.h; p.vy = 0; p.onGround = true; }
     else p.onGround = false;
-    if (p.input.up && p.onGround && p.jumpCd <= 0) { p.vy = -11; p.jumpCd = 12; p.onGround = false; }
-    if (p.jumpCd > 0) p.jumpCd--;
+    if (p.input.up && p.onGround && p.jumpCd<=0) { p.vy=-11; p.jumpCd=12; p.onGround=false; }
+    if (p.jumpCd>0) p.jumpCd--;
     p.hitDown = false;
-    if (p.input.down && p.downCd <= 0) { p.vy = 12; p.downCd = 20; p.hitDown = true; }
-    if (p.downCd > 0) p.downCd--;
+    if (p.input.down && p.downCd<=0) { p.vy=12; p.downCd=20; p.hitDown=true; }
+    if (p.downCd>0) p.downCd--;
   });
 
-  for (const b of blocks) {
-    if (b.broken) continue;
+  blocks.forEach(b => {
+    if (b.broken) return;
     b.vy += GRAVITY;
     b.x += b.vx; b.y += b.vy; b.vx *= 0.98;
-    if (b.y + b.h >= GROUND) {
-      b.y = GROUND - b.h; b.vy = 0; b.vx *= 0.7;
+    if (b.y+b.h >= GROUND) {
+      b.y = GROUND-b.h; b.vy = 0; b.vx *= 0.7;
       if (Math.abs(b.vx) < 0.2) b.vx = 0;
     }
-  }
+  });
 
   players.forEach(p => {
-    for (const b of blocks) {
-      if (b.broken || !rectHit(p,b)) continue;
-      const dx = (b.x+b.w/2) - (p.x+p.w/2);
-      const dy = (b.y+b.h/2) - (p.y+p.h/2);
-      if (Math.abs(dx) > Math.abs(dy)) b.vx = Math.sign(dx) * 8;
-      else {
-        if (dy < 0) { b.vy = 10; if (p.hitDown) b.vx = (Math.random()-0.5)*6; }
-        else b.vy = -6;
-      }
+    blocks.forEach(b => {
+      if (b.broken || !hit(p,b)) return;
+      const dx = (b.x+b.w/2)-(p.x+p.w/2), dy = (b.y+b.h/2)-(p.y+p.h/2);
+      if (Math.abs(dx) > Math.abs(dy)) b.vx = Math.sign(dx)*8;
+      else { if (dy < 0) { b.vy = 10; if (p.hitDown) b.vx = (Math.random()-.5)*6; } else b.vy = -6; }
       p.score++;
-      p.x -= Math.sign(dx) * 2;
-    }
+      p.x -= Math.sign(dx)*2;
+    });
   });
 
   for (let i=0; i<blocks.length; i++) {
     const a = blocks[i]; if (a.broken) continue;
     for (let j=i+1; j<blocks.length; j++) {
-      const b = blocks[j]; if (b.broken) continue;
-      if (!rectHit(a,b)) continue;
+      const b = blocks[j]; if (b.broken || !hit(a,b)) continue;
       const oY = Math.min(a.y+a.h, b.y+b.h) - Math.max(a.y, b.y);
       const push = oY/2;
-      if (a.y < b.y) { a.y -= push; b.y += push; }
-      else { a.y += push; b.y -= push; }
+      if (a.y < b.y) { a.y -= push; b.y += push; } else { a.y += push; b.y -= push; }
       a.vy = 0; b.vy = 0;
     }
   }
 }
 
-/* ============ Рендер ============ */
+/* ==================== Рендер ==================== */
 function draw() {
   ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#16213e'; ctx.fillRect(0,H-40,W,40);
 
-  // Земля
-  ctx.fillStyle = '#16213e';
-  ctx.fillRect(0, H-40, W, 40);
-
-  // Блоки
-  for (const b of blocks) {
-    if (b.broken) continue;
-    const t = Math.min(1, (GROUND - b.y) / 300);
-    ctx.fillStyle = `rgb(${Math.floor(80+t*150)},${Math.floor(120-t*60)},${Math.floor(200-t*120)})`;
-    ctx.fillRect(b.x, b.y, b.w, b.h);
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.strokeRect(b.x, b.y, b.w, b.h);
-  }
-
-  // Игроки
-  players.forEach((p,i) => {
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, p.w, p.h);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(p.x+10, p.y+12, 6, 6);
-    ctx.fillRect(p.x+24, p.y+12, 6, 6);
-    if (i === myId) {
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-      ctx.strokeRect(p.x, p.y, p.w, p.h);
-    }
+  blocks.forEach(b => {
+    if (b.broken) return;
+    const t = Math.min(1, (GROUND-b.y)/300);
+    ctx.fillStyle = `rgb(${80+t*150|0},${120-t*60|0},${200-t*120|0})`;
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+    ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.strokeRect(b.x,b.y,b.w,b.h);
   });
 
-  // HUD
+  players.forEach((p,i) => {
+    ctx.fillStyle = p.color; ctx.fillRect(p.x,p.y,p.w,p.h);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(p.x+10,p.y+12,6,6); ctx.fillRect(p.x+24,p.y+12,6,6);
+    if (i === myId) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(p.x,p.y,p.w,p.h); }
+  });
+
   if (players[0]) hud1.textContent = 'P1: ' + players[0].score;
   if (players[1]) hud2.textContent = 'P2: ' + players[1].score;
 }
 
-function hostLoop() {
-  step();
-  draw();
-  requestAnimationFrame(hostLoop);
-}
-function clientLoop() {
-  draw();
-  requestAnimationFrame(clientLoop);
-}
+function hostLoop() { step(); draw(); requestAnimationFrame(hostLoop); }
+function clientLoop() { draw(); requestAnimationFrame(clientLoop); }
 
-/* ============ Инициализация ============ */
-bindPad();
+/* ==================== Init ==================== */
 resize();
 </script>
 </body>
