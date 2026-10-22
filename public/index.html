@@ -2,943 +2,205 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#ffffff">
-<link rel="icon" href="data:,">
-<title>DERZUS</title>
-<script src="/socket.io/socket.io.js"></script>
-<script src="https://unpkg.com/html5-qrcode"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<title>Tear Down — на двоих</title>
 <style>
-:root{--bg:#fff;--panel:#fff;--chat-bg:#dfe8d6;--text:#000;--sec:#8e8e93;--accent:#3390ec;--border:#e5e5ea;--hover:#f2f2f7;--in:#fff;--out:#eeffde;--outt:#4fae4e;--glass:rgba(255,255,255,.85);--danger:#ff453a;--gold:#e6b800;--premium:#ffd700;
---font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-[data-theme=dark]{--bg:#0f0f10;--panel:#1c1c1e;--chat-bg:#0e1621;--text:#fff;--accent:#4ea4f6;--border:#2c2c2e;--hover:#2a2a2d;--in:#182533;--out:#2b5278;--outt:#8fc4ee;--glass:rgba(28,28,30,.85)}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;font-size:16px;-webkit-font-smoothing:antialiased}
-body{user-select:none;-webkit-touch-callout:none}
-input,textarea{user-select:text;font-size:16px;font-family:inherit;outline:none;border:none;background:transparent;color:var(--text)}
-.hidden{display:none!important}
-button{font-family:inherit;cursor:pointer}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes slideUp{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
-@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
-
-.ic{width:22px;height:22px;display:inline-block;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
-.ic.sm{width:18px;height:18px}
-.ic.lg{width:44px;height:44px;stroke-width:1.6}
-
-.auth-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bg);z-index:50}
-.auth{width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px;align-items:center;animation:fadeIn .3s}
-.logo{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#54a9eb,#3390ec);color:#fff;display:flex;align-items:center;justify-content:center}
-.brand{font-size:30px;font-weight:900;letter-spacing:2px}
-.sub{color:var(--sec);font-size:15px;text-align:center}
-.avp{width:80px;height:80px;border-radius:50%;cursor:pointer;overflow:hidden;background:var(--hover);display:flex;align-items:center;justify-content:center;color:var(--sec);position:relative}
-.avp img{width:100%;height:100%;object-fit:cover}
-.fld{width:100%;padding:14px 16px;border-radius:12px;background:var(--hover);border:1.5px solid transparent;transition:border-color .2s}
-.fld:focus{border-color:var(--accent)}
-.btn{width:100%;padding:13px;border-radius:12px;font-size:16px;font-weight:600;border:none;transition:transform .1s,opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn:active{transform:scale(.97);opacity:.85}
-.btn.primary{background:var(--accent);color:#fff}
-.btn.secondary{background:var(--hover);color:var(--accent)}
-.btn.gold{background:var(--gold);color:#000}
-
-#main{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--panel)}
-.top{display:flex;align-items:center;gap:10px;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top));min-height:56px;background:var(--glass);backdrop-filter:blur(20px);border-bottom:.5px solid var(--border);z-index:20}
-.bsm{font-weight:900;font-size:21px}
-.stars{background:var(--hover);padding:5px 12px;border-radius:14px;font-size:14px;font-weight:600;color:var(--gold);display:flex;align-items:center;gap:6px;cursor:pointer}
-.ib{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);background:none;border:none}
-.ib:active{background:var(--hover)}
-.dd{position:absolute;top:46px;right:0;background:var(--panel);border-radius:14px;padding:6px;display:flex;flex-direction:column;z-index:80;min-width:230px;box-shadow:0 8px 32px rgba(0,0,0,.2);border:.5px solid var(--border);animation:pop .15s;transform-origin:top right}
-.dd button{background:none;color:var(--text);padding:12px 14px;text-align:left;border-radius:8px;font-size:16px;border:none;display:flex;gap:12px;align-items:center}
-.dd button:hover{background:var(--hover)}
-.dd .sep{height:.5px;background:var(--border);margin:4px 0}
-
-.body{flex:1;display:flex;min-height:0;position:relative;overflow:hidden}
-#sb{width:100%;max-width:380px;flex-shrink:0;display:flex;flex-direction:column;background:var(--panel);border-right:.5px solid var(--border)}
-.sbs{padding:8px 12px}.sbs input{width:100%;padding:10px 16px;border-radius:20px;background:var(--hover)}
-#fl{flex:1;overflow-y:auto}
-.fr{display:flex;align-items:center;gap:12px;padding:8px 12px;cursor:pointer}
-.fr:hover,.fr.act{background:var(--hover)}
-.avw{position:relative;flex-shrink:0}
-.av{width:54px;height:54px;border-radius:50%;overflow:hidden;position:relative}
-.av.premium{border:2px solid var(--premium)}
-.dot{position:absolute;bottom:1px;right:1px;width:14px;height:14px;border-radius:50%;background:#34c759;border:2.5px solid var(--panel)}
-.fi{flex:1;min-width:0}
-.fn{display:flex;justify-content:space-between;gap:8px;font-size:16px;font-weight:600}
-.fn span:first-child{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.ft{font-size:13px;font-weight:400;color:var(--sec);flex-shrink:0}
-.fl{font-size:15px;color:var(--sec);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
-
-#ca{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;background:var(--chat-bg)}
-.ch{display:flex;align-items:center;gap:10px;padding:6px 12px;min-height:56px;background:var(--glass);backdrop-filter:blur(20px);border-bottom:.5px solid var(--border)}
-.avsm{width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;position:relative}
-.cn{font-size:16px;font-weight:600}
-.cs{font-size:13px;color:var(--sec)}
-.cs.on{color:var(--accent)}
-.bk{display:none;background:none;border:none;color:var(--accent);padding:4px 8px}
-.msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:4px}
-.msg{display:flex;flex-direction:column;max-width:80%;animation:pop .15s}
-.msg.me{align-self:flex-end;align-items:flex-end}
-.msg.th{align-self:flex-start;align-items:flex-start}
-.bub{padding:7px 12px 6px;border-radius:16px;line-height:1.35;word-break:break-word;white-space:pre-wrap;box-shadow:0 1px 1px rgba(0,0,0,.1)}
-.me .bub{background:var(--out);border-bottom-right-radius:4px}
-.th .bub{background:var(--in);border-bottom-left-radius:4px}
-.sn{font-size:13px;font-weight:600;color:var(--accent);margin-bottom:2px}
-.mt{font-size:12px;color:var(--sec);float:right;margin:6px 0 -2px 10px}
-.me .mt{color:var(--outt)}
-.rx{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
-.rx div{background:var(--panel);border:.5px solid var(--border);padding:2px 8px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:4px}
-.rx .ic{width:14px;height:14px}
-.rmenu{position:fixed;background:var(--panel);border-radius:30px;padding:6px 10px;display:flex;gap:4px;box-shadow:0 8px 32px rgba(0,0,0,.3);z-index:250;animation:slideUp .15s;border:.5px solid var(--border)}
-.rmenu span{cursor:pointer;padding:6px;transition:transform .15s;display:flex;align-items:center;justify-content:center;border-radius:50%}
-.rmenu span:hover{transform:scale(1.2);background:var(--hover)}
-.rmenu .ic{width:24px;height:24px}
-
-.cmp{display:flex;gap:8px;padding:8px 10px;padding-bottom:calc(8px + env(safe-area-inset-bottom));background:var(--panel);align-items:flex-end;border-top:.5px solid var(--border)}
-.mi{flex:1;padding:10px 14px;border-radius:20px;background:var(--hover);min-height:40px;max-height:120px;resize:none;line-height:1.35}
-.send{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;border:none;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.mic-btn{width:40px;height:40px;border-radius:50%;background:var(--hover);color:var(--text);border:none;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.mic-btn.recording{background:var(--danger);color:#fff;animation:pulse 1s infinite}
-#cempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--sec);background:var(--chat-bg)}
-#cempty span{background:rgba(0,0,0,.25);color:#fff;padding:6px 14px;border-radius:14px;font-size:14px}
-
-#profileScreen{position:fixed;inset:0;background:var(--hover);z-index:200;display:flex;flex-direction:column;animation:slideUp .2s}
-.nav{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));background:var(--glass);font-weight:600}
-.pt{display:flex;flex-direction:column;align-items:center;padding:20px 16px;background:var(--panel);position:relative}
-.pav{width:110px;height:110px;border-radius:50%;overflow:hidden;margin-bottom:12px;position:relative}
-.pav.premium{border:3px solid var(--premium)}
-.pn{font-size:22px;font-weight:600}
-.ps{font-size:15px;color:var(--sec)}
-.ps.on{color:var(--accent)}
-.sec{margin:16px;background:var(--panel);border-radius:12px;overflow:hidden}
-.row{padding:12px 16px;border-bottom:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.row:last-child{border:none}
-.gift-badge{position:absolute;right:-6px;bottom:-6px;width:44px;height:44px;border-radius:50%;background:var(--panel);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:5}
-.gift-badge .ic{width:26px;height:26px}
-
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:400;padding:16px}
-.modal.open{display:flex}
-.mc{width:100%;max-width:360px;background:var(--panel);border-radius:16px;padding:20px;animation:slideUp .2s;max-height:90vh;overflow-y:auto}
-.mtitle{font-size:20px;font-weight:700;text-align:center;margin-bottom:14px}
-.tabs{display:flex;background:var(--hover);border-radius:10px;padding:3px;margin-bottom:14px}
-.tab{flex:1;text-align:center;padding:8px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;color:var(--sec)}
-.tab.active{background:var(--panel);color:var(--text)}
-.gm{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;cursor:pointer}
-.gm:hover{background:var(--hover)}
-.gm input{width:20px;height:20px;accent-color:var(--accent)}
-.gav{width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0}
-
-.pay-box{background:var(--hover);border-radius:16px;padding:16px;text-align:center;margin-bottom:16px}
-.qr-img{width:180px;height:180px;border-radius:12px;margin:10px auto;display:block}
-.price-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-.price-item{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:background .2s}
-.price-item:hover{background:var(--hover)}
-.admin-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border);gap:10px}
-.admin-input{width:70px;padding:6px;border-radius:8px;border:1px solid var(--border);background:var(--panel);text-align:center;color:var(--text)}
-.nft-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:10px}
-.nft-card{background:var(--panel);border-radius:12px;overflow:hidden;cursor:pointer;border:1px solid var(--border);position:relative}
-.nft-art{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef2ff,#fce7f3)}
-.nft-art svg{width:80%;height:80%;display:block}
-.nft-name{font-size:12px;padding:6px;text-align:center;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nft-price{position:absolute;bottom:24px;right:6px;background:rgba(0,0,0,.7);color:#fff;font-size:11px;padding:2px 6px;border-radius:10px;display:flex;align-items:center;gap:3px}
-.nft-price .ic{width:10px;height:10px;stroke:var(--gold)}
-
-.call-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
-.call-av{width:120px;height:120px;border-radius:50%;background:var(--accent);margin-bottom:20px;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:bold}
-.call-btn{width:60px;height:60px;border-radius:50%;border:none;color:#fff;display:flex;align-items:center;justify-content:center;margin:0 10px;cursor:pointer}
-.call-btn.end{background:var(--danger)}
-.call-btn.accept{background:#34c759}
-
-@media(max-width:700px){#sb{max-width:none}body.co2 #sb{display:none}body:not(.co2) #ca{display:none}.bk{display:flex}}
+  body { margin:0; background:#1a1a2e; color:#eee; font-family:Arial,sans-serif;
+         display:flex; flex-direction:column; align-items:center; user-select:none; }
+  h1 { margin:10px; font-size:22px; }
+  #hud { display:flex; gap:40px; font-size:16px; margin-bottom:8px; }
+  canvas { background:#0f3460; border:3px solid #16213e; border-radius:8px; display:block; }
+  #controls { margin:10px; font-size:13px; color:#aaa; text-align:center; line-height:1.6; }
+  .p1 { color:#4fc3f7; } .p2 { color:#ff7043; }
+  button { margin-top:8px; padding:8px 16px; font-size:14px; background:#4fc3f7;
+           color:#000; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
 </style>
 </head>
-<body data-theme="light">
-
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-<symbol id="i-logo" viewBox="0 0 24 24"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/><path d="M2 17c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></symbol>
-<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
-<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
-<symbol id="i-friends" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2.2.6 3.5 2.2 3.5 4.5"/></symbol>
-<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></symbol>
-<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14a8 8 0 1 1-9-9 6.5 6.5 0 0 0 9 9z"/></symbol>
-<symbol id="i-exit" viewBox="0 0 24 24"><path d="M14 4h5v16h-5M10 12H3M6 8l-3 4 3 4"/></symbol>
-<symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
-<symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
-<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
-<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4 4 0 0 1 12 7a4 4 0 0 1 7 3.5C19 15.6 12 20 12 20z"/></symbol>
-<symbol id="i-fire" viewBox="0 0 24 24"><path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 1-5 0 1 1 2 2 2 0-2-1-3 1-5z"/></symbol>
-<symbol id="i-like" viewBox="0 0 24 24"><path d="M7 11v9H4v-9zM7 11l4-7a2 2 0 0 1 3 2v4h4a2 2 0 0 1 2 2.3l-1.3 6A2 2 0 0 1 16.7 20H7"/></symbol>
-<symbol id="i-laugh" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 3 4 3 4-3 4-3M9 9h.01M15 9h.01"/></symbol>
-<symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 20V5M6 11l6-6 6 6"/></symbol>
-<symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M20 12H5M11 6l-6 6 6 6"/></symbol>
-<symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12l5 5 11-11"/></symbol>
-<symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
-<symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></symbol>
-<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
-<symbol id="i-admin" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></symbol>
-<symbol id="i-crown" viewBox="0 0 24 24"><path d="M2 20h20M4 20V10l4 4 4-8 4 8 4-4v10"/></symbol>
-</defs></svg>
-
-<div id="authScr" class="auth-wrap">
-  <div class="auth">
-    <div class="logo"><svg class="ic lg"><use href="#i-logo"/></svg></div>
-    <h1 class="brand">DERZUS</h1>
-    <p class="sub">Имя пользователя должно быть уникальным.</p>
-    <label class="avp"><img id="avPrev" alt="" class="hidden"><span id="avPlus"><svg class="ic"><use href="#i-plus"/></svg></span><input type="file" id="phIn" accept="image/*" hidden></label>
-    <input id="nIn" class="fld" placeholder="Ваше имя" maxlength="24" autocomplete="off">
-    <input id="pIn" class="fld" type="password" placeholder="Пароль" maxlength="64">
-    <button id="aBtn" class="btn primary">Войти / Создать</button>
-    <button id="themeBtn" class="btn secondary" style="padding:10px;font-size:14px"><svg class="ic sm"><use href="#i-moon"/></svg> Сменить тему</button>
-  </div>
+<body>
+<h1>🔨 Tear Down — на двоих</h1>
+<div id="hud">
+  <span class="p1">Игрок 1: <b id="s1">0</b></span>
+  <span class="p2">Игрок 2: <b id="s2">0</b></span>
 </div>
-
-<div id="main" class="hidden">
-  <header class="top">
-    <div class="bsm">DERZUS</div>
-    <div class="stars" onclick="openStars()"><svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg><span id="starCount">0</span></div>
-    <div style="margin-left:auto;position:relative;display:flex;gap:4px">
-      <button id="adminBtn" class="ib hidden" onclick="openAdminPanel()"><svg class="ic" style="stroke:var(--accent)"><use href="#i-admin"/></svg></button>
-      <button id="menuBtn" class="ib"><svg class="ic"><use href="#i-menu"/></svg></button>
-      <button id="profileBtn" class="ib"><svg class="ic"><use href="#i-user"/></svg></button>
-      <div id="adM" class="dd hidden">
-        <button data-a="addfriend"><svg class="ic sm"><use href="#i-friends"/></svg> Добавить друга</button>
-        <button data-a="group"><svg class="ic sm"><use href="#i-chat"/></svg> Создать группу</button>
-        <div class="sep"></div>
-        <button data-a="theme"><svg class="ic sm"><use href="#i-moon"/></svg> Сменить тему</button>
-        <div class="sep"></div>
-        <button id="loBtn" style="color:var(--danger)"><svg class="ic sm"><use href="#i-exit"/></svg> Выйти</button>
-      </div>
-    </div>
-  </header>
-  <div class="body">
-    <aside id="sb">
-      <div class="sbs"><input id="sbSr" placeholder="Поиск"></div>
-      <div id="fl"></div>
-    </aside>
-    <main id="ca">
-      <div id="chd" class="ch"></div>
-      <div id="msgs" class="msgs"></div>
-      <div class="cmp">
-        <button id="micBtn" class="mic-btn"><svg class="ic"><use href="#i-mic"/></svg></button>
-        <textarea id="mi" class="mi" placeholder="Сообщение" rows="1"></textarea>
-        <button id="sendBtn" class="send"><svg class="ic"><use href="#i-arrow-up"/></svg></button>
-      </div>
-      <div id="cempty"><span>Выберите чат</span></div>
-    </main>
-  </div>
+<canvas id="game" width="800" height="500"></canvas>
+<div id="controls">
+  <b class="p1">P1:</b> A/D — движение, W — прыжок, S — удар вниз &nbsp;|&nbsp;
+  <b class="p2">P2:</b> ←/→ — движение, ↑ — прыжок, ↓ — удар вниз
 </div>
-
-<div id="profileScreen" class="hidden">
-  <div class="nav">
-    <button class="ib" id="profileBack"><svg class="ic"><use href="#i-arrow-left"/></svg></button>
-    <div>Профиль</div>
-    <button class="ib" id="editProfileBtn" onclick="openEditProfile()"><svg class="ic"><use href="#i-menu"/></svg></button>
-  </div>
-  <div id="profileContent" style="flex:1;overflow-y:auto"></div>
-</div>
-
-<div id="editProfileModal" class="modal"><div class="mc">
-  <h3 class="mtitle">Редактировать профиль</h3>
-  <div style="text-align:center;margin-bottom:16px">
-    <label class="avp" style="margin:0 auto;width:100px;height:100px">
-      <img id="editAvPrev" alt="" class="hidden">
-      <span id="editAvPlus"><svg class="ic"><use href="#i-user"/></svg></span>
-      <input type="file" id="editPhIn" accept="image/*" hidden>
-    </label>
-  </div>
-  <input id="editName" class="fld" placeholder="Имя" maxlength="24" style="margin-bottom:10px">
-  <input id="editBio" class="fld" placeholder="О себе (статус)" maxlength="60" style="margin-bottom:16px">
-  <button class="btn primary" onclick="saveProfile()">Сохранить</button>
-  <button class="btn secondary" onclick="closeEditProfile()" style="margin-top:10px">Отмена</button>
-</div></div>
-
-<div id="starsModal" class="modal"><div class="mc">
-  <h3 class="mtitle">Магазин звёзд</h3>
-  <div class="price-list">
-    <div class="price-item" onclick="selectPrice(100, 99)"><div style="font-weight:700">100 звёзд</div><div style="color:var(--accent);font-weight:700">99 руб.</div></div>
-    <div class="price-item" onclick="selectPrice(500, 449)"><div style="font-weight:700">500 звёзд</div><div style="color:var(--accent);font-weight:700">449 руб.</div></div>
-    <div class="price-item" onclick="selectPrice(1000, 899)"><div style="font-weight:700">1000 звёзд</div><div style="color:var(--accent);font-weight:700">899 руб.</div></div>
-  </div>
-  <div style="text-align:center;margin-top:16px">
-    <p class="sub" style="margin-bottom:10px">Переведите на номер:</p>
-    <div style="font-size:20px;font-weight:900;">+7 902 016-75-09</div>
-    <div style="color:var(--sec)">Данил К.</div>
-  </div>
-  <button class="btn primary" onclick="requestStars()" style="margin-top:16px">Я оплатил(а)</button>
-  <button class="btn secondary" onclick="closeStars()" style="margin-top:10px">Закрыть</button>
-</div></div>
-
-<div id="nftModal" class="modal"><div class="mc" style="max-width:500px">
-  <h3 class="mtitle">NFT Подарки</h3>
-  <div id="nftGrid" class="nft-grid"></div>
-  <button class="btn secondary" onclick="closeNft()" style="margin-top:16px">Закрыть</button>
-</div></div>
-
-<div id="adminModal" class="modal"><div class="mc" style="max-width:500px">
-  <div class="tabs" style="margin-bottom:16px">
-    <div id="tabAdminUsers" class="tab active" onclick="switchAdminTab('users')">Пользователи</div>
-    <div id="tabAdminReqs" class="tab" onclick="switchAdminTab('reqs')">Заявки <span id="reqBadge" class="hidden" style="background:var(--danger);color:#fff;padding:2px 6px;border-radius:10px;font-size:10px;margin-left:4px">0</span></div>
-  </div>
-  <div id="adminViewUsers">
-    <div id="adminUsersList" style="max-height:400px;overflow-y:auto;margin-bottom:16px"></div>
-  </div>
-  <div id="adminViewReqs" class="hidden">
-    <div id="adminReqsList" style="max-height:400px;overflow-y:auto;margin-bottom:16px"></div>
-  </div>
-  <button class="btn secondary" onclick="closeAdminPanel()">Закрыть</button>
-</div></div>
-
-<div id="addFriendModal" class="modal"><div class="mc">
-  <h3 class="mtitle">Добавить друга</h3>
-  <div class="tabs">
-    <div id="tabSearch" class="tab" onclick="switchAddTab('search')">Поиск</div>
-    <div id="tabQr" class="tab" onclick="switchAddTab('qr')">Мой QR</div>
-    <div id="tabScan" class="tab" onclick="switchAddTab('scan')">Сканер</div>
-  </div>
-  <div id="viewSearch">
-    <input id="searchFriendInput" class="fld" placeholder="Имя или код друга" style="margin-bottom:10px">
-    <button class="btn primary" onclick="searchFriend()">Найти</button>
-    <div id="searchResult" style="margin-top:12px;max-height:220px;overflow-y:auto"></div>
-  </div>
-  <div id="viewQr" class="hidden" style="text-align:center">
-    <p class="sub" style="margin-bottom:12px">Покажите этот QR-код другу</p>
-    <div style="background:#fff;padding:12px;border-radius:16px;display:inline-block"><img id="myQrImg" alt="QR" style="width:180px;height:180px"></div>
-    <div id="myCodeText" style="font-size:24px;font-weight:700;letter-spacing:2px;margin:12px 0 8px;color:var(--accent)">------</div>
-    <button class="btn secondary" onclick="copyMyCode()" style="padding:8px;font-size:14px"><svg class="ic sm"><use href="#i-copy"/></svg> Копировать код</button>
-  </div>
-  <div id="viewScan" class="hidden">
-    <div id="qrReader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:240px"></div>
-    <p class="sub" style="font-size:13px;margin-top:8px">Наведите камеру на QR-код</p>
-  </div>
-  <button class="btn secondary" onclick="closeAddFriend()" style="margin-top:14px">Закрыть</button>
-</div></div>
-
-<div id="groupModal" class="modal"><div class="mc">
-  <h3 class="mtitle">Создать группу</h3>
-  <input id="grName" class="fld" placeholder="Название группы" maxlength="40" style="margin-bottom:12px">
-  <p class="sub" style="font-size:13px;text-align:left;margin-bottom:6px">Выберите друзей:</p>
-  <div id="grMembers" style="max-height:240px;overflow-y:auto;margin-bottom:12px"></div>
-  <button class="btn primary" onclick="submitCreateGroup()">Создать</button>
-  <button class="btn secondary" onclick="closeGroupModal()" style="margin-top:8px">Отмена</button>
-</div></div>
-
-<div id="callModal" class="call-overlay hidden">
-  <div class="call-av" id="callAvatar">?</div>
-  <h2 id="callName" style="margin-bottom:10px">Имя</h2>
-  <p id="callStatus" style="color:#aaa;margin-bottom:40px">Звоним...</p>
-  <div style="display:flex">
-    <button class="call-btn end" onclick="endCall()"><svg class="ic" style="transform:rotate(135deg)"><use href="#i-phone"/></svg></button>
-    <button id="acceptCallBtn" class="call-btn accept hidden" onclick="acceptCall()"><svg class="ic"><use href="#i-phone"/></svg></button>
-  </div>
-</div>
+<button id="reset">🔄 Перестроить башню</button>
 
 <script>
-'use strict';
-const $ = s => document.querySelector(s);
-const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const store = { get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}} };
-const fmtTime = ts => new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-function toast(t){
-  const e = document.createElement('div'); e.textContent = t;
-  e.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:12px 20px;border-radius:22px;font-size:15px;z-index:500;max-width:90%;text-align:center';
-  document.body.appendChild(e); setTimeout(()=>e.remove(),2500);
-}
-function avFor(n,p,premium){
-  if (p) return `<img src="${p}" style="width:100%;height:100%;object-fit:cover">`;
-  const raw = (n||'?').trim()||'?', cs=['#3390ec','#e17076','#7bc862','#e5ca77','#6ec9cb'];
-  let x=0; for (const c of raw) x+=c.charCodeAt(0);
-  return `<div style="width:100%;height:100%;background:${cs[x%cs.length]};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:20px">${esc(raw[0].toUpperCase())}</div>`;
-}
-const applyTheme = t => { document.body.dataset.theme=t; store.set('derzus_theme',t); };
-const toggleTheme = () => applyTheme(document.body.dataset.theme==='dark'?'light':'dark');
-applyTheme(store.get('derzus_theme','light'));
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const GROUND = H - 40, GRAVITY = 0.5;
+const s1El = document.getElementById('s1');
+const s2El = document.getElementById('s2');
 
-const state = {user:null,friends:[],groups:[],messages:{},activeChat:null,activeGroup:null,online:{},qrScanner:null,pendingAvatar:null,editAvatar:null,selectedPrice:null,isRecording:false,mediaRecorder:null,audioChunks:[],callData:null, adminReqs:[], viewingProfileCode:null};
-const activeKey = () => state.activeGroup || state.activeChat;
-const socket = io();
-let pc, localStream;
+let blocks = [], particles = [];
 
-const NFT_CATALOG = {
-  wave: { name: 'Волна', price: 50, art: `<svg viewBox="0 0 100 100"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3390ec"/><stop offset="1" stop-color="#7bc862"/></linearGradient></defs><rect width="100" height="100" fill="url(#g1)"/><path d="M0 65 Q25 45 50 65 T100 65 V100 H0 Z" fill="#fff" opacity=".9"/><path d="M0 78 Q25 58 50 78 T100 78 V100 H0 Z" fill="#fff" opacity=".5"/></svg>` },
-  star: { name: 'Звезда', price: 150, art: `<svg viewBox="0 0 100 100"><defs><radialGradient id="g2"><stop offset="0" stop-color="#fff8d0"/><stop offset="1" stop-color="#ffb400"/></radialGradient></defs><rect width="100" height="100" fill="#1a0033"/><circle cx="50" cy="50" r="42" fill="url(#g2)"/><path d="M50 20l7 20h21l-17 13 7 21-18-13-18 13 7-21-17-13h21z" fill="#fff" stroke="#ff8a00" stroke-width="2"/></svg>` },
-  diamond: { name: 'Алмаз', price: 300, art: `<svg viewBox="0 0 100 100"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4ea4f6"/><stop offset=".5" stop-color="#b39ddb"/><stop offset="1" stop-color="#4ea4f6"/></linearGradient></defs><rect width="100" height="100" fill="#0b1020"/><polygon points="50,15 80,40 50,85 20,40" fill="url(#g3)" stroke="#fff" stroke-width="2"/><polygon points="20,40 50,40 50,85" fill="#fff" opacity=".25"/><polygon points="50,15 50,40 80,40" fill="#fff" opacity=".4"/></svg>` },
-  rocket: { name: 'Ракета', price: 500, art: `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0b1020"/><path d="M50 15 Q65 40 65 65 L50 80 L35 65 Q35 40 50 15Z" fill="#e5e5ea"/><circle cx="50" cy="45" r="7" fill="#4ea4f6"/><path d="M35 65 L25 78 L40 75Z" fill="#e17076"/><path d="M65 65 L75 78 L60 75Z" fill="#e17076"/><path d="M45 80 Q50 92 55 80" fill="#ffb400"/></svg>` },
-  crown: { name: 'Корона', price: 1000, art: `<svg viewBox="0 0 100 100"><defs><linearGradient id="g4"><stop offset="0" stop-color="#ffe066"/><stop offset="1" stop-color="#e6b800"/></linearGradient></defs><rect width="100" height="100" fill="#1a0033"/><path d="M20 75 L20 45 L35 58 L50 30 L65 58 L80 45 L80 75 Z" fill="url(#g4)" stroke="#fff" stroke-width="2"/><circle cx="50" cy="42" r="3" fill="#ff3b30"/><circle cx="30" cy="52" r="2" fill="#4ea4f6"/><circle cx="70" cy="52" r="2" fill="#4ea4f6"/></svg>` },
-  alien: { name: 'Пришелец', price: 2000, art: `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0b1020"/><ellipse cx="50" cy="45" rx="30" ry="35" fill="#7bc862"/><ellipse cx="38" cy="40" rx="8" ry="12" fill="#0b1020"/><ellipse cx="62" cy="40" rx="8" ry="12" fill="#0b1020"/><circle cx="38" cy="40" r="3" fill="#fff"/><circle cx="62" cy="40" r="3" fill="#fff"/><path d="M40 70 Q50 75 60 70" stroke="#0b1020" stroke-width="2" fill="none"/><path d="M20 80 L15 90 M80 80 L85 90" stroke="#7bc862" stroke-width="3"/></svg>` }
-};
+const players = [
+  { x: W*0.25, y: GROUND-40, w:40, h:40, vx:0, vy:0, color:'#4fc3f7',
+    onGround:true, score:0, jumpCd:0, downCd:0, hitDown:false,
+    keys:{left:'KeyA',right:'KeyD',up:'KeyW',down:'KeyS'} },
+  { x: W*0.75, y: GROUND-40, w:40, h:40, vx:0, vy:0, color:'#ff7043',
+    onGround:true, score:0, jumpCd:0, downCd:0, hitDown:false,
+    keys:{left:'ArrowLeft',right:'ArrowRight',up:'ArrowUp',down:'ArrowDown'} }
+];
 
-socket.on('connect', () => {
-  const s = store.get('derzus_profile',null);
-  if (s) doRegister(s.code, s.name, s.pass, s.photo, true);
-});
-socket.on('newMessage', ({from,message}) => {
-  const key = message.groupId || from;
-  (state.messages[key] ||= []).push(message);
-  if (activeKey()===key) renderMessages();
-  renderFriends();
-});
-socket.on('messageSent', ({to,groupId,message}) => {
-  const key = groupId || to;
-  (state.messages[key] ||= []).push(message);
-  if (activeKey()===key) renderMessages();
-  renderFriends();
-});
-socket.on('messageDeleted', ({id, key}) => {
-  if(state.messages[key]) {
-    state.messages[key] = state.messages[key].filter(m => m.id !== id);
-    if(activeKey() === key) renderMessages();
-    renderFriends();
-  }
-});
-socket.on('messageReacted', ({id,reactions}) => {
-  let ch=false;
-  for (const k in state.messages){ const m=state.messages[k].find(x=>x.id===id); if(m){m.reactions=reactions;ch=true;} }
-  if (ch) renderMessages();
-});
-socket.on('friendOnline', ({code,online}) => { state.online[code]=online; renderFriends(); if(state.activeChat===code) updateChatHeader(); });
-socket.on('friendAdded', f => {
-  if (!state.friends.find(x=>x.code===f.code)) { state.friends.push(f); state.online[f.code]=f.online; renderFriends(); refreshGroupMembers(); }
-});
-socket.on('friendUpdated', f => {
-  const friend = state.friends.find(x=>x.code===f.code);
-  if (friend) { friend.name = f.name; friend.bio = f.bio; friend.photo = f.photo; friend.premium = f.premium; renderFriends(); if(state.activeChat===f.code) updateChatHeader(); }
-});
-socket.on('groupAdded', g => {
-  if (!state.groups.find(x=>x.id===g.id)) { state.groups.push(g); renderFriends(); }
-});
-socket.on('nftReceived', ({nft}) => { state.user.nft.push(nft); toast('Вам подарен NFT!'); });
-socket.on('adminUsers', (users) => renderAdminUsers(users));
-socket.on('starsRequests', (reqs) => { state.adminReqs = reqs; renderAdminReqs(); });
-socket.on('newStarsRequest', (req) => { state.adminReqs.push(req); renderAdminReqs(); updateReqBadge(); });
+const input = [{left:false,right:false,up:false,down:false},
+               {left:false,right:false,up:false,down:false}];
 
-function doRegister(code,name,pass,photo,silent){
-  socket.emit('register',{code,name,pass,photo},res => {
-    if (!res || !res.ok) {
-      if (silent) { store.set('derzus_profile',null); $('#authScr').classList.remove('hidden'); $('#main').classList.add('hidden'); }
-      return toast('Ошибка: '+(res?.error||'нет связи'));
+function buildTower() {
+  blocks = [];
+  const bw = 45, bh = 22;
+  const baseX = W/2 - bw*2;
+  for (let row = 0; row < 12; row++) {
+    for (let col = 0; col < 4; col++) {
+      blocks.push({
+        x: baseX + col*bw + (row%2 ? bw/2 : 0) - (row%2 ? bw/4 : 0),
+        y: GROUND - (row+1)*bh - row*1,
+        w: bw-2, h: bh-2, vx:0, vy:0, broken:false
+      });
     }
-    state.user=res.user; state.friends=res.friends||[]; state.groups=res.groups||[];
-    state.friends.forEach(f=>state.online[f.code]=f.online);
-    for (const k in (res.lasts||{})) if (!(state.messages[k]||[]).length) state.messages[k]=[res.lasts[k]];
-    store.set('derzus_profile',{code:res.user.code,name,pass,photo:res.user.photo});
-    $('#authScr').classList.add('hidden'); $('#main').classList.remove('hidden');
-    $('#starCount').textContent=res.user.stars;
-    if(state.user.code === 'ADMIN') $('#adminBtn').classList.remove('hidden');
-    renderFriends();
-  });
+  }
 }
-$('#aBtn').onclick = () => {
-  const name=$('#nIn').value.trim(), pass=$('#pIn').value;
-  if (!name||!pass) return toast('Заполните поля');
-  const code = Math.random().toString(36).slice(2,8).toUpperCase();
-  doRegister(code,name,pass,state.pendingAvatar);
-};
-$('#loBtn').onclick = () => { if (confirm('Выйти?')) { store.set('derzus_profile',null); location.reload(); } };
-$('#themeBtn').onclick = toggleTheme;
-$('#phIn').onchange = e => {
-  const f=e.target.files[0]; if(!f) return;
-  const img=new Image(), url=URL.createObjectURL(f);
-  img.onload = () => {
-    const c=document.createElement('canvas'), s=Math.min(256/img.width,256/img.height,1);
-    c.width=img.width*s; c.height=img.height*s; c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    state.pendingAvatar=c.toDataURL('image/jpeg',.8);
-    $('#avPrev').src=state.pendingAvatar; $('#avPrev').classList.remove('hidden'); $('#avPlus').classList.add('hidden');
-    URL.revokeObjectURL(url);
-  };
-  img.src=url;
+buildTower();
+
+document.addEventListener('keydown', e => {
+  players.forEach((p,i) => {
+    for (const k in p.keys) if (p.keys[k]===e.code) { input[i][k]=true; e.preventDefault(); }
+  });
+});
+document.addEventListener('keyup', e => {
+  players.forEach((p,i) => {
+    for (const k in p.keys) if (p.keys[k]===e.code) { input[i][k]=false; e.preventDefault(); }
+  });
+});
+document.getElementById('reset').onclick = () => {
+  buildTower();
+  players.forEach(p => { p.score = 0; });
 };
 
-const lastOf = c => { const a=state.messages[c]||[]; return a[a.length-1]; };
-function renderFriends(){
-  const list=$('#fl'); if(!list||!state.user) return;
-  const all=[...state.friends.map(f=>({...f,isGroup:false})),...state.groups.map(g=>({...g,isGroup:true,code:g.id}))];
-  all.sort((a,b)=>(lastOf(b.code)?.ts||0)-(lastOf(a.code)?.ts||0));
-  if (!all.length) {
-    list.innerHTML='<div style="text-align:center;padding:40px;color:var(--sec)">Нет чатов<br><br><button class="btn primary" onclick="openAddFriend()" style="max-width:200px;padding:10px;margin:0 auto">Добавить друга</button></div>';
-    return;
-  }
-  list.innerHTML=all.map(f=>{
-    const last=lastOf(f.code);
-    let prev='Нет сообщений';
-    if (last) prev=(last.from===state.user.code?'Вы: ':'')+(last.kind==='voice'?'[Голосовое]':(last.text||'[файл]'));
-    const act=f.code===activeKey()?' act':'';
-    return `<div class="fr${act}" data-code="${esc(f.code)}" onclick="${f.isGroup?'openGroup':'openChat'}('${esc(f.code)}')">
-      <div class="avw"><div class="av ${f.premium?'premium':''}">${avFor(f.name,f.photo)}</div>${!f.isGroup&&state.online[f.code]?'<div class="dot"></div>':''}</div>
-      <div class="fi"><div class="fn"><span>${f.isGroup?'[Группа] ':''}${esc(f.name)}</span><span class="ft">${last?fmtTime(last.ts):''}</span></div>
-      <div class="fl">${esc(prev).slice(0,80)}</div></div></div>`;
-  }).join('');
-  filterList();
-}
-function filterList(){
-  const q=$('#sbSr').value.toLowerCase();
-  document.querySelectorAll('#fl .fr').forEach(el=>{ el.style.display=(el.querySelector('.fn span').textContent.toLowerCase().includes(q))?'':'none'; });
-}
-$('#sbSr').oninput = filterList;
-
-function openChat(code){
-  const f = state.friends.find(x=>x.code===code);
-  if (!f) return toast('Сначала добавьте в друзья');
-  state.activeChat=code; state.activeGroup=null; showChat();
-  socket.emit('loadHistory',{withCode:code},res=>{ state.messages[code]=res.history||[]; renderMessages(); renderFriends(); });
-}
-function openGroup(gid){
-  if (!state.groups.find(x=>x.id===gid)) return;
-  state.activeGroup=gid; state.activeChat=null; showChat();
-  socket.emit('loadHistory',{groupId:gid},res=>{ state.messages[gid]=res.history||[]; renderMessages(); renderFriends(); });
-}
-function showChat(){
-  document.body.classList.add('co2'); $('#cempty').style.display='none';
-  $('#msgs').innerHTML=''; updateChatHeader(); renderFriends();
-}
-function closeChat(){ state.activeChat=state.activeGroup=null; document.body.classList.remove('co2'); $('#cempty').style.display=''; renderFriends(); }
-function updateChatHeader(){
-  const back='<button class="bk" onclick="closeChat()"><svg class="ic"><use href="#i-arrow-left"/></svg></button>';
-  if (state.activeChat){
-    const f=state.friends.find(x=>x.code===state.activeChat); if(!f) return;
-    const on=state.online[f.code];
-    $('#chd').innerHTML=`${back}<div class="avsm ${f.premium?'premium':''}">${avFor(f.name,f.photo)}</div><div style="flex:1;cursor:pointer" onclick="openProfile('${esc(f.code)}')"><div class="cn">${esc(f.name)}</div><div class="cs ${on?'on':''}">${on?'в сети':'был(а) недавно'}</div></div>
-    <button class="ib" onclick="startCall('${f.code}','${esc(f.name)}')"><svg class="ic"><use href="#i-phone"/></svg></button>`;
-  } else if (state.activeGroup){
-    const g=state.groups.find(x=>x.id===state.activeGroup); if(!g) return;
-    $('#chd').innerHTML=`${back}<div class="avsm">${avFor(g.name,null)}</div><div style="flex:1"><div class="cn">${esc(g.name)}</div><div class="cs">${g.members.length} участников</div></div>`;
-  }
+function rectHit(a,b) {
+  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
 }
 
-const REACTIONS = {
-  like:  '<svg class="ic"><use href="#i-like"/></svg>',
-  heart: '<svg class="ic" style="stroke:#ff3b30"><use href="#i-heart"/></svg>',
-  fire:  '<svg class="ic" style="stroke:#ff8a00"><use href="#i-fire"/></svg>',
-  laugh: '<svg class="ic" style="stroke:#ffb400"><use href="#i-laugh"/></svg>'
-};
+function step() {
+  // Игроки
+  players.forEach((p,i) => {
+    const speed = 5;
+    p.vx = 0;
+    if (input[i].left) p.vx = -speed;
+    if (input[i].right) p.vx = speed;
+    p.x += p.vx;
+    if (p.x < 0) p.x = 0;
+    if (p.x + p.w > W) p.x = W - p.w;
 
-function renderMessages(){
-  const key=activeKey(); if(!key) return;
-  const ms=state.messages[key]||[], a=$('#msgs');
-  if (!ms.length){ a.innerHTML='<div style="text-align:center;padding:40px;color:var(--sec)">Напишите первое сообщение</div>'; return; }
-  const nearBottom = a.scrollHeight-a.scrollTop-a.clientHeight<150;
-  a.innerHTML=ms.map(m=>{
-    const mine=m.from===state.user.code;
-    const rx=m.reactions&&Object.keys(m.reactions).length?'<div class="rx">'+Object.keys(m.reactions).map(k=>`<div>${REACTIONS[k]||''} ${m.reactions[k].length}</div>`).join('')+'</div>':'';
-    const who=state.activeGroup&&!mine?`<div class="sn">${esc((state.friends.find(f=>f.code===m.from)||{}).name||m.from)}</div>`:'';
-    let content = esc(m.text||'');
-    if(m.kind==='voice') content = `<audio controls src="${m.text}" style="max-width:200px;height:36px;"></audio>`;
-    return `<div class="msg ${mine?'me':'th'}" data-id="${m.id}" ondblclick="quickReact(event,'${m.id}')" oncontextmenu="showReactionsMenu(event,'${m.id}','${mine}');return false">
-      <div class="bub">${who}${content}<span class="mt">${fmtTime(m.ts)}${mine?' <svg class="ic" style="width:12px;height:12px;stroke:var(--outt)"><use href="#i-check"/></svg>':''}</span></div>${rx}</div>`;
-  }).join('');
-  if (nearBottom || ms.length<=1 || ms[ms.length-1].from===state.user.code) a.scrollTop=a.scrollHeight;
-}
+    p.vy += GRAVITY;
+    p.y += p.vy;
+    if (p.y + p.h >= GROUND) { p.y = GROUND-p.h; p.vy = 0; p.onGround = true; }
+    else p.onGround = false;
 
-function quickReact(e,id){
-  e.preventDefault(); socket.emit('reactToMessage',{id,emoji:'heart'});
-}
-let lp, lastTap=0;
-$('#msgs').addEventListener('touchstart',e=>{
-  const m=e.target.closest('.msg'); if(!m) return; const t=e.touches[0];
-  const now=Date.now();
-  if (now-lastTap<300){ clearTimeout(lp); quickReact({preventDefault(){}},m.dataset.id); lastTap=0; return; }
-  lastTap=now;
-  lp=setTimeout(()=>showReactionsMenu({preventDefault(){},clientX:t.clientX,clientY:t.clientY},m.dataset.id, m.classList.contains('me')),500);
-},{passive:true});
-['touchend','touchmove','touchcancel'].forEach(ev=>$('#msgs').addEventListener(ev,()=>clearTimeout(lp),{passive:true}));
+    if (input[i].up && p.onGround && p.jumpCd<=0) { p.vy=-11; p.jumpCd=12; p.onGround=false; }
+    if (p.jumpCd>0) p.jumpCd--;
 
-function showReactionsMenu(e,id,mine){
-  e.preventDefault(); document.querySelectorAll('.rmenu').forEach(m=>m.remove());
-  const menu=document.createElement('div'); menu.className='rmenu';
-  let html = Object.entries(REACTIONS).map(([k,svg])=>`<span data-em="${k}">${svg}</span>`).join('');
-  if(mine || state.user.code === 'ADMIN') {
-    html += `<span data-del="1" style="color:var(--danger)"><svg class="ic"><use href="#i-trash"/></svg></span>`;
-  }
-  menu.innerHTML = html;
-  menu.onclick=ev=>{ 
-    const s=ev.target.closest('span[data-em]'); 
-    if(s) { socket.emit('reactToMessage',{id,emoji:s.dataset.em}); menu.remove(); }
-    const d=ev.target.closest('span[data-del]');
-    if(d) { socket.emit('deleteMessage',{id}); menu.remove(); }
-  };
-  menu.style.left=Math.max(8,Math.min(e.clientX,innerWidth-270))+'px';
-  menu.style.top=Math.max(10,e.clientY-60)+'px';
-  document.body.appendChild(menu);
-  setTimeout(()=>{ const close=()=>{menu.remove();document.removeEventListener('click',close)}; document.addEventListener('click',close); },50);
-}
+    p.hitDown = false;
+    if (input[i].down && p.downCd<=0) { p.vy=12; p.downCd=20; p.hitDown=true; }
+    if (p.downCd>0) p.downCd--;
+  });
 
-const mi=$('#mi');
-const autoResize=()=>{ mi.style.height='auto'; mi.style.height=Math.min(mi.scrollHeight,120)+'px'; };
-mi.addEventListener('input',autoResize);
-function send(){
-  const t=mi.value.trim(); if(!t) return;
-  if (!activeKey()) return toast('Выберите чат');
-  const p={kind:'text',text:t};
-  state.activeGroup?p.groupId=state.activeGroup:p.to=state.activeChat;
-  socket.emit('sendMessage',p);
-  mi.value=''; autoResize(); mi.focus();
-}
-$('#sendBtn').onclick=send;
-mi.onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } };
-
-$('#micBtn').onclick = async () => {
-  if (state.isRecording) {
-    state.mediaRecorder.stop(); state.isRecording = false; $('#micBtn').classList.remove('recording');
-  } else {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      state.mediaRecorder = new MediaRecorder(stream);
-      state.audioChunks = [];
-      state.mediaRecorder.ondataavailable = e => state.audioChunks.push(e.data);
-      state.mediaRecorder.onstop = () => {
-        const blob = new Blob(state.audioChunks, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = () => {
-          const p = { kind: 'voice', text: reader.result };
-          state.activeGroup ? p.groupId = state.activeGroup : p.to = state.activeChat;
-          socket.emit('sendMessage', p);
-        };
-      };
-      state.mediaRecorder.start(); state.isRecording = true; $('#micBtn').classList.add('recording');
-    } catch(e) { toast('Нет доступа к микрофону'); }
-  }
-};
-
-$('#menuBtn').onclick=e=>{ e.stopPropagation(); $('#adM').classList.toggle('hidden'); };
-document.addEventListener('click',e=>{ if(!e.target.closest('#adM')&&!e.target.closest('#menuBtn')) $('#adM').classList.add('hidden'); });
-$('#adM').onclick=e=>{
-  const b=e.target.closest('button'); if(!b) return; $('#adM').classList.add('hidden');
-  const a=b.dataset.a;
-  if (a==='addfriend') openAddFriend();
-  else if (a==='group') openGroupModal();
-  else if (a==='theme') toggleTheme();
-};
-
-function profileHtml(u, self){
-  const nftId = self ? state.user.profileNft : null; 
-  const nftArt = nftId && NFT_CATALOG[nftId] ? NFT_CATALOG[nftId].art : '';
-  const isFriend = state.friends.some(f => f.code === u.code);
-  
-  let actions = '';
-  if (!self) {
-    actions = `
-      <div style="display:flex;gap:8px;margin-top:16px;width:100%;padding:0 16px">
-        <button class="btn primary" onclick="openChat('${u.code}')">Написать</button>
-        <button class="btn secondary" onclick="startCall('${u.code}','${esc(u.name)}')"><svg class="ic"><use href="#i-phone"/></svg></button>
-        ${!isFriend ? `<button class="btn secondary" onclick="addFriendByCode('${u.code}', true)"><svg class="ic"><use href="#i-plus"/></svg></button>` : ''}
-      </div>
-    `;
+  // Блоки
+  for (const b of blocks) {
+    if (b.broken) continue;
+    b.vy += GRAVITY;
+    b.x += b.vx; b.y += b.vy;
+    b.vx *= 0.98;
+    if (b.y + b.h >= GROUND) {
+      b.y = GROUND-b.h; b.vy = 0; b.vx *= 0.7;
+      if (Math.abs(b.vx) < 0.2) b.vx = 0;
+    }
   }
 
-  return `<div class="pt">
-    <div class="pav ${u.premium?'premium':''}">${avFor(u.name,u.photo)}${nftId?`<div class="gift-badge">${nftArt}</div>`:''}</div>
-    <div class="pn">${esc(u.name)} ${u.premium?'<svg class="ic sm" style="stroke:var(--premium);vertical-align:middle"><use href="#i-crown"/></svg>':''}</div>
-    <div class="ps ${u.online?'on':''}">${esc(u.bio || (u.online?'в сети':'был(а) недавно'))}</div>
-    ${actions}
-    </div>
-    <div class="sec">
-    <div class="row"><div style="font-size:16px">${esc(u.name)}</div><div style="font-size:13px;color:var(--sec)">Имя</div></div>
-    <div class="row"><div style="font-size:16px">${esc(u.code)}</div><div style="font-size:13px;color:var(--sec)">Код пользователя</div></div>
-    ${self?`<div class="row" style="cursor:pointer" onclick="openNft()"><div style="font-size:16px;color:var(--accent)">NFT Подарки</div><div style="font-size:13px;color:var(--sec)">${(state.user.nft||[]).length} шт.</div></div>`:''}
-    ${self?`<div class="row"><div style="font-size:16px">${u.stars||0} <svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg></div><div style="font-size:13px;color:var(--sec)">Баланс</div></div>`:''}
-    ${self&&!state.user.premium?`<div class="row" style="cursor:pointer" onclick="buyPremium()"><div style="font-size:16px;color:var(--gold)">Купить Premium</div><div style="font-size:13px;color:var(--sec)">1000 <svg class="ic sm" style="stroke:var(--gold)"><use href="#i-star"/></svg></div></div>`:''}
-    </div>`;
-}
-
-$('#profileBtn').onclick=()=>{ if(!state.user) return; state.viewingProfileCode = state.user.code; $('#profileContent').innerHTML=profileHtml({...state.user,online:true},true); $('#profileScreen').classList.remove('hidden'); };
-$('#profileBack').onclick=()=>{ $('#profileScreen').classList.add('hidden'); state.viewingProfileCode=null; };
-
-function openProfile(code){
-  // Ищем в друзьях или ищем по коду (если это админ, он мог перейти из админки)
-  let f = state.friends.find(x=>x.code===code);
-  if (!f && state.user.code === 'ADMIN') {
-     // Админ может смотреть профиль любого, но данные нужно найти. 
-     // В упрощенном виде возьмем из списка. Если нет - заглушка.
-     f = { code, name: 'User', online: false };
-  }
-  if (!f) return toast('Пользователь не найден в друзьях');
-  state.viewingProfileCode = code;
-  $('#profileContent').innerHTML=profileHtml({...f,online:!!state.online[code]}, false);
-  $('#profileScreen').classList.remove('hidden');
-}
-
-function openEditProfile(){
-  $('#editName').value = state.user.name;
-  $('#editBio').value = state.user.bio || '';
-  $('#editAvPrev').src = state.user.photo || '';
-  if (state.user.photo) { $('#editAvPrev').classList.remove('hidden'); $('#editAvPlus').classList.add('hidden'); }
-  else { $('#editAvPrev').classList.add('hidden'); $('#editAvPlus').classList.remove('hidden'); }
-  state.editAvatar = state.user.photo;
-  $('#editProfileModal').classList.add('open');
-}
-function closeEditProfile(){ $('#editProfileModal').classList.remove('open'); }
-$('#editPhIn').onchange = e => {
-  const f=e.target.files[0]; if(!f) return;
-  const img=new Image(), url=URL.createObjectURL(f);
-  img.onload = () => {
-    const c=document.createElement('canvas'), s=Math.min(256/img.width,256/img.height,1);
-    c.width=img.width*s; c.height=img.height*s; c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    state.editAvatar=c.toDataURL('image/jpeg',.8);
-    $('#editAvPrev').src=state.editAvatar; $('#editAvPrev').classList.remove('hidden'); $('#editAvPlus').classList.add('hidden');
-    URL.revokeObjectURL(url);
-  };
-  img.src=url;
-};
-function saveProfile(){
-  const name = $('#editName').value.trim();
-  const bio = $('#editBio').value.trim();
-  if (!name) return toast('Имя не может быть пустым');
-  socket.emit('updateProfile', { name, bio, photo: state.editAvatar }, res => {
-    if (!res || !res.ok) return toast(res?.error || 'Ошибка');
-    state.user.name = name; state.user.bio = bio; state.user.photo = state.editAvatar;
-    toast('Профиль обновлен');
-    closeEditProfile();
-    $('#profileContent').innerHTML = profileHtml({...state.user, online:true}, true);
-  });
-}
-
-function buyPremium(){
-  socket.emit('buyPremium', res => {
-    if (!res || !res.ok) return toast(res?.error || 'Ошибка');
-    state.user.stars = res.stars; state.user.premium = true;
-    $('#starCount').textContent = res.stars;
-    toast('Premium активирован!');
-    $('#profileContent').innerHTML = profileHtml({...state.user, online:true}, true);
-  });
-}
-
-function openStars(){ $('#starsModal').classList.add('open'); }
-function closeStars(){ $('#starsModal').classList.remove('open'); state.selectedPrice=null; }
-function selectPrice(amount, price){
-  state.selectedPrice = { amount, price };
-  toast(`Выбран пакет: ${amount} звёзд за ${price} руб.`);
-}
-function requestStars(){
-  if(!state.selectedPrice) return toast('Выберите пакет');
-  socket.emit('requestStars', state.selectedPrice, res => {
-    if(res.ok) { toast('Заявка отправлена Админу!'); closeStars(); }
-  });
-}
-
-function openNft(){
-  $('#nftGrid').innerHTML = Object.entries(NFT_CATALOG).map(([id, n]) => `
-    <div class="nft-card" onclick="buyNft('${id}')">
-      <div class="nft-art">${n.art}</div>
-      <div class="nft-name">${n.name}</div>
-      <div class="nft-price"><svg class="ic"><use href="#i-star"/></svg>${n.price}</div>
-    </div>
-  `).join('');
-  $('#nftModal').classList.add('open');
-}
-function closeNft(){ $('#nftModal').classList.remove('open'); }
-function buyNft(id){
-  const n = NFT_CATALOG[id];
-  if (state.user.stars < n.price) return toast('Недостаточно звёзд!');
-  socket.emit('buyNft', { nftId: id }, res => {
-    if (!res || !res.ok) return toast(res?.error||'Ошибка');
-    state.user.stars = res.stars;
-    state.user.nft.push(res.nft);
-    $('#starCount').textContent = res.stars;
-    toast(`Куплено: ${n.name}`);
-  });
-}
-
-// --- АДМИНКА (УЛУЧШЕННАЯ) ---
-function openAdminPanel(){ 
-  socket.emit('getAdminUsers'); 
-  socket.emit('getStarsRequests');
-  $('#adminModal').classList.add('open'); 
-}
-function closeAdminPanel(){ $('#adminModal').classList.remove('open'); }
-function switchAdminTab(tab){
-  if(tab === 'users') {
-    $('#tabAdminUsers').classList.add('active'); $('#tabAdminReqs').classList.remove('active');
-    $('#adminViewUsers').classList.remove('hidden'); $('#adminViewReqs').classList.add('hidden');
-  } else {
-    $('#tabAdminUsers').classList.remove('active'); $('#tabAdminReqs').classList.add('active');
-    $('#adminViewUsers').classList.add('hidden'); $('#adminViewReqs').classList.remove('hidden');
-    renderAdminReqs();
-  }
-}
-function updateReqBadge(){
-  const b = $('#reqBadge');
-  b.textContent = state.adminReqs.length;
-  if(state.adminReqs.length > 0) b.classList.remove('hidden'); else b.classList.add('hidden');
-}
-function renderAdminUsers(users){
-  $('#adminUsersList').innerHTML = users.map(u => `
-    <div class="admin-row">
-      <div style="cursor:pointer" onclick="openProfile('${u.code}')">
-        <div style="font-weight:700">${esc(u.name)} <span style="color:var(--sec);font-size:12px">(${u.code})</span></div>
-        <div style="color:var(--gold);font-size:14px;font-weight:700">★ ${u.stars}</div>
-      </div>
-      <div style="display:flex;gap:6px">
-        <input type="number" id="adminAmt_${u.code}" class="admin-input" placeholder="+100">
-        <button class="btn primary" style="padding:6px 12px;width:auto" onclick="giveStars('${u.code}')">Выдать</button>
-      </div>
-    </div>
-  `).join('');
-}
-function giveStars(code){
-  const amt = $(`#adminAmt_${code}`).value;
-  if(!amt) return;
-  socket.emit('adminGiveStars', { target: code, amount: amt }, res => {
-    if(res.ok) { toast('Звёзды выданы!'); socket.emit('getAdminUsers'); }
-  });
-}
-function renderAdminReqs(){
-  updateReqBadge();
-  if(!state.adminReqs.length) {
-    $('#adminReqsList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--sec)">Нет активных заявок</div>';
-    return;
-  }
-  $('#adminReqsList').innerHTML = state.adminReqs.map(r => `
-    <div class="admin-row">
-      <div>
-        <div style="font-weight:700">${esc(r.userName)} <span style="color:var(--sec);font-size:12px">(${r.userCode})</span></div>
-        <div style="color:var(--accent);font-weight:600">Запрос: ${r.amount} звёзд (${r.price} руб.)</div>
-      </div>
-      <button class="btn primary" style="padding:6px 12px;width:auto" onclick="resolveReq('${r.id}', '${r.amount}')">Выдать</button>
-    </div>
-  `).join('');
-}
-function resolveReq(id, amount){
-  socket.emit('resolveStarsRequest', { id, amount }, () => {
-    toast('Заявка выполнена!');
-    socket.emit('getStarsRequests');
-  });
-}
-
-function openAddFriend(){ $('#addFriendModal').classList.add('open'); switchAddTab('search'); }
-function closeAddFriend(){ $('#addFriendModal').classList.remove('open'); stopQRScanner(); }
-function switchAddTab(tab){
-  [['search','Search'],['qr','Qr'],['scan','Scan']].forEach(([t,n])=>{
-    $('#view'+n).classList.toggle('hidden',t!==tab);
-    $('#tab'+n).classList.toggle('active',t===tab);
-  });
-  if (tab==='qr') generateMyQR();
-  if (tab==='scan') startQRScanner(); else stopQRScanner();
-}
-function generateMyQR(){
-  if(!state.user) return;
-  const code=state.user.code; $('#myCodeText').textContent=code;
-  const fb=()=>{ $('#myQrImg').src='https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(code); };
-  if (window.QRCode&&QRCode.toDataURL) QRCode.toDataURL(code,{width:180,margin:1},(err,url)=>err?fb():$('#myQrImg').src=url); else fb();
-}
-function copyMyCode(){
-  if(!state.user) return;
-  (navigator.clipboard?navigator.clipboard.writeText(state.user.code):Promise.reject())
-    .then(()=>toast('Код скопирован: '+state.user.code)).catch(()=>toast('Код: '+state.user.code));
-}
-function searchFriend(){
-  const q=$('#searchFriendInput').value.trim(); if(!q) return toast('Введите имя или код');
-  socket.emit('searchUsers',{query:q},res=>{
-    const box=$('#searchResult');
-    if(!res||!res.ok) return toast('Ошибка поиска');
-    if(!res.users.length){ box.innerHTML='<p class="sub" style="padding:16px">Никого не найдено</p>'; return; }
-    box.innerHTML=res.users.map(u=>{
-      const isF=state.friends.some(f=>f.code===u.code);
-      return `<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--hover);border-radius:10px;margin-bottom:8px">
-        <div class="gav" style="width:44px;height:44px;cursor:pointer" onclick="openProfile('${u.code}')">${avFor(u.name,u.photo)}</div>
-        <div style="flex:1;min-width:0;cursor:pointer" onclick="openProfile('${u.code}')"><div style="font-weight:600">${esc(u.name)}</div><div class="sub" style="font-size:13px;text-align:left">${esc(u.code)}</div></div>
-        ${isF?'<span class="sub" style="font-size:13px">уже друг</span>':`<button class="btn primary" style="width:auto;padding:8px 14px;font-size:14px" onclick="addFriendByCode('${esc(u.code)}')"><svg class="ic sm"><use href="#i-plus"/></svg></button>`}</div>`;
-    }).join('');
-  });
-}
-function addFriendByCode(code, closeModal=false){
-  socket.emit('addFriendByCode',{code},res=>{
-    if(!res||!res.ok) return toast(res?.error||'Ошибка');
-    if(!state.friends.find(x=>x.code===res.friend.code)){ state.friends.push(res.friend); state.online[res.friend.code]=res.friend.online; }
-    toast((res.already?'Уже в друзьях: ':'Друг добавлен: ')+res.friend.name);
-    renderFriends(); 
-    if(!closeModal) closeAddFriend();
-    else {
-      // Обновляем кнопки в профиле, если он открыт
-      if(state.viewingProfileCode === code) openProfile(code);
+  // Игрок ↔ блок
+  players.forEach(p => {
+    for (const b of blocks) {
+      if (b.broken || !rectHit(p,b)) continue;
+      const dx = (b.x+b.w/2) - (p.x+p.w/2);
+      const dy = (b.y+b.h/2) - (p.y+p.h/2);
+      if (Math.abs(dx) > Math.abs(dy)) {
+        b.vx = Math.sign(dx) * 8;
+      } else {
+        if (dy < 0) { b.vy = 10; if (p.hitDown) b.vx = (Math.random()-0.5)*6; }
+        else b.vy = -6;
+      }
+      p.score++;
+      p.x -= Math.sign(dx) * 2;
     }
   });
-}
-function startQRScanner(){
-  if (typeof Html5Qrcode==='undefined') return toast('Сканер недоступен');
-  if (state.qrScanner) return;
-  $('#qrReader').innerHTML='';
-  const sc=state.qrScanner=new Html5Qrcode('qrReader');
-  sc.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},decoded=>{
-    const code=String(decoded||'').trim().toUpperCase(); if(!code) return;
-    stopQRScanner(); addFriendByCode(code);
-  },()=>{}).catch(()=>{ toast('Камера недоступна'); state.qrScanner=null; });
-}
-function stopQRScanner(){
-  const s=state.qrScanner; if(!s) return; state.qrScanner=null;
-  try{ s.stop().then(()=>s.clear()).catch(()=>{}); }catch(e){}
+
+  // Блок ↔ блок
+  for (let i=0; i<blocks.length; i++) {
+    const a = blocks[i]; if (a.broken) continue;
+    for (let j=i+1; j<blocks.length; j++) {
+      const b = blocks[j]; if (b.broken) continue;
+      if (!rectHit(a,b)) continue;
+      const oX = Math.min(a.x+a.w, b.x+b.w) - Math.max(a.x, b.x);
+      const oY = Math.min(a.y+a.h, b.y+b.h) - Math.max(a.y, b.y);
+      if (oY < oX) {
+        const push = oY/2;
+        if (a.y < b.y) { a.y -= push; b.y += push; }
+        else { a.y += push; b.y -= push; }
+        a.vy = 0; b.vy = 0;
+      }
+    }
+  }
+
+  // Частицы
+  particles = particles.filter(pt => pt.life > 0);
+  particles.forEach(pt => { pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.3; pt.life--; });
+
+  s1El.textContent = players[0].score;
+  s2El.textContent = players[1].score;
 }
 
-function openGroupModal(){
-  if(!state.friends.length) return toast('Сначала добавьте друзей');
-  $('#grName').value=''; refreshGroupMembers(); $('#groupModal').classList.add('open');
-}
-function closeGroupModal(){ $('#groupModal').classList.remove('open'); }
-function refreshGroupMembers(){
-  $('#grMembers').innerHTML=state.friends.map(f=>`<label class="gm"><input type="checkbox" value="${esc(f.code)}">
-    <div class="gav">${avFor(f.name,f.photo)}</div><div style="flex:1;font-weight:600;font-size:15px">${esc(f.name)}</div></label>`).join('');
-}
-function submitCreateGroup(){
-  const name=$('#grName').value.trim(); if(!name) return toast('Введите название');
-  const members=[...document.querySelectorAll('#grMembers input:checked')].map(i=>i.value);
-  if(!members.length) return toast('Выберите друзей');
-  socket.emit('createGroup',{name,members},res=>{
-    if(!res||!res.ok) return toast(res?.error||'Ошибка');
-    toast('Группа создана'); closeGroupModal();
-  });
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#16213e'; ctx.fillRect(0,H-40,W,40);
+
+  for (const b of blocks) {
+    if (b.broken) continue;
+    const t = Math.min(1, (GROUND - b.y) / 300);
+    ctx.fillStyle = `rgb(${Math.floor(80+t*150)},${Math.floor(120-t*60)},${Math.floor(200-t*120)})`;
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.strokeRect(b.x,b.y,b.w,b.h);
+  }
+
+  for (const p of players) {
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x,p.y,p.w,p.h);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(p.x+10, p.y+12, 6,6);
+    ctx.fillRect(p.x+24, p.y+12, 6,6);
+  }
+
+  for (const pt of particles) {
+    ctx.globalAlpha = pt.life/30;
+    ctx.fillStyle = pt.color;
+    ctx.fillRect(pt.x, pt.y, 3, 3);
+  }
+  ctx.globalAlpha = 1;
 }
 
-async function setupPeer() {
-  const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-  pc = new RTCPeerConnection(configuration);
-  pc.onicecandidate = event => {
-    if (event.candidate && state.callData) socket.emit('iceCandidate', { to: state.callData.peer, candidate: event.candidate });
-  };
-  pc.ontrack = event => {
-    let audio = document.getElementById('remoteAudio');
-    if (!audio) { audio = document.createElement('audio'); audio.id = 'remoteAudio'; document.body.appendChild(audio); }
-    audio.srcObject = event.streams[0]; audio.play();
-  };
-  if(!localStream) localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(50, now-last); last = now;
+  const steps = Math.ceil(dt / 16);
+  for (let i=0; i<steps; i++) step();
+  draw();
+  requestAnimationFrame(loop);
 }
-async function startCall(peerCode, peerName) {
-  state.callData = { peer: peerCode, name: peerName, isCaller: true };
-  $('#callName').textContent = peerName; $('#callStatus').textContent = 'Звоним...';
-  $('#callModal').classList.remove('hidden'); $('#acceptCallBtn').classList.add('hidden');
-  await setupPeer();
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  socket.emit('callUser', { to: peerCode, offer });
-}
-socket.on('incomingCall', async ({ from, offer }) => {
-  const friend = state.friends.find(f => f.code === from);
-  state.callData = { peer: from, name: friend ? friend.name : 'User', isCaller: false, offer };
-  $('#callName').textContent = state.callData.name; $('#callStatus').textContent = 'Входящий звонок...';
-  $('#callModal').classList.remove('hidden'); $('#acceptCallBtn').classList.remove('hidden');
-});
-async function acceptCall() {
-  $('#acceptCallBtn').classList.add('hidden'); $('#callStatus').textContent = 'Соединение...';
-  await setupPeer();
-  await pc.setRemoteDescription(new RTCSessionDescription(state.callData.offer));
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  socket.emit('answerCall', { to: state.callData.peer, answer });
-}
-socket.on('callAnswered', async ({ answer }) => {
-  $('#callStatus').textContent = 'На связи'; await pc.setRemoteDescription(new RTCSessionDescription(answer));
-});
-socket.on('iceCandidate', async ({ candidate }) => {
-  if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
-});
-socket.on('callEnded', () => { endCall(); });
-function endCall() {
-  $('#callModal').classList.add('hidden');
-  if (pc) { pc.close(); pc = null; }
-  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-  if (state.callData) { socket.emit('endCall', { to: state.callData.peer }); state.callData = null; }
-  const audio = document.getElementById('remoteAudio'); if(audio) audio.remove();
-}
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
