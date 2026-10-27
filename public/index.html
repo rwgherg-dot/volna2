@@ -2,19 +2,103 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Discord Clone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <style>
+        html, body {
+            touch-action: manipulation;
+            overscroll-behavior-y: contain;
+            height: 100%;
+            overflow: hidden;
+        }
+        .overscroll-contain {
+            overscroll-behavior-y: contain;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(71, 85, 105, 1);
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans antialiased h-screen overflow-hidden select-none">
+<body class="bg-slate-900 text-slate-100 font-sans antialiased h-screen overflow-hidden select-none overscroll-contain">
     <div id="root" class="h-full w-full"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
+
+        // Clean SVG Icon Library (No emojis used anywhere)
+        const Icons = {
+            Hash: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/>
+                </svg>
+            ),
+            Speaker: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+            ),
+            Mic: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+                </svg>
+            ),
+            MicOff: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3zM3 3l18 18"/>
+                </svg>
+            ),
+            Headphones: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4a7 7 0 00-7 7v6a3 3 0 003 3h1a1 1 0 001-1v-4a1 1 0 00-1-1H6V11a6 6 0 1112 0v3h-3a1 1 0 00-1 1v4a1 1 0 001 1h1a3 3 0 003-3v-6a7 7 0 00-7-7z"/>
+                </svg>
+            ),
+            HeadphonesOff: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM3 3l18 18"/>
+                </svg>
+            ),
+            Users: () => (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+            ),
+            Menu: () => (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            ),
+            Refresh: () => (
+                <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+            ),
+            Plus: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
+                </svg>
+            ),
+            Close: () => (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            )
+        };
 
         // Global Socket Instance
         const socket = io(window.location.origin);
@@ -30,9 +114,15 @@
             const [activeServerId, setActiveServerId] = useState(null);
             const [activeChannelId, setActiveChannelId] = useState(null);
             const [messages, setMessages] = useState([]);
+
+            // Voice call controls state
             const [activeVoiceChannelId, setActiveVoiceChannelId] = useState(null);
             const [isMuted, setIsMuted] = useState(false);
             const [isDeafened, setIsDeafened] = useState(false);
+
+            // Mobile Responsive Drawer States
+            const [mobileNavOpen, setMobileNavOpen] = useState(false);
+            const [mobileMembersOpen, setMobileMembersOpen] = useState(false);
 
             // Modals state
             const [showAuthModal, setShowAuthModal] = useState(!currentUser);
@@ -55,7 +145,13 @@
             const [profileDisplayName, setProfileDisplayName] = useState('');
             const [profileAvatarColor, setProfileAvatarColor] = useState('#6366f1');
 
+            // Pull-to-refresh state
+            const [pullDistance, setPullDistance] = useState(0);
+            const [isRefreshing, setIsRefreshing] = useState(false);
+            const touchStartYRef = useRef(null);
+
             const messagesEndRef = useRef(null);
+            const messagesContainerRef = useRef(null);
 
             // Auto-scroll messages
             useEffect(() => {
@@ -118,6 +214,16 @@
                     });
                 });
 
+                socket.on('voice:state_update', (data) => {
+                    if (!data || !data.serverId) return;
+                    setServers(prev => prev.map(s => {
+                        if (s.id === data.serverId) {
+                            return { ...s, voiceStates: data.voiceStates };
+                        }
+                        return s;
+                    }));
+                });
+
                 socket.on('channel:history', (data) => {
                     if (data && Array.isArray(data.messages)) {
                         setMessages(data.messages);
@@ -152,6 +258,7 @@
                     socket.off('auth:error');
                     socket.off('server:list');
                     socket.off('server:updated');
+                    socket.off('voice:state_update');
                     socket.off('channel:history');
                     socket.off('message:new');
                     socket.off('message:updated');
@@ -219,6 +326,7 @@
                         setServerNameInput('');
                         setShowCreateServer(false);
                         setActiveServerId(res.server.id);
+                        setMobileNavOpen(false);
                     }
                 });
             };
@@ -231,6 +339,7 @@
                         setInviteCodeInput('');
                         setShowJoinServer(false);
                         setActiveServerId(res.server.id);
+                        setMobileNavOpen(false);
                     } else if (res && res.error) {
                         alert(res.error);
                     }
@@ -283,12 +392,43 @@
                 });
             };
 
-            // Voice Actions
+            // Voice Call Actions
             const handleJoinVoice = (channelId) => {
                 if (!activeServerId) return;
                 if (activeVoiceChannelId === channelId) return;
-                socket.emit('voice:join', { serverId: activeServerId, channelId });
+                socket.emit('voice:join', {
+                    serverId: activeServerId,
+                    channelId,
+                    isMuted,
+                    isDeafened
+                });
                 setActiveVoiceChannelId(channelId);
+            };
+
+            const handleToggleMute = () => {
+                const newMute = !isMuted;
+                setIsMuted(newMute);
+                if (activeVoiceChannelId && activeServerId) {
+                    socket.emit('voice:state_update', {
+                        serverId: activeServerId,
+                        channelId: activeVoiceChannelId,
+                        isMuted: newMute,
+                        isDeafened
+                    });
+                }
+            };
+
+            const handleToggleDeafen = () => {
+                const newDeaf = !isDeafened;
+                setIsDeafened(newDeaf);
+                if (activeVoiceChannelId && activeServerId) {
+                    socket.emit('voice:state_update', {
+                        serverId: activeServerId,
+                        channelId: activeVoiceChannelId,
+                        isMuted,
+                        isDeafened: newDeaf
+                    });
+                }
             };
 
             const handleLeaveVoice = () => {
@@ -310,6 +450,43 @@
                 });
             };
 
+            // Pull-To-Refresh Handlers
+            const handleTouchStart = (e) => {
+                if (messagesContainerRef.current && messagesContainerRef.current.scrollTop <= 0) {
+                    touchStartYRef.current = e.touches[0].clientY;
+                } else {
+                    touchStartYRef.current = null;
+                }
+            };
+
+            const handleTouchMove = (e) => {
+                if (touchStartYRef.current !== null && messagesContainerRef.current && messagesContainerRef.current.scrollTop <= 0) {
+                    const currentY = e.touches[0].clientY;
+                    const diff = currentY - touchStartYRef.current;
+                    if (diff > 0) {
+                        const distance = Math.min(diff * 0.45, 70);
+                        setPullDistance(distance);
+                    }
+                }
+            };
+
+            const handleTouchEnd = () => {
+                if (pullDistance > 40) {
+                    setIsRefreshing(true);
+                    if (activeChannelId) {
+                        socket.emit('channel:history', { channelId: activeChannelId });
+                    }
+                    socket.emit('server:list');
+                    setTimeout(() => {
+                        setIsRefreshing(false);
+                        setPullDistance(0);
+                    }, 700);
+                } else {
+                    setPullDistance(0);
+                }
+                touchStartYRef.current = null;
+            };
+
             // Helper to render user initials for avatar
             const getInitials = (name) => {
                 if (!name) return 'U';
@@ -323,32 +500,32 @@
             // User role in active server
             const currentUserMember = activeServer?.members?.find(m => m.userId === currentUser?.id);
             const isAdmin = currentUserMember?.role === 'admin';
-
             const activeChannel = activeServer?.channels?.find(c => c.id === activeChannelId);
 
-            return (
-                <div class="flex h-screen w-screen overflow-hidden bg-slate-900 text-slate-100">
-
-                    {/* 1. LEFTMOST SERVER SIDEBAR */}
-                    <div class="w-18 bg-slate-950 flex flex-col items-center py-3 space-y-3 z-20 border-r border-slate-800 shrink-0">
+            // Reusable Sidebar content component
+            const renderSidebarContent = () => (
+                <div className="flex h-full w-full">
+                    {/* LEFTMOST SERVER COLUMN */}
+                    <div className="w-16 bg-slate-950 flex flex-col items-center py-3 space-y-3 z-20 border-r border-slate-800 shrink-0">
                         {/* App Logo Button */}
-                        <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-lg hover:rounded-xl transition-all cursor-pointer">
+                        <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-lg hover:rounded-xl transition-all cursor-pointer">
                             DC
                         </div>
-                        <div class="w-8 h-0.5 bg-slate-800 rounded"></div>
+                        <div className="w-6 h-0.5 bg-slate-800 rounded"></div>
 
                         {/* Server Icons List */}
-                        <div class="flex-1 w-full flex flex-col items-center space-y-2 overflow-y-auto px-2">
+                        <div className="flex-1 w-full flex flex-col items-center space-y-2 overflow-y-auto px-1">
                             {servers.map(srv => {
                                 const isActive = srv.id === activeServerId;
                                 return (
-                                    <div key={srv.id} class="relative group flex items-center">
-                                        {/* Active Indicator Bar */}
-                                        <div class={`absolute -left-2 w-1.5 bg-indigo-500 rounded-r transition-all ${isActive ? 'h-10' : 'h-0 group-hover:h-5'}`}></div>
-
+                                    <div key={srv.id} className="relative group flex items-center">
+                                        <div className={`absolute -left-1 w-1 bg-indigo-500 rounded-r transition-all ${isActive ? 'h-8' : 'h-0 group-hover:h-4'}`}></div>
                                         <button
-                                            onClick={() => setActiveServerId(srv.id)}
-                                            class={`w-12 h-12 rounded-3xl flex items-center justify-center font-bold text-sm transition-all ${isActive ? 'bg-indigo-600 text-white rounded-2xl' : 'bg-slate-800 text-slate-200 hover:bg-indigo-600 hover:text-white hover:rounded-2xl'}`}
+                                            onClick={() => {
+                                                setActiveServerId(srv.id);
+                                                setMobileNavOpen(false);
+                                            }}
+                                            className={`w-10 h-10 rounded-3xl flex items-center justify-center font-bold text-xs transition-all ${isActive ? 'bg-indigo-600 text-white rounded-2xl' : 'bg-slate-800 text-slate-200 hover:bg-indigo-600 hover:text-white hover:rounded-2xl'}`}
                                             title={srv.name}
                                         >
                                             {getInitials(srv.name)}
@@ -359,17 +536,17 @@
                         </div>
 
                         {/* Action Buttons: Create & Join */}
-                        <div class="space-y-2 pt-2 border-t border-slate-800 w-full flex flex-col items-center">
+                        <div className="space-y-2 pt-2 border-t border-slate-800 w-full flex flex-col items-center">
                             <button
                                 onClick={() => setShowCreateServer(true)}
-                                class="w-12 h-12 bg-slate-800 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-3xl hover:rounded-2xl flex items-center justify-center font-bold transition-all"
+                                className="w-10 h-10 bg-slate-800 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-3xl hover:rounded-2xl flex items-center justify-center font-bold transition-all"
                                 title="Создать сервер"
                             >
-                                +
+                                <Icons.Plus />
                             </button>
                             <button
                                 onClick={() => setShowJoinServer(true)}
-                                class="w-12 h-12 bg-slate-800 hover:bg-blue-600 text-blue-400 hover:text-white rounded-3xl hover:rounded-2xl flex items-center justify-center font-bold text-xs transition-all"
+                                className="w-10 h-10 bg-slate-800 hover:bg-blue-600 text-blue-400 hover:text-white rounded-3xl hover:rounded-2xl flex items-center justify-center font-bold text-[10px] transition-all"
                                 title="Войти по коду"
                             >
                                 Вход
@@ -377,15 +554,15 @@
                         </div>
                     </div>
 
-                    {/* 2. CHANNELS SIDEBAR */}
-                    <div class="w-60 bg-slate-900 flex flex-col border-r border-slate-800 shrink-0">
+                    {/* CHANNELS COLUMN */}
+                    <div className="w-56 bg-slate-900 flex flex-col border-r border-slate-800 shrink-0">
                         {/* Server Header */}
-                        <div class="h-14 border-b border-slate-800 px-4 flex items-center justify-between font-bold text-slate-100 shadow-sm">
-                            <span class="truncate max-w-[140px]">{activeServer ? activeServer.name : 'Discord Clone'}</span>
+                        <div className="h-14 border-b border-slate-800 px-3 flex items-center justify-between font-bold text-slate-100 shadow-sm">
+                            <span className="truncate max-w-[120px] text-sm">{activeServer ? activeServer.name : 'Discord Clone'}</span>
                             {activeServer && (
                                 <button
                                     onClick={() => setShowInviteModal(true)}
-                                    class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded font-medium border border-slate-700"
+                                    className="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded font-medium border border-slate-700"
                                 >
                                     Пригласить
                                 </button>
@@ -393,32 +570,35 @@
                         </div>
 
                         {/* Channel List */}
-                        <div class="flex-1 overflow-y-auto p-3 space-y-4">
+                        <div className="flex-1 overflow-y-auto p-2.5 space-y-4">
                             {/* Text Channels Section */}
                             <div>
-                                <div class="flex items-center justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 px-1">
+                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1 px-1">
                                     <span>Текстовые каналы</span>
                                     {isAdmin && (
                                         <button
                                             onClick={() => { setCreateChannelType('text'); setShowCreateChannel(true); }}
-                                            class="hover:text-slate-100 font-bold px-1"
+                                            className="hover:text-slate-100 font-bold px-1"
                                             title="Создать текстовый канал"
                                         >
-                                            +
+                                            <Icons.Plus />
                                         </button>
                                     )}
                                 </div>
-                                <div class="space-y-0.5">
+                                <div className="space-y-0.5">
                                     {activeServer?.channels?.filter(c => c.type === 'text').map(chan => {
                                         const isActive = chan.id === activeChannelId;
                                         return (
                                             <button
                                                 key={chan.id}
-                                                onClick={() => setActiveChannelId(chan.id)}
-                                                class={`w-full text-left px-2.5 py-1.5 rounded flex items-center space-x-2 text-sm font-medium transition-colors ${isActive ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'}`}
+                                                onClick={() => {
+                                                    setActiveChannelId(chan.id);
+                                                    setMobileNavOpen(false);
+                                                }}
+                                                className={`w-full text-left px-2.5 py-1.5 rounded flex items-center space-x-2 text-xs font-medium transition-colors ${isActive ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'}`}
                                             >
-                                                <span class="text-slate-500 font-bold">#</span>
-                                                <span class="truncate">{chan.name}</span>
+                                                <Icons.Hash />
+                                                <span className="truncate">{chan.name}</span>
                                             </button>
                                         );
                                     })}
@@ -427,50 +607,56 @@
 
                             {/* Voice Channels Section */}
                             <div>
-                                <div class="flex items-center justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 px-1">
+                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1 px-1">
                                     <span>Голосовые каналы</span>
                                     {isAdmin && (
                                         <button
                                             onClick={() => { setCreateChannelType('voice'); setShowCreateChannel(true); }}
-                                            class="hover:text-slate-100 font-bold px-1"
+                                            className="hover:text-slate-100 font-bold px-1"
                                             title="Создать голосовой канал"
                                         >
-                                            +
+                                            <Icons.Plus />
                                         </button>
                                     )}
                                 </div>
-                                <div class="space-y-1">
+                                <div className="space-y-1">
                                     {activeServer?.channels?.filter(c => c.type === 'voice').map(chan => {
                                         const isConnected = activeVoiceChannelId === chan.id;
                                         const voiceUsers = activeServer.voiceStates?.[chan.id] || [];
 
                                         return (
-                                            <div key={chan.id} class="space-y-0.5">
+                                            <div key={chan.id} className="space-y-0.5">
                                                 <button
                                                     onClick={() => handleJoinVoice(chan.id)}
-                                                    class={`w-full text-left px-2.5 py-1.5 rounded flex items-center justify-between text-sm font-medium transition-colors ${isConnected ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/40' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'}`}
+                                                    className={`w-full text-left px-2.5 py-1.5 rounded flex items-center justify-between text-xs font-medium transition-colors ${isConnected ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/40' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'}`}
                                                 >
-                                                    <div class="flex items-center space-x-2 truncate">
-                                                        <span class="text-slate-500 text-xs font-bold">[V]</span>
-                                                        <span class="truncate">{chan.name}</span>
+                                                    <div className="flex items-center space-x-1.5 truncate">
+                                                        <Icons.Speaker />
+                                                        <span className="truncate">{chan.name}</span>
                                                     </div>
                                                     {isConnected && (
-                                                        <span class="text-[10px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded uppercase">В эфире</span>
+                                                        <span className="text-[9px] bg-emerald-600 text-white font-bold px-1 py-0.5 rounded uppercase">В эфире</span>
                                                     )}
                                                 </button>
 
-                                                {/* Users inside this voice channel */}
+                                                {/* Users inside voice channel */}
                                                 {voiceUsers.length > 0 && (
-                                                    <div class="pl-6 space-y-1 py-0.5">
+                                                    <div className="pl-5 space-y-1 py-0.5">
                                                         {voiceUsers.map(vUser => (
-                                                            <div key={vUser.userId} class="flex items-center space-x-2 text-xs text-slate-300">
-                                                                <div
-                                                                    class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold"
-                                                                    style={{ backgroundColor: vUser.avatarColor }}
-                                                                >
-                                                                    {getInitials(vUser.displayName)}
+                                                            <div key={vUser.userId} className="flex items-center justify-between text-[11px] text-slate-300 pr-1">
+                                                                <div className="flex items-center space-x-1.5 truncate">
+                                                                    <div
+                                                                        className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] text-white font-bold shrink-0"
+                                                                        style={{ backgroundColor: vUser.avatarColor }}
+                                                                    >
+                                                                        {getInitials(vUser.displayName)}
+                                                                    </div>
+                                                                    <span className="truncate">{vUser.displayName}</span>
                                                                 </div>
-                                                                <span class="truncate">{vUser.displayName}</span>
+                                                                <div className="flex items-center space-x-1 shrink-0 text-slate-400">
+                                                                    {vUser.isMuted && <span className="text-[9px] text-red-400 font-bold">[Микр выкл]</span>}
+                                                                    {vUser.isDeafened && <span className="text-[9px] text-red-400 font-bold">[Звук выкл]</span>}
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -482,37 +668,37 @@
                             </div>
                         </div>
 
-                        {/* Active Voice Control Bar */}
+                        {/* Active Voice Call Controls Bar */}
                         {activeVoiceChannelId && (
-                            <div class="bg-slate-950 p-2.5 border-t border-slate-800 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-2">
-                                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                            <div className="bg-slate-950 p-2.5 border-t border-slate-800 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
                                         <div>
-                                            <div class="text-xs font-bold text-emerald-400">Голосовая связь подключена</div>
-                                            <div class="text-[11px] text-slate-400 truncate">
+                                            <div className="text-[11px] font-bold text-emerald-400">Голосовая связь</div>
+                                            <div className="text-[10px] text-slate-400 truncate max-w-[100px]">
                                                 {activeServer?.channels?.find(c => c.id === activeVoiceChannelId)?.name}
                                             </div>
                                         </div>
                                     </div>
                                     <button
                                         onClick={handleLeaveVoice}
-                                        class="text-xs bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded font-bold"
+                                        className="text-[10px] bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded font-bold transition-colors"
                                         title="Отключиться"
                                     >
-                                        Отключиться
+                                        Покинуть
                                     </button>
                                 </div>
-                                <div class="flex space-x-1 pt-1">
+                                <div className="flex space-x-1 pt-0.5">
                                     <button
-                                        onClick={() => setIsMuted(!isMuted)}
-                                        class={`flex-1 text-xs py-1 rounded font-semibold text-center transition-colors ${isMuted ? 'bg-red-900/60 text-red-300 border border-red-700' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                                        onClick={handleToggleMute}
+                                        className={`flex-1 text-[10px] py-1 px-1 rounded font-semibold text-center transition-colors ${isMuted ? 'bg-red-900/60 text-red-300 border border-red-700' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
                                     >
                                         {isMuted ? 'Микрофон: Выкл' : 'Микрофон: Вкл'}
                                     </button>
                                     <button
-                                        onClick={() => setIsDeafened(!isDeafened)}
-                                        class={`flex-1 text-xs py-1 rounded font-semibold text-center transition-colors ${isDeafened ? 'bg-red-900/60 text-red-300 border border-red-700' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                                        onClick={handleToggleDeafen}
+                                        className={`flex-1 text-[10px] py-1 px-1 rounded font-semibold text-center transition-colors ${isDeafened ? 'bg-red-900/60 text-red-300 border border-red-700' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
                                     >
                                         {isDeafened ? 'Звук: Выкл' : 'Звук: Вкл'}
                                     </button>
@@ -520,288 +706,405 @@
                             </div>
                         )}
 
-                        {/* Bottom Panel: User Info & Live Online Counter */}
-                        <div class="bg-slate-950 p-3 border-t border-slate-800 flex flex-col space-y-2">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2 min-w-0">
+                        {/* User Profile & Unique Online Counter */}
+                        <div className="bg-slate-950 p-2.5 border-t border-slate-800 flex flex-col space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2 min-w-0">
                                     <div
                                         onClick={() => setShowProfileModal(true)}
-                                        class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                                        className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
                                         style={{ backgroundColor: currentUser?.avatarColor || '#6366f1' }}
                                     >
                                         {getInitials(currentUser?.displayName || currentUser?.username)}
                                     </div>
-                                    <div class="min-w-0">
-                                        <div class="text-xs font-bold text-slate-200 truncate">{currentUser?.displayName || 'Пользователь'}</div>
-                                        <div class="text-[11px] text-slate-400 truncate">@{currentUser?.username}</div>
+                                    <div className="min-w-0">
+                                        <div className="text-xs font-bold text-slate-200 truncate">{currentUser?.displayName || 'Пользователь'}</div>
+                                        <div className="text-[10px] text-slate-400 truncate">@{currentUser?.username}</div>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center space-x-1 shrink-0">
+                                <div className="flex items-center space-x-1 shrink-0">
                                     <button
                                         onClick={() => setShowProfileModal(true)}
-                                        class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded font-medium border border-slate-700"
-                                        title="Настройки профиля"
+                                        className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-1 rounded font-medium border border-slate-700"
+                                        title="Профиль"
                                     >
-                                        Профиль
+                                        Инфо
                                     </button>
                                     <button
                                         onClick={handleLogout}
-                                        class="text-xs bg-slate-800 hover:bg-red-900/40 text-slate-300 hover:text-red-400 px-2 py-1 rounded font-medium border border-slate-700"
-                                        title="Выйти из аккаунта"
+                                        className="text-[10px] bg-slate-800 hover:bg-red-900/40 text-slate-300 hover:text-red-400 px-1.5 py-1 rounded font-medium border border-slate-700"
+                                        title="Выход"
                                     >
                                         Выход
                                     </button>
                                 </div>
                             </div>
 
-                            {/* EXACT Online Counter String Requested */}
-                            <div class="pt-1 border-t border-slate-900 flex items-center space-x-1.5 text-xs text-slate-400 font-medium">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                <span>В сети: {onlineCount} человек</span>
+                            {/* EXACT Online Counter String displaying unique count */}
+                            <div className="pt-1.5 border-t border-slate-900 flex items-center space-x-1.5 text-[11px] text-slate-300 font-semibold">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>В сети: {onlineCount}</span>
                             </div>
                         </div>
                     </div>
+                </div>
+            );
 
-                    {/* 3. MAIN CHAT AREA */}
-                    <div class="flex-1 flex flex-col bg-slate-800 min-w-0">
-                        {/* Chat Header */}
-                        <div class="h-14 border-b border-slate-700 px-4 flex items-center justify-between bg-slate-800 shrink-0">
-                            <div class="flex items-center space-x-2 min-w-0">
-                                <span class="text-xl font-bold text-slate-400">#</span>
-                                <span class="font-bold text-slate-100 text-base truncate">{activeChannel ? activeChannel.name : 'выберите-канал'}</span>
-                                <span class="text-xs text-slate-400 hidden sm:inline pl-2 border-l border-slate-700">Текстовый канал для сообщений</span>
-                            </div>
-
-                            <button
-                                onClick={() => setShowMemberList(!showMemberList)}
-                                class={`text-xs px-2.5 py-1.5 rounded font-semibold border transition-colors ${showMemberList ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-700 text-slate-300 border-slate-600 hover:bg-slate-600'}`}
-                            >
-                                {showMemberList ? 'Скрыть участников' : 'Участники'}
-                            </button>
+            // Reusable Member List Sidebar component
+            const renderMemberListContent = () => (
+                <div className="h-full w-full overflow-y-auto">
+                    {/* Administrators */}
+                    <div className="mb-4">
+                        <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">
+                            Администраторы — {activeServer?.members?.filter(m => m.role === 'admin').length || 0}
                         </div>
-
-                        {/* Messages List */}
-                        <div class="flex-1 overflow-y-auto p-4 space-y-4">
-                            {messages.length === 0 ? (
-                                <div class="h-full flex flex-col items-center justify-center text-slate-500 space-y-2">
-                                    <div class="text-lg font-semibold">Сообщений пока нет</div>
-                                    <div class="text-xs">Напишите первое сообщение в канал #{activeChannel?.name || 'основной'}</div>
-                                </div>
-                            ) : (
-                                messages.map(msg => (
-                                    <div key={msg.id} class="flex space-x-3 group hover:bg-slate-750 p-1.5 rounded-lg transition-colors">
-                                        {/* Avatar */}
+                        <div className="space-y-1">
+                            {activeServer?.members?.filter(m => m.role === 'admin').map(mem => (
+                                <div key={mem.userId} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800/50">
+                                    <div className="relative">
                                         <div
-                                            class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5"
-                                            style={{ backgroundColor: msg.author?.avatarColor || '#6366f1' }}
+                                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                                            style={{ backgroundColor: mem.avatarColor }}
                                         >
-                                            {getInitials(msg.author?.displayName || msg.author?.username)}
+                                            {getInitials(mem.displayName)}
                                         </div>
-
-                                        {/* Content */}
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-baseline space-x-2">
-                                                <span class="font-bold text-sm text-slate-100">{msg.author?.displayName || 'Пользователь'}</span>
-                                                <span class="text-[11px] text-slate-400">@{msg.author?.username}</span>
-                                                <span class="text-[10px] text-slate-500">{msg.timestamp}</span>
-                                            </div>
-
-                                            <div class="text-sm text-slate-200 mt-1 leading-relaxed break-words">
-                                                {msg.content}
-                                            </div>
-
-                                            {/* Reaction Pills & Options */}
-                                            <div class="flex flex-wrap items-center gap-1.5 mt-2">
-                                                {/* Existing reaction badges */}
-                                                {msg.reactions && Object.entries(msg.reactions).map(([reaction, userIds]) => {
-                                                    const hasReacted = userIds.includes(currentUser?.id);
-                                                    return (
-                                                        <button
-                                                            key={reaction}
-                                                            onClick={() => handleToggleReaction(msg.id, reaction)}
-                                                            class={`text-xs px-2 py-0.5 rounded-full border flex items-center space-x-1 font-semibold transition-colors ${hasReacted ? 'bg-indigo-900/60 text-indigo-300 border-indigo-500' : 'bg-slate-900/60 text-slate-400 border-slate-700 hover:border-slate-500'}`}
-                                                        >
-                                                            <span>{reaction}</span>
-                                                            <span class="text-[10px] opacity-80">{userIds.length}</span>
-                                                        </button>
-                                                    );
-                                                })}
-
-                                                {/* Quick reaction add buttons */}
-                                                <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 bg-slate-900/80 px-1 py-0.5 rounded border border-slate-700">
-                                                    {['+1', 'Согласен', 'Класс', 'Важно'].map(r => (
-                                                        <button
-                                                            key={r}
-                                                            onClick={() => handleToggleReaction(msg.id, r)}
-                                                            class="text-[11px] px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-medium"
-                                                        >
-                                                            {r}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${mem.status === 'online' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
                                     </div>
-                                ))
-                            )}
-                            <div ref={messagesEndRef} />
-                        </div>
-
-                        {/* Input Box */}
-                        <div class="p-4 bg-slate-800 shrink-0">
-                            <form onSubmit={handleSendMessage} class="flex items-center space-x-2 bg-slate-900 rounded-lg p-2 border border-slate-700">
-                                <input
-                                    type="text"
-                                    value={messageText}
-                                    onChange={(e) => setMessageText(e.target.value)}
-                                    placeholder={activeChannel ? `Написать в #${activeChannel.name}...` : 'Выберите канал...'}
-                                    disabled={!activeChannel}
-                                    class="flex-1 bg-transparent px-2 py-1 text-sm text-slate-100 placeholder-slate-500 focus:outline-none disabled:opacity-50"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={!messageText.trim() || !activeChannel}
-                                    class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white px-4 py-1.5 rounded text-xs font-bold transition-colors"
-                                >
-                                    Отправить
-                                </button>
-                            </form>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="text-xs font-semibold text-slate-200 truncate">{mem.displayName}</div>
+                                        <div className="text-[10px] text-amber-400 font-medium">Админ</div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* 4. RIGHT MEMBER LIST SIDEBAR */}
-                    {showMemberList && (
-                        <div class="w-60 bg-slate-900 border-l border-slate-800 p-3 overflow-y-auto shrink-0 hidden md:block">
-                            {/* Administrators */}
-                            <div class="mb-4">
-                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">
-                                    Администраторы — {activeServer?.members?.filter(m => m.role === 'admin').length || 0}
-                                </div>
-                                <div class="space-y-1">
-                                    {activeServer?.members?.filter(m => m.role === 'admin').map(mem => (
-                                        <div key={mem.userId} class="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800/50">
-                                            <div class="relative">
-                                                <div
-                                                    class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                                                    style={{ backgroundColor: mem.avatarColor }}
-                                                >
-                                                    {getInitials(mem.displayName)}
-                                                </div>
-                                                <div class={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${mem.status === 'online' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
-                                            </div>
-                                            <div class="min-w-0 flex-1">
-                                                <div class="text-xs font-semibold text-slate-200 truncate">{mem.displayName}</div>
-                                                <div class="text-[10px] text-amber-400 font-medium">Админ</div>
-                                            </div>
+                    {/* Members */}
+                    <div>
+                        <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">
+                            Участники — {activeServer?.members?.filter(m => m.role !== 'admin').length || 0}
+                        </div>
+                        <div className="space-y-1">
+                            {activeServer?.members?.filter(m => m.role !== 'admin').map(mem => (
+                                <div key={mem.userId} className="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800/50">
+                                    <div className="relative">
+                                        <div
+                                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                                            style={{ backgroundColor: mem.avatarColor }}
+                                        >
+                                            {getInitials(mem.displayName)}
                                         </div>
-                                    ))}
+                                        <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${mem.status === 'online' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="text-xs font-medium text-slate-300 truncate">{mem.displayName}</div>
+                                        <div className="text-[10px] text-slate-500 truncate">@{mem.username}</div>
+                                    </div>
                                 </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-900 text-slate-100">
+
+                    {/* MOBILE TOP HEADER BAR (< 768px screens) */}
+                    <div className="md:hidden h-12 bg-slate-950 border-b border-slate-800 px-3 flex items-center justify-between z-30 shrink-0">
+                        <button
+                            onClick={() => setMobileNavOpen(true)}
+                            className="flex items-center space-x-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
+                        >
+                            <Icons.Menu />
+                            <span>Серверы</span>
+                        </button>
+
+                        <div className="font-bold text-xs text-slate-200 truncate px-2 max-w-[140px]">
+                            {activeChannel ? `# ${activeChannel.name}` : (activeServer ? activeServer.name : 'Discord Clone')}
+                        </div>
+
+                        <button
+                            onClick={() => setMobileMembersOpen(true)}
+                            className="flex items-center space-x-1.5 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 active:scale-95 transition-transform"
+                        >
+                            <Icons.Users />
+                            <span>Участники</span>
+                        </button>
+                    </div>
+
+                    {/* MAIN CONTENT AREA */}
+                    <div className="flex flex-1 overflow-hidden relative">
+
+                        {/* DESKTOP SIDEBAR (Visible on md+) */}
+                        <div className="hidden md:flex shrink-0">
+                            {renderSidebarContent()}
+                        </div>
+
+                        {/* MOBILE NAVIGATION DRAWER OVERLAY (< 768px) */}
+                        {mobileNavOpen && (
+                            <div className="fixed inset-0 z-50 md:hidden flex">
+                                <div
+                                    className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+                                    onClick={() => setMobileNavOpen(false)}
+                                ></div>
+                                <div className="relative z-10 w-72 max-w-[85%] bg-slate-900 h-full shadow-2xl flex flex-col">
+                                    <div className="p-2 border-b border-slate-800 flex justify-end">
+                                        <button
+                                            onClick={() => setMobileNavOpen(false)}
+                                            className="p-1 text-slate-400 hover:text-white"
+                                        >
+                                            <Icons.Close />
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-hidden">
+                                        {renderSidebarContent()}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* CHAT AREA */}
+                        <div className="flex-1 flex flex-col bg-slate-800 min-w-0 relative">
+                            {/* Desktop Chat Header */}
+                            <div className="hidden md:flex h-14 border-b border-slate-700 px-4 items-center justify-between bg-slate-800 shrink-0">
+                                <div className="flex items-center space-x-2 min-w-0">
+                                    <span className="text-xl font-bold text-slate-400">#</span>
+                                    <span className="font-bold text-slate-100 text-base truncate">{activeChannel ? activeChannel.name : 'выберите-канал'}</span>
+                                    <span className="text-xs text-slate-400 hidden lg:inline pl-2 border-l border-slate-700">Текстовый канал</span>
+                                </div>
+
+                                <button
+                                    onClick={() => setShowMemberList(!showMemberList)}
+                                    className={`text-xs px-3 py-1.5 rounded font-semibold border transition-colors ${showMemberList ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-700 text-slate-300 border-slate-600 hover:bg-slate-600'}`}
+                                >
+                                    {showMemberList ? 'Скрыть участников' : 'Участники'}
+                                </button>
                             </div>
 
-                            {/* Members */}
-                            <div>
-                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">
-                                    Участники — {activeServer?.members?.filter(m => m.role !== 'admin').length || 0}
+                            {/* PULL-TO-REFRESH VISUAL INDICATOR */}
+                            {(pullDistance > 0 || isRefreshing) && (
+                                <div
+                                    className="w-full flex items-center justify-center py-2 transition-all duration-150 overflow-hidden text-xs font-semibold text-slate-300 bg-slate-900/90 border-b border-slate-700 shrink-0 z-10"
+                                    style={{ height: `${isRefreshing ? 42 : pullDistance}px` }}
+                                >
+                                    {isRefreshing ? (
+                                        <div className="flex items-center space-x-2">
+                                            <Icons.Refresh />
+                                            <span>Обновление сообщений...</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center space-x-1.5">
+                                            <span className="text-indigo-400 font-bold">{pullDistance > 40 ? '↓' : '↓'}</span>
+                                            <span>{pullDistance > 40 ? 'Отпустите для обновления' : 'Потяните вниз для обновления'}</span>
+                                        </div>
+                                    )}
                                 </div>
-                                <div class="space-y-1">
-                                    {activeServer?.members?.filter(m => m.role !== 'admin').map(mem => (
-                                        <div key={mem.userId} class="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-slate-800/50">
-                                            <div class="relative">
-                                                <div
-                                                    class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                                                    style={{ backgroundColor: mem.avatarColor }}
-                                                >
-                                                    {getInitials(mem.displayName)}
-                                                </div>
-                                                <div class={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${mem.status === 'online' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
+                            )}
+
+                            {/* MESSAGES SCROLL LIST WITH PULL-TO-REFRESH LISTENERS */}
+                            <div
+                                ref={messagesContainerRef}
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                                className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 overscroll-contain"
+                            >
+                                {messages.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-2 p-4 text-center">
+                                        <div className="text-base font-semibold">Сообщений пока нет</div>
+                                        <div className="text-xs">Напишите первое сообщение в канал #{activeChannel?.name || 'основной'}</div>
+                                    </div>
+                                ) : (
+                                    messages.map(msg => (
+                                        <div key={msg.id} className="flex space-x-2.5 sm:space-x-3 group hover:bg-slate-750 p-1.5 rounded-lg transition-colors">
+                                            {/* Avatar */}
+                                            <div
+                                                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5"
+                                                style={{ backgroundColor: msg.author?.avatarColor || '#6366f1' }}
+                                            >
+                                                {getInitials(msg.author?.displayName || msg.author?.username)}
                                             </div>
-                                            <div class="min-w-0 flex-1">
-                                                <div class="text-xs font-medium text-slate-300 truncate">{mem.displayName}</div>
-                                                <div class="text-[10px] text-slate-500 truncate">@{mem.username}</div>
+
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-baseline space-x-2">
+                                                    <span className="font-bold text-xs sm:text-sm text-slate-100">{msg.author?.displayName || 'Пользователь'}</span>
+                                                    <span className="text-[10px] sm:text-[11px] text-slate-400">@{msg.author?.username}</span>
+                                                    <span className="text-[9px] sm:text-[10px] text-slate-500">{msg.timestamp}</span>
+                                                </div>
+
+                                                <div className="text-xs sm:text-sm text-slate-200 mt-0.5 leading-relaxed break-words">
+                                                    {msg.content}
+                                                </div>
+
+                                                {/* Reaction Badges (Text Only - Strictly No Emojis) */}
+                                                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                                    {msg.reactions && Object.entries(msg.reactions).map(([reaction, userIds]) => {
+                                                        const hasReacted = userIds.includes(currentUser?.id);
+                                                        return (
+                                                            <button
+                                                                key={reaction}
+                                                                onClick={() => handleToggleReaction(msg.id, reaction)}
+                                                                className={`text-[11px] px-2 py-0.5 rounded-full border flex items-center space-x-1 font-semibold transition-colors ${hasReacted ? 'bg-indigo-900/60 text-indigo-300 border-indigo-500' : 'bg-slate-900/60 text-slate-400 border-slate-700 hover:border-slate-500'}`}
+                                                            >
+                                                                <span>{reaction}</span>
+                                                                <span className="text-[10px] opacity-80">{userIds.length}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+
+                                                    {/* Quick Text Reaction Buttons */}
+                                                    <div className="opacity-80 sm:opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 bg-slate-900/80 px-1 py-0.5 rounded border border-slate-700">
+                                                        {['+1', 'Согласен', 'Класс', 'Важно'].map(r => (
+                                                            <button
+                                                                key={r}
+                                                                onClick={() => handleToggleReaction(msg.id, r)}
+                                                                className="text-[10px] sm:text-[11px] px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-medium"
+                                                            >
+                                                                {r}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
+                                    ))
+                                )}
+                                <div ref={messagesEndRef} />
+                            </div>
+
+                            {/* CHAT INPUT FORM */}
+                            <div className="p-2.5 sm:p-4 bg-slate-800 shrink-0">
+                                <form onSubmit={handleSendMessage} className="flex items-center space-x-2 bg-slate-900 rounded-xl p-1.5 sm:p-2 border border-slate-700 shadow-inner">
+                                    <input
+                                        type="text"
+                                        value={messageText}
+                                        onChange={(e) => setMessageText(e.target.value)}
+                                        placeholder={activeChannel ? `Написать в #${activeChannel.name}...` : 'Выберите канал...'}
+                                        disabled={!activeChannel}
+                                        className="flex-1 bg-transparent px-2.5 py-1.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none disabled:opacity-50"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={!messageText.trim() || !activeChannel}
+                                        className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 active:scale-95"
+                                    >
+                                        Отправить
+                                    </button>
+                                </form>
                             </div>
                         </div>
-                    )}
+
+                        {/* DESKTOP MEMBER LIST SIDEBAR */}
+                        {showMemberList && (
+                            <div className="w-60 bg-slate-900 border-l border-slate-800 p-3 overflow-y-auto shrink-0 hidden md:block">
+                                {renderMemberListContent()}
+                            </div>
+                        )}
+
+                        {/* MOBILE MEMBERS DRAWER OVERLAY (< 768px) */}
+                        {mobileMembersOpen && (
+                            <div className="fixed inset-0 z-50 md:hidden flex justify-end">
+                                <div
+                                    className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+                                    onClick={() => setMobileMembersOpen(false)}
+                                ></div>
+                                <div className="relative z-10 w-72 max-w-[80%] bg-slate-900 h-full shadow-2xl flex flex-col p-4 border-l border-slate-800">
+                                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+                                        <span className="font-bold text-sm text-slate-200">Участники сервера</span>
+                                        <button
+                                            onClick={() => setMobileMembersOpen(false)}
+                                            className="p-1 text-slate-400 hover:text-white"
+                                        >
+                                            <Icons.Close />
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto">
+                                        {renderMemberListContent()}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
 
                     {/* MODALS */}
 
                     {/* Auth Modal (Login / Register) */}
                     {showAuthModal && (
-                        <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                            <div class="bg-slate-800 w-full max-w-md rounded-xl shadow-2xl border border-slate-700 overflow-hidden">
-                                <div class="p-6">
-                                    <div class="text-center mb-6">
-                                        <h2 class="text-2xl font-black text-white">Discord Clone</h2>
-                                        <p class="text-xs text-slate-400 mt-1">Добро пожаловать в веб-чат</p>
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4">
+                            <div className="bg-slate-800 w-full max-w-sm sm:max-w-md rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+                                <div className="p-5 sm:p-6">
+                                    <div className="text-center mb-5 sm:mb-6">
+                                        <h2 className="text-xl sm:text-2xl font-black text-white">Discord Clone</h2>
+                                        <p className="text-xs text-slate-400 mt-1">Добро пожаловать в веб-чат</p>
                                     </div>
 
                                     {/* Tabs */}
-                                    <div class="flex border-b border-slate-700 mb-6">
+                                    <div className="flex border-b border-slate-700 mb-5 sm:mb-6">
                                         <button
                                             onClick={() => { setAuthTab('login'); setAuthError(''); }}
-                                            class={`flex-1 py-2 text-sm font-bold border-b-2 transition-colors ${authTab === 'login' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+                                            className={`flex-1 py-2 text-xs sm:text-sm font-bold border-b-2 transition-colors ${authTab === 'login' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
                                         >
                                             Вход
                                         </button>
                                         <button
                                             onClick={() => { setAuthTab('register'); setAuthError(''); }}
-                                            class={`flex-1 py-2 text-sm font-bold border-b-2 transition-colors ${authTab === 'register' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+                                            className={`flex-1 py-2 text-xs sm:text-sm font-bold border-b-2 transition-colors ${authTab === 'register' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
                                         >
                                             Регистрация
                                         </button>
                                     </div>
 
                                     {authError && (
-                                        <div class="mb-4 p-3 bg-red-950/60 border border-red-700 rounded text-xs text-red-300 font-medium">
+                                        <div className="mb-4 p-3 bg-red-950/60 border border-red-700 rounded-lg text-xs text-red-300 font-medium">
                                             {authError}
                                         </div>
                                     )}
 
-                                    <form onSubmit={handleAuthSubmit} class="space-y-4">
+                                    <form onSubmit={handleAuthSubmit} className="space-y-4">
                                         <div>
-                                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Имя пользователя</label>
+                                            <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Имя пользователя</label>
                                             <input
                                                 type="text"
                                                 required
                                                 value={authForm.username}
                                                 onChange={(e) => setAuthForm({ ...authForm, username: e.target.value })}
-                                                class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
                                                 placeholder="user123"
                                             />
                                         </div>
 
                                         {authTab === 'register' && (
                                             <div>
-                                                <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Отображаемое имя</label>
+                                                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Отображаемое имя</label>
                                                 <input
                                                     type="text"
                                                     value={authForm.displayName}
                                                     onChange={(e) => setAuthForm({ ...authForm, displayName: e.target.value })}
-                                                    class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
                                                     placeholder="Иван Иванов"
                                                 />
                                             </div>
                                         )}
 
                                         <div>
-                                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Пароль</label>
+                                            <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Пароль</label>
                                             <input
                                                 type="password"
                                                 required
                                                 value={authForm.password}
                                                 onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
-                                                class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
                                                 placeholder="••••••••"
                                             />
                                         </div>
 
                                         <button
                                             type="submit"
-                                            class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded text-sm transition-colors mt-2"
+                                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-lg text-xs sm:text-sm transition-colors mt-2"
                                         >
                                             {authTab === 'login' ? 'Войти' : 'Зарегистрироваться'}
                                         </button>
@@ -813,35 +1116,35 @@
 
                     {/* Create Server Modal */}
                     {showCreateServer && (
-                        <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                            <div class="bg-slate-800 w-full max-w-md rounded-xl shadow-xl border border-slate-700 p-6">
-                                <h3 class="text-xl font-bold text-white mb-2">Создать сервер</h3>
-                                <p class="text-xs text-slate-400 mb-4">Придумайте название для нового сервера</p>
+                        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+                            <div className="bg-slate-800 w-full max-w-md rounded-2xl shadow-xl border border-slate-700 p-5 sm:p-6">
+                                <h3 className="text-lg sm:text-xl font-bold text-white mb-1">Создать сервер</h3>
+                                <p className="text-xs text-slate-400 mb-4">Придумайте название для нового сервера</p>
 
-                                <form onSubmit={handleCreateServerSubmit} class="space-y-4">
+                                <form onSubmit={handleCreateServerSubmit} className="space-y-4">
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Название сервера</label>
+                                        <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Название сервера</label>
                                         <input
                                             type="text"
                                             required
                                             value={serverNameInput}
                                             onChange={(e) => setServerNameInput(e.target.value)}
-                                            class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
                                             placeholder="Моё Сообщество"
                                         />
                                     </div>
 
-                                    <div class="flex justify-end space-x-2 pt-2">
+                                    <div className="flex justify-end space-x-2 pt-2">
                                         <button
                                             type="button"
                                             onClick={() => setShowCreateServer(false)}
-                                            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-xs font-bold"
+                                            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-xs font-bold"
                                         >
                                             Отмена
                                         </button>
                                         <button
                                             type="submit"
-                                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-bold"
+                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold"
                                         >
                                             Создать
                                         </button>
@@ -853,35 +1156,35 @@
 
                     {/* Join Server Modal */}
                     {showJoinServer && (
-                        <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                            <div class="bg-slate-800 w-full max-w-md rounded-xl shadow-xl border border-slate-700 p-6">
-                                <h3 class="text-xl font-bold text-white mb-2">Присоединиться к серверу</h3>
-                                <p class="text-xs text-slate-400 mb-4">Введите код приглашения (например, WELCOME)</p>
+                        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+                            <div className="bg-slate-800 w-full max-w-md rounded-2xl shadow-xl border border-slate-700 p-5 sm:p-6">
+                                <h3 className="text-lg sm:text-xl font-bold text-white mb-1">Присоединиться к серверу</h3>
+                                <p className="text-xs text-slate-400 mb-4">Введите код приглашения (например, WELCOME)</p>
 
-                                <form onSubmit={handleJoinServerSubmit} class="space-y-4">
+                                <form onSubmit={handleJoinServerSubmit} className="space-y-4">
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Код приглашения</label>
+                                        <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Код приглашения</label>
                                         <input
                                             type="text"
                                             required
                                             value={inviteCodeInput}
                                             onChange={(e) => setInviteCodeInput(e.target.value)}
-                                            class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 uppercase"
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 uppercase"
                                             placeholder="WELCOME"
                                         />
                                     </div>
 
-                                    <div class="flex justify-end space-x-2 pt-2">
+                                    <div className="flex justify-end space-x-2 pt-2">
                                         <button
                                             type="button"
                                             onClick={() => setShowJoinServer(false)}
-                                            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-xs font-bold"
+                                            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-xs font-bold"
                                         >
                                             Отмена
                                         </button>
                                         <button
                                             type="submit"
-                                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-bold"
+                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold"
                                         >
                                             Присоединиться
                                         </button>
@@ -893,54 +1196,56 @@
 
                     {/* Create Channel Modal */}
                     {showCreateChannel && (
-                        <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                            <div class="bg-slate-800 w-full max-w-md rounded-xl shadow-xl border border-slate-700 p-6">
-                                <h3 class="text-xl font-bold text-white mb-2">Создать канал</h3>
+                        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+                            <div className="bg-slate-800 w-full max-w-md rounded-2xl shadow-xl border border-slate-700 p-5 sm:p-6">
+                                <h3 className="text-lg sm:text-xl font-bold text-white mb-3">Создать канал</h3>
 
-                                <form onSubmit={handleCreateChannelSubmit} class="space-y-4">
+                                <form onSubmit={handleCreateChannelSubmit} className="space-y-4">
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Тип канала</label>
-                                        <div class="flex space-x-2">
+                                        <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Тип канала</label>
+                                        <div className="flex space-x-2">
                                             <button
                                                 type="button"
                                                 onClick={() => setCreateChannelType('text')}
-                                                class={`flex-1 py-2 px-3 rounded text-xs font-bold border ${createChannelType === 'text' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
+                                                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold border flex items-center justify-center space-x-1 ${createChannelType === 'text' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
                                             >
-                                                # Текстовый
+                                                <Icons.Hash />
+                                                <span>Текстовый</span>
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setCreateChannelType('voice')}
-                                                class={`flex-1 py-2 px-3 rounded text-xs font-bold border ${createChannelType === 'voice' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
+                                                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold border flex items-center justify-center space-x-1 ${createChannelType === 'voice' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
                                             >
-                                                [V] Голосовой
+                                                <Icons.Speaker />
+                                                <span>Голосовой</span>
                                             </button>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Название канала</label>
+                                        <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Название канала</label>
                                         <input
                                             type="text"
                                             required
                                             value={channelNameInput}
                                             onChange={(e) => setChannelNameInput(e.target.value)}
-                                            class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
                                             placeholder="новости"
                                         />
                                     </div>
 
-                                    <div class="flex justify-end space-x-2 pt-2">
+                                    <div className="flex justify-end space-x-2 pt-2">
                                         <button
                                             type="button"
                                             onClick={() => setShowCreateChannel(false)}
-                                            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-xs font-bold"
+                                            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-xs font-bold"
                                         >
                                             Отмена
                                         </button>
                                         <button
                                             type="submit"
-                                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-bold"
+                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold"
                                         >
                                             Создать канал
                                         </button>
@@ -952,13 +1257,13 @@
 
                     {/* Invite Modal */}
                     {showInviteModal && (
-                        <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                            <div class="bg-slate-800 w-full max-w-md rounded-xl shadow-xl border border-slate-700 p-6">
-                                <h3 class="text-xl font-bold text-white mb-2">Пригласить друзей</h3>
-                                <p class="text-xs text-slate-400 mb-4">Поделитесь этим кодом приглашения, чтобы другие могли присоединиться</p>
+                        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+                            <div className="bg-slate-800 w-full max-w-md rounded-2xl shadow-xl border border-slate-700 p-5 sm:p-6">
+                                <h3 className="text-lg sm:text-xl font-bold text-white mb-1">Пригласить друзей</h3>
+                                <p className="text-xs text-slate-400 mb-4">Поделитесь этим кодом приглашения, чтобы другие могли присоединиться</p>
 
-                                <div class="bg-slate-900 p-3 rounded border border-slate-700 flex items-center justify-between mb-4">
-                                    <span class="text-lg font-mono font-bold tracking-widest text-indigo-400">
+                                <div className="bg-slate-900 p-3 rounded-lg border border-slate-700 flex items-center justify-between mb-4">
+                                    <span className="text-lg font-mono font-bold tracking-widest text-indigo-400">
                                         {activeServer?.inviteCode || 'N/A'}
                                     </span>
                                     <button
@@ -966,16 +1271,16 @@
                                             navigator.clipboard.writeText(activeServer?.inviteCode || '');
                                             alert('Код скопирован в буфер обмена!');
                                         }}
-                                        class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded font-bold"
+                                        className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg font-bold transition-colors"
                                     >
                                         Скопировать код
                                     </button>
                                 </div>
 
-                                <div class="flex justify-end">
+                                <div className="flex justify-end">
                                     <button
                                         onClick={() => setShowInviteModal(false)}
-                                        class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-xs font-bold"
+                                        className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-xs font-bold"
                                     >
                                         Закрыть
                                     </button>
@@ -986,48 +1291,48 @@
 
                     {/* Profile Settings Modal */}
                     {showProfileModal && (
-                        <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                            <div class="bg-slate-800 w-full max-w-md rounded-xl shadow-xl border border-slate-700 p-6">
-                                <h3 class="text-xl font-bold text-white mb-2">Настройки профиля</h3>
+                        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+                            <div className="bg-slate-800 w-full max-w-md rounded-2xl shadow-xl border border-slate-700 p-5 sm:p-6">
+                                <h3 className="text-lg sm:text-xl font-bold text-white mb-3">Настройки профиля</h3>
 
-                                <form onSubmit={handleUpdateProfileSubmit} class="space-y-4">
+                                <form onSubmit={handleUpdateProfileSubmit} className="space-y-4">
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Отображаемое имя</label>
+                                        <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Отображаемое имя</label>
                                         <input
                                             type="text"
                                             required
                                             value={profileDisplayName}
                                             onChange={(e) => setProfileDisplayName(e.target.value)}
-                                            class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
                                         />
                                     </div>
 
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Цвет аватарки</label>
-                                        <div class="flex space-x-2 pt-1">
+                                        <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Цвет аватарки</label>
+                                        <div className="flex flex-wrap gap-2 pt-1">
                                             {['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#14b8a6'].map(color => (
                                                 <button
                                                     key={color}
                                                     type="button"
                                                     onClick={() => setProfileAvatarColor(color)}
-                                                    class={`w-8 h-8 rounded-full border-2 transition-transform ${profileAvatarColor === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'}`}
+                                                    className={`w-8 h-8 rounded-full border-2 transition-transform ${profileAvatarColor === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'}`}
                                                     style={{ backgroundColor: color }}
                                                 />
                                             ))}
                                         </div>
                                     </div>
 
-                                    <div class="flex justify-end space-x-2 pt-4">
+                                    <div className="flex justify-end space-x-2 pt-4">
                                         <button
                                             type="button"
                                             onClick={() => setShowProfileModal(false)}
-                                            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-xs font-bold"
+                                            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-xs font-bold"
                                         >
                                             Отмена
                                         </button>
                                         <button
                                             type="submit"
-                                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-bold"
+                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold"
                                         >
                                             Сохранить
                                         </button>
@@ -1036,6 +1341,7 @@
                             </div>
                         </div>
                     )}
+
                 </div>
             );
         }
